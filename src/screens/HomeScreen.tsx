@@ -17,6 +17,7 @@ import { SearchBarWidget } from '../components/common/SearchBarWidget';
 import { CategoryTabs } from '../components/common/CategoryTabs';
 import { UmkmGrid } from '../components/home/UmkmGrid';
 import { AddTransactionModal } from '../components/finance/AddTransactionModal';
+import { NotificationModal } from '../components/common/NotificationModal';
 import { walletService } from '../services/walletService';
 import { TransactionType } from '../models/transaction';
 import { UmkmModel } from '../models/umkm';
@@ -37,6 +38,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [modalType, setModalType] = useState<TransactionType>('income');
+  const [notificationModalVisible, setNotificationModalVisible] = useState<boolean>(false);
 
   useEffect(() => {
     const unsubscribe = walletService.subscribe(() => {
@@ -168,6 +170,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         <View style={styles.responsiveContainer}>
           <HeaderWidget
             userName="Salman"
+            hasUnread={true}
+            onNotificationPress={() => setNotificationModalVisible(true)}
             onProfilePress={() => {}}
           />
 
@@ -234,6 +238,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         visible={modalVisible}
         initialType={modalType}
         onClose={() => setModalVisible(false)}
+      />
+
+      <NotificationModal
+        visible={notificationModalVisible}
+        onClose={() => setNotificationModalVisible(false)}
       />
     </SafeAreaView>
   );

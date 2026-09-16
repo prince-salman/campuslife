@@ -5,12 +5,14 @@ import { Ionicons } from '@expo/vector-icons';
 
 interface HeaderWidgetProps {
   userName?: string;
+  hasUnread?: boolean;
   onNotificationPress?: () => void;
   onProfilePress?: () => void;
 }
 
 export const HeaderWidget: React.FC<HeaderWidgetProps> = ({
   userName = 'RICE',
+  hasUnread = true,
   onNotificationPress,
   onProfilePress,
 }) => {
@@ -28,6 +30,7 @@ export const HeaderWidget: React.FC<HeaderWidgetProps> = ({
 
       <Pressable onPress={onNotificationPress} style={styles.notificationButton}>
         <Ionicons name="notifications-outline" size={20} color={Colors.textWhite} />
+        {hasUnread && <View style={styles.badgeDot} />}
       </Pressable>
     </View>
   );
@@ -82,5 +85,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: Colors.border,
+    position: 'relative',
+  },
+  badgeDot: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.badgeRed,
   },
 });
