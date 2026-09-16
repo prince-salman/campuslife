@@ -144,6 +144,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             hasUnread={true}
             onNotificationPress={() => setNotificationModalVisible(true)}
             onProfilePress={handleProfilePress}
+            onLogoutPress={logout}
           />
 
           {/* Responsive Dashboard: Side-by-side on tablet/desktop, stacked on mobile */}

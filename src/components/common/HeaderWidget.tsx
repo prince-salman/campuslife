@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Colors } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ interface HeaderWidgetProps {
   hasUnread?: boolean;
   onNotificationPress?: () => void;
   onProfilePress?: () => void;
+  onLogoutPress?: () => void;
 }
 
 export const HeaderWidget: React.FC<HeaderWidgetProps> = ({
@@ -15,6 +16,7 @@ export const HeaderWidget: React.FC<HeaderWidgetProps> = ({
   hasUnread = true,
   onNotificationPress,
   onProfilePress,
+  onLogoutPress,
 }) => {
   return (
     <View style={styles.container}>
@@ -28,10 +30,17 @@ export const HeaderWidget: React.FC<HeaderWidgetProps> = ({
         </View>
       </View>
 
-      <Pressable onPress={onNotificationPress} style={styles.notificationButton} hitSlop={8}>
-        <Ionicons name="notifications-outline" size={20} color={Colors.textWhite} />
-        {hasUnread && <View style={styles.badgeDot} />}
-      </Pressable>
+      <View style={styles.rightRow}>
+        {onLogoutPress && (
+          <Pressable onPress={onLogoutPress} style={styles.logoutButton} hitSlop={8}>
+            <Ionicons name="log-out-outline" size={18} color="#FF8080" />
+          </Pressable>
+        )}
+        <Pressable onPress={onNotificationPress} style={styles.notificationButton} hitSlop={8}>
+          <Ionicons name="notifications-outline" size={20} color={Colors.textWhite} />
+          {hasUnread && <View style={styles.badgeDot} />}
+        </Pressable>
+      </View>
     </View>
   );
 };
@@ -79,6 +88,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textSecondary,
     marginTop: 2,
+  },
+  rightRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  logoutButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 107, 107, 0.12)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 107, 0.3)',
   },
   notificationButton: {
     width: 40,
