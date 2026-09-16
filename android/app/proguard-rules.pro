@@ -14,3 +14,6 @@
 # Expo modules reflection
 -keep class expo.modules.** { *; }
 -dontwarn expo.modules.**
+
+# Custom native modules
+-keep class com.campuslife.app.** { *; }
