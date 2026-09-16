@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
+import { notificationService } from '../../services/notificationService';
 
 interface NotificationModalProps {
   visible: boolean;
@@ -84,18 +85,37 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
 
           <ScrollView style={styles.listContainer} showsVerticalScrollIndicator={false}>
             {notifications.map((item) => (
-              <View key={item.id} style={styles.notificationItem}>
+              <Pressable
+                key={item.id}
+                style={styles.notificationItem}
+                onPress={() => {
+                  notificationService.sendLocalNotification(item.title, item.description);
+                }}
+              >
                 <View style={[styles.iconBox, { backgroundColor: item.iconColor + '20' }]}>
                   <Ionicons name={item.iconName} size={20} color={item.iconColor} />
                 </View>
                 <View style={styles.itemTextContainer}>
                   <Text style={styles.itemTitle}>{item.title}</Text>
                   <Text style={styles.itemDescription}>{item.description}</Text>
-                  <Text style={styles.itemTime}>{item.time}</Text>
+                  <Text style={styles.itemTime}>{item.time} • Ketuk untuk kirim ke layar HP</Text>
                 </View>
-              </View>
+              </Pressable>
             ))}
           </ScrollView>
+
+          <Pressable
+            style={styles.systemNotifyBtn}
+            onPress={() => {
+              notificationService.sendLocalNotification(
+                'Campus Life: Notifikasi Sistem Berhasil',
+                'Notifikasi ponsel aktif di bilah status dan layar HP Anda.'
+              );
+            }}
+          >
+            <Ionicons name="phone-portrait-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+            <Text style={styles.systemNotifyBtnText}>Kirim Notifikasi ke Layar HP</Text>
+          </Pressable>
 
           <Pressable style={styles.footerBtn} onPress={onClose}>
             <Text style={styles.footerBtnText}>Tutup</Text>
@@ -183,6 +203,20 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: 'rgba(255, 255, 255, 0.4)',
     fontWeight: '500',
+  },
+  systemNotifyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    borderRadius: 14,
+    paddingVertical: 12,
+    marginBottom: 10,
+  },
+  systemNotifyBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
   footerBtn: {
     backgroundColor: Colors.accentYellow,

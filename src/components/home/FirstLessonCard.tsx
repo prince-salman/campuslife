@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Colors } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { ScheduleItem } from '../../models/schedule';
+import { notificationService } from '../../services/notificationService';
 
 interface FirstLessonCardProps {
   schedule: ScheduleItem;
@@ -13,6 +14,13 @@ export const FirstLessonCard: React.FC<FirstLessonCardProps> = ({
   schedule,
   onPressDetail,
 }) => {
+  const [reminded, setReminded] = useState(false);
+
+  const handleReminder = async () => {
+    setReminded(true);
+    await notificationService.sendClassReminder(schedule.title, schedule.room || 'B103', '08:00 WIB');
+  };
+
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
@@ -30,10 +38,27 @@ export const FirstLessonCard: React.FC<FirstLessonCardProps> = ({
           <Text style={styles.lecturerText}>{schedule.lecturer}</Text>
         </View>
 
-        <Pressable onPress={onPressDetail} style={styles.detailButton}>
-          <Text style={styles.detailButtonText}>Lihat Detail</Text>
-          <Ionicons name="chevron-forward" size={14} color={Colors.yellowAccent} />
-        </Pressable>
+        <View style={styles.rightActions}>
+          <Pressable
+            onPress={handleReminder}
+            style={[styles.reminderBtn, reminded && styles.reminderBtnActive]}
+            hitSlop={6}
+          >
+            <Ionicons
+              name={reminded ? 'notifications' : 'notifications-outline'}
+              size={15}
+              color={reminded ? Colors.accentYellow : Colors.textWhite}
+            />
+            <Text style={[styles.reminderBtnText, reminded && styles.reminderBtnTextActive]}>
+              {reminded ? 'Diingatkan' : 'Ingatkan'}
+            </Text>
+          </Pressable>
+
+          <Pressable onPress={onPressDetail} style={styles.detailButton}>
+            <Text style={styles.detailButtonText}>Lihat Detail</Text>
+            <Ionicons name="chevron-forward" size={14} color={Colors.yellowAccent} />
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -91,6 +116,34 @@ const styles = StyleSheet.create({
   lecturerText: {
     color: Colors.textSecondary,
     fontSize: 13,
+  },
+  rightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  reminderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0F1E36',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 10,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  reminderBtnActive: {
+    backgroundColor: '#1E293B',
+    borderColor: Colors.accentYellow,
+  },
+  reminderBtnText: {
+    fontSize: 11,
+    color: Colors.textWhite,
+    fontWeight: '600',
+  },
+  reminderBtnTextActive: {
+    color: Colors.accentYellow,
   },
   detailButton: {
     flexDirection: 'row',
