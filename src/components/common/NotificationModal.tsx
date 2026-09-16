@@ -180,11 +180,24 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                     <Ionicons name="arrow-redo-outline" size={14} color="rgba(255,255,255,0.4)" />
                   </View>
                   <Text style={styles.itemDescription}>{item.description}</Text>
-                  <Text style={styles.itemTime}>{item.time}</Text>
+                  <Text style={styles.itemTime}>{item.time} • Ketuk untuk kirim ke layar HP</Text>
                 </View>
               </Pressable>
             ))}
           </ScrollView>
+
+          <Pressable
+            style={styles.systemNotifyBtn}
+            onPress={() => {
+              notificationService.sendLocalNotification(
+                'Campus Life: Notifikasi Sistem Berhasil',
+                'Notifikasi ponsel aktif di bilah status dan layar HP Anda.'
+              );
+            }}
+          >
+            <Ionicons name="phone-portrait-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+            <Text style={styles.systemNotifyBtnText}>Kirim Notifikasi ke Layar HP</Text>
+          </Pressable>
 
           <Pressable style={styles.footerBtn} onPress={onClose}>
             <Text style={styles.footerBtnText}>Tutup</Text>
@@ -350,6 +363,20 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: 'rgba(255, 255, 255, 0.4)',
     fontWeight: '500',
+  },
+  systemNotifyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    borderRadius: 14,
+    paddingVertical: 12,
+    marginBottom: 10,
+  },
+  systemNotifyBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
   footerBtn: {
     backgroundColor: '#1E293B',

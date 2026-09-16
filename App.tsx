@@ -9,10 +9,20 @@ import { notificationService } from './src/services/notificationService';
 
 export default function App() {
   useEffect(() => {
-    // Automatically initialize notification channel and permissions on startup
-    notificationService.init().catch((err) => {
-      console.warn('Notification init error on startup:', err);
-    });
+    // Inisialisasi izin notifikasi multiplatform dan kirim notifikasi selamat datang ke notification center
+    const initNotifications = async () => {
+      try {
+        const granted = await notificationService.init();
+        if (granted) {
+          setTimeout(() => {
+            notificationService.sendWelcomeNotification().catch(() => {});
+          }, 1500);
+        }
+      } catch (err) {
+        console.warn('Notification init error on startup:', err);
+      }
+    };
+    initNotifications();
   }, []);
 
   return (

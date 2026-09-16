@@ -76,11 +76,14 @@ class NotificationService {
         if (Platform.OS === 'android') {
           await Notifications.setNotificationChannelAsync('default', {
             name: 'Campus Life Notifikasi',
+            description: 'Pengumuman dan pengingat jadwal kuliah Campus Life',
             importance: Notifications.AndroidImportance.MAX,
             vibrationPattern: [0, 250, 250, 250],
             lightColor: '#F59E0B',
+            sound: 'default',
             enableLights: true,
             enableVibrate: true,
+            showBadge: true,
           });
         }
 
@@ -105,6 +108,13 @@ class NotificationService {
   }
 
   /**
+   * Alias for init() to maintain full compatibility with existing code
+   */
+  async initialize(): Promise<boolean> {
+    return await this.init();
+  }
+
+  /**
    * Request or check notification permissions
    */
   async requestPermission(): Promise<boolean> {
@@ -120,7 +130,6 @@ class NotificationService {
    * - macOS: macOS Notification Center Banner
    */
   async sendNotification(payload: DeviceNotificationPayload): Promise<boolean> {
-    // Ensure initialized
     if (!this.isInitialized) {
       await this.init();
     }
@@ -175,6 +184,8 @@ class NotificationService {
             body,
             data: payload.data,
             sound: payload.sound ?? true,
+            priority: Notifications.AndroidNotificationPriority.MAX,
+            vibrate: [0, 250, 250, 250],
           },
           trigger: null, // deliver immediately to Notification Center
         });
@@ -187,13 +198,52 @@ class NotificationService {
   }
 
   /**
-   * Send upcoming class schedule reminder
+   * Alias for sendNotification to maintain full compatibility with friend's implementation
    */
-  async sendClassReminder(lessonTitle: string, time: string, room: string): Promise<boolean> {
+  async sendLocalNotification(title: string, body: string, data: Record<string, any> = {}): Promise<void> {
+    await this.sendNotification({ title, body, data });
+  }
+
+  /**
+   * Send welcome notification when app is installed/opened
+   */
+  async sendWelcomeNotification(): Promise<void> {
+    await this.sendNotification({
+      title: 'Selamat Datang di Campus Life! 🎉',
+      body: 'Aplikasi berhasil terpasang di HP Anda. Jadwal kuliah dan info kampus siap digunakan.',
+      data: { type: 'welcome' },
+    });
+  }
+
+  /**
+   * Send upcoming class schedule reminder (supports both argument conventions)
+   */
+  async sendClassReminder(courseTitle: string, arg2: string, arg3?: string): Promise<boolean> {
+    // If 3 arguments provided: (courseTitle, room, time) or (courseTitle, time, room)
+    let room = 'B103';
+    let time = '08:00 WIB';
+
+    if (arg3) {
+      // (courseTitle, room, time) or (courseTitle, time, room)
+      if (arg2.includes(':') || arg2.includes('WIB') || arg2.includes('am') || arg2.includes('pm')) {
+        time = arg2;
+        room = arg3;
+      } else {
+        room = arg2;
+        time = arg3;
+      }
+    } else if (arg2) {
+      if (arg2.includes(':') || arg2.includes('WIB')) {
+        time = arg2;
+      } else {
+        room = arg2;
+      }
+    }
+
     return await this.sendNotification({
-      title: 'Jadwal Kuliah Mendatang 📚',
-      body: `Kelas ${lessonTitle} akan dimulai pukul ${time} di Ruang ${room}. Jangan sampai terlambat!`,
-      data: { type: 'schedule', lessonTitle, time, room },
+      title: `Jadwal Kuliah Mendatang: ${courseTitle} 📚`,
+      body: `Kelas ${courseTitle} dimulai jam ${time} di Ruang ${room}. Siapkan perlengkapan kuliah Anda.`,
+      data: { type: 'class_reminder', courseTitle, room, time },
     });
   }
 
