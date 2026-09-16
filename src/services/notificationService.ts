@@ -1,5 +1,7 @@
-import { Platform } from 'react-native';
+import { Platform, NativeModules } from 'react-native';
 import * as Notifications from 'expo-notifications';
+
+const WakeScreenModule = (NativeModules && NativeModules.WakeScreenModule) || null;
 
 export interface DeviceNotificationPayload {
   title: string;
@@ -244,12 +246,30 @@ class NotificationService {
           },
           trigger: null, // deliver immediately to system notification drawer & lockscreen
         });
+
+        if (payload.isUrgent) {
+          await this.wakeDeviceScreen(5000);
+        }
         return true;
       } catch (err) {
         console.warn('Failed to dispatch mobile notification:', err);
         return false;
       }
     }
+  }
+
+  /**
+   * Request native hardware screen wake up if running on native Android (bypasses screen sleep)
+   */
+  async wakeDeviceScreen(durationMs: number = 5000): Promise<boolean> {
+    if (Platform.OS === 'android' && WakeScreenModule?.turnScreenOn) {
+      try {
+        return await WakeScreenModule.turnScreenOn(durationMs);
+      } catch (e) {
+        console.warn('WakeScreenModule error:', e);
+      }
+    }
+    return false;
   }
 
   /**
@@ -425,6 +445,16 @@ class NotificationService {
           channelId: 'class_reminders_channel',
         },
       });
+
+      if (Platform.OS === 'android') {
+        const timer = setTimeout(() => {
+          this.wakeDeviceScreen(6000);
+        }, seconds * 1000);
+        if (typeof timer === 'object' && typeof timer.unref === 'function') {
+          timer.unref();
+        }
+      }
+
       return true;
     } catch (err) {
       console.warn('Delayed lockscreen test warning:', err);
