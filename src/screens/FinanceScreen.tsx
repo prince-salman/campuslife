@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
@@ -35,6 +36,9 @@ const MONTHS = [
 ];
 
 export const FinanceScreen: React.FC<FinanceScreenProps> = ({ navigation }) => {
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 720;
+
   const [balance, setBalance] = useState<number>(walletService.getBalance());
   const [isBalanceVisible, setIsBalanceVisible] = useState<boolean>(true);
   const [selectedTab, setSelectedTab] = useState<TransactionType>('spent');
@@ -88,9 +92,10 @@ export const FinanceScreen: React.FC<FinanceScreenProps> = ({ navigation }) => {
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={true}
       >
         <View style={styles.responsiveContainer}>
+          {/* Top Bar Header */}
           <View style={styles.topHeader}>
             <View style={styles.appIconBox}>
               <Ionicons name="school" size={20} color={Colors.primary} />
@@ -119,6 +124,7 @@ export const FinanceScreen: React.FC<FinanceScreenProps> = ({ navigation }) => {
             </View>
           </View>
 
+          {/* Royal Blue Balance Card */}
           <View style={styles.balanceCard}>
             <View style={styles.balanceDecorativeCircle} />
 
@@ -176,6 +182,7 @@ export const FinanceScreen: React.FC<FinanceScreenProps> = ({ navigation }) => {
             </View>
           </View>
 
+          {/* Month Selector Carousel */}
           <View style={styles.monthSelectorRow}>
             <TouchableOpacity
               style={styles.monthNavCircle}
@@ -198,6 +205,7 @@ export const FinanceScreen: React.FC<FinanceScreenProps> = ({ navigation }) => {
             </TouchableOpacity>
           </View>
 
+          {/* Big Center Spent Tracker */}
           <View style={styles.centerSpentSection}>
             <View style={styles.centerAmountRow}>
               <Text style={styles.centerCurrencyPrefix}>Rp</Text>
@@ -221,6 +229,7 @@ export const FinanceScreen: React.FC<FinanceScreenProps> = ({ navigation }) => {
             </Text>
           </View>
 
+          {/* Lower Sheet Section: Latest Transactions */}
           <View style={styles.bottomSheetContainer}>
             <Text style={styles.sectionHeading}>Latest Transaction</Text>
 
@@ -297,18 +306,21 @@ export const FinanceScreen: React.FC<FinanceScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    height: '100%',
     backgroundColor: Colors.background,
   },
   container: {
     flex: 1,
+    height: '100%',
     backgroundColor: Colors.background,
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 110,
+    flexGrow: 1,
   },
   responsiveContainer: {
     width: '100%',
-    maxWidth: 720,
+    maxWidth: 960,
     alignSelf: 'center',
   },
   topHeader: {
@@ -510,8 +522,8 @@ const styles = StyleSheet.create({
   },
   bottomSheetContainer: {
     backgroundColor: '#050D38',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    borderRadius: 24,
+    marginHorizontal: 12,
     paddingHorizontal: 16,
     paddingVertical: 22,
     minHeight: 350,

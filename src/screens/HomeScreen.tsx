@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, SafeAreaView, Text } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
+  Text,
+  useWindowDimensions,
+  Platform,
+} from 'react-native';
 import { Colors } from '../constants/colors';
 import { HeaderWidget } from '../components/common/HeaderWidget';
 import { FirstLessonCard } from '../components/home/FirstLessonCard';
@@ -18,6 +26,9 @@ interface HomeScreenProps {
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 720;
+
   const [balance, setBalance] = useState<number>(walletService.getBalance());
   const [monthlySpent, setMonthlySpent] = useState<number>(walletService.getCurrentMonthSpent());
   const [currentMonth, setCurrentMonth] = useState<string>(walletService.getSelectedMonth());
@@ -99,17 +110,46 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     },
     {
       id: '6',
-      name: 'Guriuk Chicken',
+      name: 'Dapur Sambal Bakar',
       category: 'F&B',
-      priceTag: '5K',
-      bannerText: 'GURIUK!',
-      cardColorHex: '#1B3B2B',
+      priceTag: '15K',
+      bannerText: 'SAMBAL BAKAR',
+      cardColorHex: '#5C1D1D',
+    },
+    {
+      id: '7',
+      name: 'Laundry Kilat 3 Jam',
+      category: 'Laundry',
+      priceTag: '6K/kg',
+      bannerText: 'CUCI SETRIKA',
+      cardColorHex: '#1B3B6F',
+    },
+    {
+      id: '8',
+      name: 'Kost & Homestay Asri',
+      category: 'Homestay',
+      priceTag: '850K',
+      bannerText: 'KAMAR BERSIH AC',
+      cardColorHex: '#1D4E3E',
+    },
+    {
+      id: '9',
+      name: 'Print & Copy Sentosa',
+      category: 'Fotocopy',
+      priceTag: '250/lbr',
+      bannerText: 'PRINT SKRIPSI',
+      cardColorHex: '#3C4048',
     },
   ];
 
   const filteredUmkm = umkmList.filter((item) => {
-    const matchesCategory = selectedCategory === 'F&B' ? true : item.category === selectedCategory;
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      selectedCategory === 'Semua' ||
+      item.category.toLowerCase() === selectedCategory.toLowerCase();
+    const matchesSearch =
+      searchQuery.trim() === '' ||
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.bannerText.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
@@ -121,62 +161,72 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
-        showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
       >
-        <HeaderWidget userName="RICE" />
-
-        <View style={styles.sectionSpacer}>
-          <FirstLessonCard
-            schedule={{
-              id: '1',
-              title: 'Informatics',
-              time: '08',
-              timePeriod: 'am',
-              timeRange: '08:00 WIB - 10:00 WIB',
-              lecturer: 'Mr. John Liebert',
-              room: 'B103',
-              duration: '2 Hours',
-              headerColor: Colors.cardHeaderTeal,
-              cardColor: Colors.cardBodyTeal,
-            }}
-            onPressDetail={() => navigation?.navigate?.('Jadwal')}
+        <View style={styles.responsiveContainer}>
+          <HeaderWidget
+            userName="Salman"
+            onProfilePress={() => {}}
           />
-        </View>
 
-        <View style={styles.sectionSpacer}>
-          <FinanceCard
-            balance={balance}
-            monthlySpent={monthlySpent}
-            currentMonth={currentMonth}
-            onIncomeTap={() => openModal('income')}
-            onSpentTap={() => openModal('spent')}
-            onHistoryTap={() => navigation?.navigate?.('Keuangan')}
-          />
-        </View>
+          {/* Responsive Dashboard: Side-by-side on tablet/desktop, stacked on mobile */}
+          <View style={isTablet ? styles.desktopRow : styles.mobileCol}>
+            <View style={isTablet ? styles.desktopCol : styles.sectionSpacer}>
+              <FirstLessonCard
+                schedule={{
+                  id: '1',
+                  title: 'Informatics',
+                  time: '08',
+                  timePeriod: 'am',
+                  timeRange: '08:00 WIB - 10:00 WIB',
+                  lecturer: 'Mr. John Liebert',
+                  room: 'B103',
+                  duration: '2 Hours',
+                  headerColor: Colors.cardHeaderTeal,
+                  cardColor: Colors.cardBodyTeal,
+                }}
+                onPressDetail={() => navigation?.navigate?.('Schedule')}
+              />
+            </View>
 
-        <View style={styles.sectionSpacer}>
-          <PromoBannerSlider banners={banners} />
-        </View>
+            <View style={isTablet ? styles.desktopCol : styles.sectionSpacer}>
+              <FinanceCard
+                balance={balance}
+                monthlySpent={monthlySpent}
+                currentMonth={currentMonth}
+                onIncomeTap={() => openModal('income')}
+                onSpentTap={() => openModal('spent')}
+                onHistoryTap={() => navigation?.navigate?.('Finance')}
+              />
+            </View>
+          </View>
 
-        <View style={styles.sectionSpacer}>
-          <SearchBarWidget
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
+          <View style={styles.sectionSpacer}>
+            <PromoBannerSlider banners={banners} />
+          </View>
 
-        <View style={styles.sectionSpacer}>
-          <CategoryTabs
-            categories={categories}
-            selectedCategory={selectedCategory}
-            onSelectCategory={setSelectedCategory}
-          />
-        </View>
+          <View style={styles.sectionSpacer}>
+            <SearchBarWidget
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Cari warung makan, laundry, kos..."
+            />
+          </View>
 
-        <View style={styles.sectionSpacer}>
-          <Text style={styles.sectionTitle}>Rekomendasi UMKM Kampus</Text>
-          <UmkmGrid items={filteredUmkm} />
+          <View style={styles.sectionSpacer}>
+            <CategoryTabs
+              categories={categories}
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
+            />
+          </View>
+
+          <View style={styles.sectionSpacer}>
+            <Text style={styles.sectionTitle}>Rekomendasi UMKM Kampus</Text>
+            <UmkmGrid items={filteredUmkm} />
+          </View>
         </View>
       </ScrollView>
 
@@ -192,20 +242,44 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    height: '100%',
     backgroundColor: Colors.background,
+  },
+  scrollView: {
+    flex: 1,
+    height: '100%',
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 40,
+    paddingBottom: 110,
+    flexGrow: 1,
+  },
+  responsiveContainer: {
+    width: '100%',
+    maxWidth: 1120,
+    alignSelf: 'center',
+    paddingTop: Platform.OS === 'web' ? 12 : 6,
+  },
+  desktopRow: {
+    flexDirection: 'row',
+    gap: 16,
+    marginTop: 14,
+    alignItems: 'stretch',
+  },
+  desktopCol: {
+    flex: 1,
+  },
+  mobileCol: {
+    flexDirection: 'column',
   },
   sectionSpacer: {
     marginTop: 14,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '800',
     color: Colors.textWhite,
-    marginBottom: 10,
+    marginBottom: 12,
     letterSpacing: -0.3,
   },
 });

@@ -6,7 +6,7 @@ import {
   ScrollView,
   SafeAreaView,
   TouchableOpacity,
-  Dimensions,
+  useWindowDimensions,
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -122,10 +122,17 @@ const ALL_UMKM: UmkmModel[] = [
 ];
 
 export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
+  const { width } = useWindowDimensions();
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
 
   const categories = ['Semua', 'F&B', 'Laundry', 'Homestay', 'Fotocopy', 'Holiday'];
+
+  const getGridItemWidth = () => {
+    if (width >= 1024) return '25%';
+    if (width >= 640) return '33.33%';
+    return '50%';
+  };
 
   const filteredUmkm = ALL_UMKM.filter((item) => {
     const matchesCategory =
@@ -144,7 +151,7 @@ export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={true}
       >
         <View style={styles.responsiveContainer}>
           {/* Top Header */}
@@ -225,7 +232,10 @@ export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
             ) : (
               <View style={styles.gridContainer}>
                 {filteredUmkm.map((item) => (
-                  <View key={item.id} style={styles.gridItemWrapper}>
+                  <View
+                    key={item.id}
+                    style={[styles.gridItemWrapper, { width: getGridItemWidth() }]}
+                  >
                     <TouchableOpacity
                       style={[
                         styles.umkmCard,
@@ -276,18 +286,21 @@ export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    height: '100%',
     backgroundColor: Colors.background,
   },
   container: {
     flex: 1,
+    height: '100%',
     backgroundColor: Colors.background,
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 110,
+    flexGrow: 1,
   },
   responsiveContainer: {
     width: '100%',
-    maxWidth: 720,
+    maxWidth: 1120,
     alignSelf: 'center',
   },
   topHeader: {
@@ -410,7 +423,6 @@ const styles = StyleSheet.create({
     marginHorizontal: -6,
   },
   gridItemWrapper: {
-    width: '50%',
     padding: 6,
   },
   umkmCard: {

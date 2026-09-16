@@ -1,5 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+﻿import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
+  useWindowDimensions,
+  Platform,
+} from 'react-native';
 import { Colors } from '../constants/colors';
 import { ScheduleCalendarHeader } from '../components/schedule/ScheduleCalendarHeader';
 import { ScheduleTimelineCard } from '../components/schedule/ScheduleTimelineCard';
@@ -7,6 +15,7 @@ import { DaySchedule } from '../models/schedule';
 import { Ionicons } from '@expo/vector-icons';
 
 export const ScheduleScreen: React.FC = () => {
+  const { width } = useWindowDimensions();
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(3); // Thu 14 default
   const [monthYear] = useState<string>('June, 2026');
 
@@ -62,14 +71,14 @@ export const ScheduleScreen: React.FC = () => {
       items: [
         {
           id: 'wed_1',
-          time: '09',
+          time: '08',
           timePeriod: 'am',
-          title: 'Web Application Development',
-          room: 'Lab 1',
-          lecturer: 'Mr. Roberto',
+          title: 'Software Engineering',
+          room: 'C301',
+          lecturer: 'Dr. Julius Reichwein',
           duration: '3 Hours',
-          headerColor: '#244872',
-          cardColor: '#4C7BA8',
+          headerColor: '#2E6F79',
+          cardColor: '#55A4B2',
         },
       ],
     },
@@ -81,23 +90,34 @@ export const ScheduleScreen: React.FC = () => {
           id: 'thu_1',
           time: '08',
           timePeriod: 'am',
-          title: 'Computer Network',
+          title: 'Informatics',
           room: 'B103',
           lecturer: 'Mr. John Liebert',
           duration: '2 Hours',
-          headerColor: Colors.cardHeaderTeal,
-          cardColor: Colors.cardBodyTeal,
+          headerColor: '#2E7979',
+          cardColor: '#5FB8B2',
         },
         {
           id: 'thu_2',
-          time: '04',
+          time: '11',
+          timePeriod: 'am',
+          title: 'Linear Algebra',
+          room: 'A201',
+          lecturer: 'Dr. Johan',
+          duration: '2 Hours',
+          headerColor: '#274975',
+          cardColor: '#4D7FA9',
+        },
+        {
+          id: 'thu_3',
+          time: '02',
           timePeriod: 'pm',
-          title: 'Discrete Mathematics',
-          room: 'B209',
-          lecturer: 'Ms. Enami Asa',
-          duration: '1.5 Hours',
-          headerColor: Colors.cardHeaderBlue,
-          cardColor: Colors.cardBodyBlue,
+          title: 'Web Development Lab',
+          room: 'Lab 1',
+          lecturer: 'Mr. Salman',
+          duration: '3 Hours',
+          headerColor: '#5A2E79',
+          cardColor: '#8C5FB8',
         },
       ],
     },
@@ -107,14 +127,14 @@ export const ScheduleScreen: React.FC = () => {
       items: [
         {
           id: 'fri_1',
-          time: '08',
+          time: '09',
           timePeriod: 'am',
-          title: 'Artificial Intelligence',
-          room: 'B301',
-          lecturer: 'Dr. Kenzo Tenma',
+          title: 'Computer Networks',
+          room: 'B102',
+          lecturer: 'Mr. Richard Braun',
           duration: '2 Hours',
-          headerColor: '#4C2A78',
-          cardColor: '#7E54B0',
+          headerColor: '#792E4D',
+          cardColor: '#B85F82',
         },
       ],
     },
@@ -126,7 +146,7 @@ export const ScheduleScreen: React.FC = () => {
           id: 'sat_1',
           time: '10',
           timePeriod: 'am',
-          title: 'Workshop Cloud Computing',
+          title: 'Public Speaking Seminar',
           room: 'Auditorium',
           lecturer: 'Guest Speaker',
           duration: '3 Hours',
@@ -146,31 +166,34 @@ export const ScheduleScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScheduleCalendarHeader
-        currentMonthYear={monthYear}
-        days={weekSchedule}
-        selectedIndex={selectedDayIndex}
-        onDaySelected={setSelectedDayIndex}
-      />
+      <View style={styles.responsiveContainer}>
+        <ScheduleCalendarHeader
+          currentMonthYear={monthYear}
+          days={weekSchedule}
+          selectedIndex={selectedDayIndex}
+          onDaySelected={setSelectedDayIndex}
+        />
 
-      <ScrollView
-        contentContainerStyle={styles.timelineContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {currentDay.items.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Ionicons name="calendar-outline" size={54} color="rgba(255,255,255,0.2)" />
-            <Text style={styles.emptyTitle}>Tidak Ada Jadwal Kuliah</Text>
-            <Text style={styles.emptySubtitle}>
-              Hari {currentDay.dayName} ini tidak ada kelas perkuliahan aktif.
-            </Text>
-          </View>
-        ) : (
-          currentDay.items.map((item) => (
-            <ScheduleTimelineCard key={item.id} item={item} />
-          ))
-        )}
-      </ScrollView>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.timelineContent}
+          showsVerticalScrollIndicator={true}
+        >
+          {currentDay.items.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="calendar-outline" size={54} color="rgba(255,255,255,0.2)" />
+              <Text style={styles.emptyTitle}>Tidak Ada Jadwal Kuliah</Text>
+              <Text style={styles.emptySubtitle}>
+                Hari {currentDay.dayName} ini tidak ada kelas perkuliahan aktif.
+              </Text>
+            </View>
+          ) : (
+            currentDay.items.map((item) => (
+              <ScheduleTimelineCard key={item.id} item={item} />
+            ))
+          )}
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };
@@ -178,12 +201,25 @@ export const ScheduleScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    height: '100%',
     backgroundColor: '#191A1E',
+  },
+  responsiveContainer: {
+    flex: 1,
+    height: '100%',
+    width: '100%',
+    maxWidth: 960,
+    alignSelf: 'center',
+  },
+  scrollView: {
+    flex: 1,
+    height: '100%',
   },
   timelineContent: {
     paddingHorizontal: 16,
-    paddingTop: 24,
-    paddingBottom: 40,
+    paddingTop: 20,
+    paddingBottom: 110,
+    flexGrow: 1,
   },
   emptyState: {
     alignItems: 'center',
