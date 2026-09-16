@@ -16,7 +16,7 @@ import { SearchBarWidget } from '../components/common/SearchBarWidget';
 import { CategoryTabs } from '../components/common/CategoryTabs';
 import { UmkmDetailModal } from '../components/common/UmkmDetailModal';
 import { UmkmModel } from '../models/umkm';
-import { UMKM_LIST } from '../data/mockData';
+import { umkmService } from '../services/umkmService';
 
 interface UmkmScreenProps {
   navigation?: any;
@@ -29,6 +29,15 @@ export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
   const [selectedUmkm, setSelectedUmkm] = useState<UmkmModel | null>(null);
+  const [umkmList, setUmkmList] = useState<UmkmModel[]>(umkmService.getUmkmList());
+
+  React.useEffect(() => {
+    umkmService.fetchUmkmList().then(setUmkmList).catch(() => {});
+    const unsub = umkmService.subscribe(() => {
+      setUmkmList(umkmService.getUmkmList());
+    });
+    return () => unsub();
+  }, []);
 
   const categories = ['Semua', 'F&B', 'Laundry', 'Homestay', 'Fotocopy', 'Holiday'];
 
@@ -38,14 +47,14 @@ export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
     return '50%';
   };
 
-  const filteredUmkm = UMKM_LIST.filter((item) => {
+  const filteredUmkm = umkmList.filter((item) => {
     const matchesCategory =
       selectedCategory === 'Semua' ||
       item.category.toLowerCase() === selectedCategory.toLowerCase();
     const matchesSearch =
       searchQuery.trim() === '' ||
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.bannerText.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.bannerText && item.bannerText.toLowerCase().includes(searchQuery.toLowerCase())) ||
       item.category.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });

@@ -25,7 +25,9 @@ import { scheduleService } from '../services/scheduleService';
 import { TransactionType } from '../models/transaction';
 import { UmkmModel } from '../models/umkm';
 import { ScheduleItem } from '../models/schedule';
-import { UMKM_LIST } from '../data/mockData';
+import { umkmService } from '../services/umkmService';
+import { useAuth } from '../context/AuthContext';
+import { Alert } from 'react-native';
 
 interface HomeScreenProps {
   navigation?: any;
@@ -36,6 +38,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const topPadding = Platform.OS === 'android' ? Math.max(insets.top, 38) : Math.max(insets.top, 12);
   const isTablet = width >= 720;
+  const { user, logout } = useAuth();
 
   const [balance, setBalance] = useState<number>(walletService.getBalance());
   const [monthlySpent, setMonthlySpent] = useState<number>(walletService.getCurrentMonthSpent());
@@ -43,6 +46,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [firstLesson, setFirstLesson] = useState<ScheduleItem | null>(scheduleService.getFirstLesson());
   const [selectedCategory, setSelectedCategory] = useState<string>('F&B');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [umkmList, setUmkmList] = useState<UmkmModel[]>(umkmService.getUmkmList());
   
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [modalType, setModalType] = useState<TransactionType>('income');
@@ -50,6 +54,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [selectedUmkm, setSelectedUmkm] = useState<UmkmModel | null>(null);
 
   useEffect(() => {
+    if (user?.id) {
+      walletService.setUserId(user.id);
+      scheduleService.setUserId(user.id);
+    }
+
+    umkmService.fetchUmkmList().then(setUmkmList).catch(() => {});
+    const unsubUmkm = umkmService.subscribe(() => {
+      setUmkmList(umkmService.getUmkmList());
+    });
+
     const unsubWallet = walletService.subscribe(() => {
       setBalance(walletService.getBalance());
       setMonthlySpent(walletService.getCurrentMonthSpent());
@@ -61,10 +75,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     });
 
     return () => {
+      unsubUmkm();
       unsubWallet();
       unsubSchedule();
     };
-  }, []);
+  }, [user?.id]);
 
   const categories = ['Semua', 'F&B', 'Laundry', 'Homestay', 'Fotocopy', 'Holiday'];
 
@@ -85,7 +100,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     },
   ];
 
-  const filteredUmkm = UMKM_LIST.filter((item) => {
+  const filteredUmkm = umkmList.filter((item) => {
     const matchesCategory =
       selectedCategory === 'Semua' ||
       item.category.toLowerCase() === selectedCategory.toLowerCase();
@@ -101,6 +116,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     setModalVisible(true);
   };
 
+  const handleProfilePress = () => {
+    Alert.alert(
+      'Profil Mahasiswa',
+      `Nama: ${user?.fullName || 'Mahasiswa'}\nEmail: ${user?.email || '-'}\nRole: ${user?.role === 'admin' ? 'Administrator' : 'Mahasiswa Aktif'}`,
+      [
+        { text: 'Tutup', style: 'cancel' },
+        {
+          text: 'Keluar (Logout)',
+          style: 'destructive',
+          onPress: logout,
+        },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -110,10 +140,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       >
         <View style={[styles.responsiveContainer, { paddingTop: topPadding }]}>
           <HeaderWidget
-            userName="Salman"
+            userName={user?.fullName ? user.fullName.split(' ')[0] : 'Mahasiswa'}
             hasUnread={true}
             onNotificationPress={() => setNotificationModalVisible(true)}
-            onProfilePress={() => {}}
+            onProfilePress={handleProfilePress}
           />
 
           {/* Responsive Dashboard: Side-by-side on tablet/desktop, stacked on mobile */}

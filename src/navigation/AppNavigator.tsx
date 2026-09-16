@@ -1,25 +1,99 @@
-﻿import React from 'react';
-import { StyleSheet, Platform } from 'react-native';
+import React from 'react';
+import { StyleSheet, Platform, View, ActivityIndicator } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
+import { useAuth } from '../context/AuthContext';
+import { AuthScreen } from '../screens/AuthScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { ScheduleScreen } from '../screens/ScheduleScreen';
 import { FinanceScreen } from '../screens/FinanceScreen';
 import { UmkmScreen } from '../screens/UmkmScreen';
+import { AdminDashboardScreen } from '../screens/admin/AdminDashboardScreen';
+import { AdminUmkmScreen } from '../screens/admin/AdminUmkmScreen';
+import { AdminUsersScreen } from '../screens/admin/AdminUsersScreen';
 
-export type RootTabParamList = {
+export type StudentTabParamList = {
   Home: undefined;
   Schedule: undefined;
   Finance: undefined;
   Umkm: undefined;
 };
 
-const Tab = createBottomTabNavigator<RootTabParamList>();
+export type AdminTabParamList = {
+  AdminDashboard: undefined;
+  AdminUmkm: undefined;
+  AdminUsers: undefined;
+};
+
+const StudentTab = createBottomTabNavigator<StudentTabParamList>();
+const AdminTab = createBottomTabNavigator<AdminTabParamList>();
 
 export const AppNavigator: React.FC = () => {
+  const { user, role, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.accentYellow} />
+      </View>
+    );
+  }
+
+  // If unauthenticated, show AuthScreen (Login / Register student)
+  if (!user) {
+    return <AuthScreen />;
+  }
+
+  // If Admin: render Admin specific tabs.
+  // Note: Jadwal and Keuangan are completely blocked and hidden from Admin navigation!
+  if (role === 'admin') {
+    return (
+      <AdminTab.Navigator
+        initialRouteName="AdminDashboard"
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          tabBarActiveTintColor: Colors.accentYellow,
+          tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.5)',
+          tabBarStyle: styles.tabBar,
+          tabBarLabelStyle: styles.tabBarLabel,
+          tabBarIcon: ({ focused, color, size }) => {
+            let iconName: keyof typeof Ionicons.glyphMap = 'speedometer';
+
+            if (route.name === 'AdminDashboard') {
+              iconName = focused ? 'speedometer' : 'speedometer-outline';
+            } else if (route.name === 'AdminUmkm') {
+              iconName = focused ? 'storefront' : 'storefront-outline';
+            } else if (route.name === 'AdminUsers') {
+              iconName = focused ? 'people' : 'people-outline';
+            }
+
+            return <Ionicons name={iconName} size={22} color={color} />;
+          },
+        })}
+      >
+        <AdminTab.Screen
+          name="AdminDashboard"
+          component={AdminDashboardScreen}
+          options={{ tabBarLabel: 'Dashboard' }}
+        />
+        <AdminTab.Screen
+          name="AdminUmkm"
+          component={AdminUmkmScreen}
+          options={{ tabBarLabel: 'Kelola UMKM' }}
+        />
+        <AdminTab.Screen
+          name="AdminUsers"
+          component={AdminUsersScreen}
+          options={{ tabBarLabel: 'Kelola User' }}
+        />
+      </AdminTab.Navigator>
+    );
+  }
+
+  // Student (User) Navigation: Full access to Home, Schedule, Finance, UMKM
   return (
-    <Tab.Navigator
+    <StudentTab.Navigator
       initialRouteName="Home"
       screenOptions={({ route }) => ({
         headerShown: false,
@@ -44,31 +118,37 @@ export const AppNavigator: React.FC = () => {
         },
       })}
     >
-      <Tab.Screen
+      <StudentTab.Screen
         name="Home"
         component={HomeScreen}
         options={{ tabBarLabel: 'Beranda' }}
       />
-      <Tab.Screen
+      <StudentTab.Screen
         name="Schedule"
         component={ScheduleScreen}
         options={{ tabBarLabel: 'Jadwal' }}
       />
-      <Tab.Screen
+      <StudentTab.Screen
         name="Finance"
         component={FinanceScreen}
         options={{ tabBarLabel: 'Keuangan' }}
       />
-      <Tab.Screen
+      <StudentTab.Screen
         name="Umkm"
         component={UmkmScreen}
         options={{ tabBarLabel: 'UMKM' }}
       />
-    </Tab.Navigator>
+    </StudentTab.Navigator>
   );
 };
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#070A13',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   tabBar: {
     backgroundColor: '#0A0F1D',
     borderTopColor: '#1A2338',

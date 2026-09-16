@@ -134,6 +134,16 @@ class WalletService {
     }
     this.notify();
   }
+
+  private currentUserId: string | null = null;
+
+  public setUserId(userId: string | null): void {
+    this.currentUserId = userId;
+  }
+
+  public getUserId(): string | null {
+    return this.currentUserId;
+  }
 }
 
 export const walletService = WalletService.getInstance();

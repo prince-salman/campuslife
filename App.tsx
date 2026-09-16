@@ -7,6 +7,8 @@ import { AppNavigator } from './src/navigation/AppNavigator';
 import { Colors } from './src/constants/colors';
 import { notificationService } from './src/services/notificationService';
 
+import { AuthProvider } from './src/context/AuthContext';
+
 export default function App() {
   useEffect(() => {
     // Inisialisasi izin notifikasi multiplatform dan kirim notifikasi selamat datang ke notification center
@@ -27,12 +29,14 @@ export default function App() {
 
   return (
     <SafeAreaProvider style={styles.provider}>
-      <View style={styles.root}>
-        <StatusBar style="light" backgroundColor={Colors.background} />
-        <NavigationContainer>
-          <AppNavigator />
-        </NavigationContainer>
-      </View>
+      <AuthProvider>
+        <View style={styles.root}>
+          <StatusBar style="light" backgroundColor={Colors.background} />
+          <NavigationContainer>
+            <AppNavigator />
+          </NavigationContainer>
+        </View>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }

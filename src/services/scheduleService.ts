@@ -320,6 +320,16 @@ class ScheduleService {
     }
     return deleted;
   }
+
+  private currentUserId: string | null = null;
+
+  public setUserId(userId: string | null): void {
+    this.currentUserId = userId;
+  }
+
+  public getUserId(): string | null {
+    return this.currentUserId;
+  }
 }
 
 export const scheduleService = ScheduleService.getInstance();
