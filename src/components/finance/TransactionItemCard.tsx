@@ -13,7 +13,7 @@ export const TransactionItemCard: React.FC<TransactionItemCardProps> = ({
   transaction,
   onPress,
 }) => {
-  const getIconName = (name: string): any => {
+  const getIconName = (name?: string): any => {
     switch (name) {
       case 'restaurant':
         return 'restaurant';
@@ -40,7 +40,7 @@ export const TransactionItemCard: React.FC<TransactionItemCardProps> = ({
     <Pressable onPress={onPress} style={styles.card}>
       <View style={styles.iconBox}>
         <Ionicons
-          name={getIconName(transaction.iconName)}
+          name={getIconName(transaction.iconName || transaction.icon)}
           size={22}
           color="#7FA2E8"
         />

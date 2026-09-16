@@ -1,12 +1,20 @@
-﻿import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { Colors } from './src/constants/colors';
+import { notificationService } from './src/services/notificationService';
 
 export default function App() {
+  useEffect(() => {
+    // Automatically initialize notification channel and permissions on startup
+    notificationService.init().catch((err) => {
+      console.warn('Notification init error on startup:', err);
+    });
+  }, []);
+
   return (
     <SafeAreaProvider style={styles.provider}>
       <View style={styles.root}>

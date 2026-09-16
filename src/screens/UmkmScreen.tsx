@@ -14,113 +14,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../constants/colors';
 import { SearchBarWidget } from '../components/common/SearchBarWidget';
 import { CategoryTabs } from '../components/common/CategoryTabs';
+import { UmkmDetailModal } from '../components/common/UmkmDetailModal';
 import { UmkmModel } from '../models/umkm';
+import { UMKM_LIST } from '../data/mockData';
 
 interface UmkmScreenProps {
   navigation?: any;
 }
-
-const ALL_UMKM: UmkmModel[] = [
-  {
-    id: '1',
-    name: 'Kokoes Bites',
-    category: 'F&B',
-    priceTag: '15K',
-    rating: 5.0,
-    bannerText: 'Kokoes Dessert',
-    cardColorHex: '#2C2D30',
-  },
-  {
-    id: '2',
-    name: 'Bakso Sapi Enak',
-    category: 'F&B',
-    priceTag: '10K',
-    rating: 4.8,
-    bannerText: 'BAKSO FAVORIT',
-    cardColorHex: '#8B2500',
-  },
-  {
-    id: '3',
-    name: 'Ayam Geprek Kampus',
-    category: 'F&B',
-    priceTag: '12K',
-    rating: 4.9,
-    bannerText: 'AYAM GEPREK',
-    cardColorHex: '#8B1A1A',
-  },
-  {
-    id: '4',
-    name: 'Paket Hemat Makan',
-    category: 'F&B',
-    priceTag: '50%',
-    rating: 4.7,
-    bannerText: 'MAKAN HEMAT',
-    cardColorHex: '#9E2A2B',
-  },
-  {
-    id: '5',
-    name: 'Dimsum Mentai',
-    category: 'F&B',
-    priceTag: '18K',
-    rating: 4.9,
-    bannerText: 'DIMSUM MENTAI',
-    cardColorHex: '#3D2314',
-  },
-  {
-    id: '6',
-    name: 'Dapur Sambal Bakar',
-    category: 'F&B',
-    priceTag: '15K',
-    rating: 4.8,
-    bannerText: 'SAMBAL BAKAR',
-    cardColorHex: '#5C1D1D',
-  },
-  {
-    id: '7',
-    name: 'Laundry Kilat 3 Jam',
-    category: 'Laundry',
-    priceTag: '6K/kg',
-    rating: 4.9,
-    bannerText: 'CUCI SETRIKA',
-    cardColorHex: '#1B3B6F',
-  },
-  {
-    id: '8',
-    name: 'Clean & Fresh Laundry',
-    category: 'Laundry',
-    priceTag: '7K/kg',
-    rating: 4.8,
-    bannerText: 'EXPRESS SERVICE',
-    cardColorHex: '#21295C',
-  },
-  {
-    id: '9',
-    name: 'Kost & Homestay Asri',
-    category: 'Homestay',
-    priceTag: '850K',
-    rating: 4.9,
-    bannerText: 'KAMAR BERSIH AC',
-    cardColorHex: '#1D4E3E',
-  },
-  {
-    id: '10',
-    name: 'Print & Copy Sentosa',
-    category: 'Fotocopy',
-    priceTag: '250/lbr',
-    rating: 4.8,
-    bannerText: 'PRINT SKRIPSI',
-    cardColorHex: '#3C4048',
-  },
-  {
-    id: '11',
-    name: 'Campus Tour & Travel',
-    category: 'Holiday',
-    priceTag: '150K',
-    rating: 4.9,
-    bannerText: 'TRIP AKHIR PEKAN',
-    cardColorHex: '#4A306D',
-  },
-];
 
 export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
   const { width } = useWindowDimensions();
@@ -128,6 +28,7 @@ export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
   const topPadding = Platform.OS === 'android' ? Math.max(insets.top, 38) : Math.max(insets.top, 12);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
+  const [selectedUmkm, setSelectedUmkm] = useState<UmkmModel | null>(null);
 
   const categories = ['Semua', 'F&B', 'Laundry', 'Homestay', 'Fotocopy', 'Holiday'];
 
@@ -137,7 +38,7 @@ export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
     return '50%';
   };
 
-  const filteredUmkm = ALL_UMKM.filter((item) => {
+  const filteredUmkm = UMKM_LIST.filter((item) => {
     const matchesCategory =
       selectedCategory === 'Semua' ||
       item.category.toLowerCase() === selectedCategory.toLowerCase();
@@ -249,6 +150,7 @@ export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
                         { backgroundColor: item.cardColorHex || '#2C2D30' },
                       ]}
                       activeOpacity={0.85}
+                      onPress={() => setSelectedUmkm(item)}
                     >
                       <View style={styles.cardTopRow}>
                         <View style={styles.categoryPill}>
@@ -286,6 +188,12 @@ export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
+
+      <UmkmDetailModal
+        visible={!!selectedUmkm}
+        item={selectedUmkm}
+        onClose={() => setSelectedUmkm(null)}
+      />
     </SafeAreaView>
   );
 };

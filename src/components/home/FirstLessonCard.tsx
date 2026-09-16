@@ -14,7 +14,7 @@ export const FirstLessonCard: React.FC<FirstLessonCardProps> = ({
   onPressDetail,
 }) => {
   return (
-    <View style={styles.card}>
+    <Pressable onPress={onPressDetail} style={styles.card}>
       <View style={styles.headerRow}>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>First Lesson</Text>
@@ -30,12 +30,12 @@ export const FirstLessonCard: React.FC<FirstLessonCardProps> = ({
           <Text style={styles.lecturerText}>{schedule.lecturer}</Text>
         </View>
 
-        <Pressable onPress={onPressDetail} style={styles.detailButton}>
+        <View style={styles.detailButton}>
           <Text style={styles.detailButtonText}>Lihat Detail</Text>
           <Ionicons name="chevron-forward" size={14} color={Colors.yellowAccent} />
-        </Pressable>
+        </View>
       </View>
-    </View>
+    </Pressable>
   );
 };
 

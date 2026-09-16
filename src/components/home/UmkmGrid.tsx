@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
 import { Colors } from '../../constants/colors';
 import { UmkmModel } from '../../models/umkm';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,13 +10,24 @@ interface UmkmGridProps {
 }
 
 export const UmkmGrid: React.FC<UmkmGridProps> = ({ items, onItemPress }) => {
+  const { width } = useWindowDimensions();
+
+  const getResponsiveCardWidth = () => {
+    if (width >= 960) return '18.4%'; // 5 columns on wide desktop
+    if (width >= 640) return '23.4%'; // 4 columns on tablet / medium desktop
+    if (width >= 400) return '31.2%'; // 3 columns on standard mobile
+    return '48%'; // 2 columns on small mobile
+  };
+
+  const cardWidth = getResponsiveCardWidth();
+
   return (
     <View style={styles.grid}>
       {items.map((item) => (
         <Pressable
           key={item.id}
           onPress={() => onItemPress?.(item)}
-          style={[styles.card, { backgroundColor: item.cardColorHex }]}
+          style={[styles.card, { width: cardWidth, backgroundColor: item.cardColorHex }]}
         >
           <View style={styles.badgeRow}>
             <Text style={styles.priceBadge}>{item.priceTag}</Text>
@@ -43,15 +54,14 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
-    justifyContent: 'space-between',
+    gap: 12,
+    justifyContent: 'flex-start',
   },
   card: {
-    width: '31%',
     minWidth: 100,
     borderRadius: 14,
     padding: 10,
-    minHeight: 110,
+    minHeight: 115,
     justifyContent: 'space-between',
   },
   badgeRow: {

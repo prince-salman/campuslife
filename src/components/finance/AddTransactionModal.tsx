@@ -11,6 +11,8 @@ import {
 import { Colors } from '../../constants/colors';
 import { TransactionType } from '../../models/transaction';
 import { walletService } from '../../services/walletService';
+import { notificationService } from '../../services/notificationService';
+import { formatRupiah } from '../../utils/currencyFormatter';
 import { Ionicons } from '@expo/vector-icons';
 
 interface AddTransactionModalProps {
@@ -43,21 +45,41 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   const quickAmounts = [10000, 20000, 50000, 100000];
 
   const handleSave = () => {
-    const numAmount = parseFloat(amount.trim().replace(/\./g, ''));
-    if (!title.trim()) {
+    const sanitizedTitle = title.trim();
+    if (!sanitizedTitle) {
       alert('Silakan masukkan nama transaksi');
       return;
     }
-    if (isNaN(numAmount) || numAmount <= 0) {
-      alert('Silakan masukkan nominal yang valid');
+    if (sanitizedTitle.length > 100) {
+      alert('Nama transaksi maksimal 100 karakter');
+      return;
+    }
+
+    const cleanAmount = amount.replace(/[^\d]/g, '');
+    const numAmount = parseInt(cleanAmount, 10);
+    if (!numAmount || isNaN(numAmount) || numAmount <= 0 || !Number.isFinite(numAmount)) {
+      alert('Silakan masukkan nominal yang valid (lebih dari 0)');
+      return;
+    }
+    if (numAmount > 1000000000) {
+      alert('Nominal maksimal Rp 1.000.000.000');
       return;
     }
 
     walletService.addTransaction({
-      title: title.trim(),
+      title: sanitizedTitle,
       amount: numAmount,
       type,
       iconName: selectedIcon,
+    });
+
+    // Send notification to device Notification Center
+    notificationService.sendTransactionAlert(
+      sanitizedTitle,
+      formatRupiah(numAmount),
+      type === 'income' ? 'income' : 'expense'
+    ).catch((err) => {
+      console.warn('Failed to send transaction notification:', err);
     });
 
     setTitle('');
@@ -159,7 +181,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               placeholderTextColor={Colors.textMuted}
               keyboardType="numeric"
               value={amount}
-              onChangeText={setAmount}
+              onChangeText={(text) => setAmount(text.replace(/[^\d]/g, ''))}
             />
 
             {/* Quick Amount Chips */}
@@ -168,7 +190,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 <Pressable
                   key={amt}
                   onPress={() => {
-                    const current = parseInt(amount || '0', 10) || 0;
+                    const current = parseInt(amount.replace(/[^\d]/g, '') || '0', 10) || 0;
                     setAmount((current + amt).toString());
                   }}
                   style={styles.chip}
@@ -196,8 +218,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'flex-end',
+    alignItems: 'center',
   },
   sheet: {
+    width: '100%',
+    maxWidth: 520,
     backgroundColor: '#131A33',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,

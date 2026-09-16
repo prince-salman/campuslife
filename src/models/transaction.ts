@@ -6,6 +6,7 @@ export interface TransactionModel {
   dateText: string;
   amount: number;
   type: TransactionType;
-  iconName: string;
+  iconName?: string;
+  icon?: string;
   month: string;
 }
