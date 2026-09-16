@@ -7,3 +7,10 @@ npm-debug.*
 *.log
 .DS_Store
 Thumbs.db
+
+# Android build outputs and caches
+android/.gradle/
+android/app/build/
+android/build/
+android/.cxx/
+android/local.properties
