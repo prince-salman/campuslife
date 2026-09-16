@@ -1,0 +1,28 @@
+﻿{
+  "expo": {
+    "name": "CampusLife",
+    "slug": "campus-life",
+    "version": "1.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#080D1A"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.campuslife.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#080D1A"
+      },
+      "package": "com.campuslife.app"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
