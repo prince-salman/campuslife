@@ -21,8 +21,10 @@ import { AddTransactionModal } from '../components/finance/AddTransactionModal';
 import { NotificationModal } from '../components/common/NotificationModal';
 import { UmkmDetailModal } from '../components/common/UmkmDetailModal';
 import { walletService } from '../services/walletService';
+import { scheduleService } from '../services/scheduleService';
 import { TransactionType } from '../models/transaction';
 import { UmkmModel } from '../models/umkm';
+import { ScheduleItem } from '../models/schedule';
 import { UMKM_LIST } from '../data/mockData';
 
 interface HomeScreenProps {
@@ -38,6 +40,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [balance, setBalance] = useState<number>(walletService.getBalance());
   const [monthlySpent, setMonthlySpent] = useState<number>(walletService.getCurrentMonthSpent());
   const [currentMonth, setCurrentMonth] = useState<string>(walletService.getSelectedMonth());
+  const [firstLesson, setFirstLesson] = useState<ScheduleItem | null>(scheduleService.getFirstLesson());
   const [selectedCategory, setSelectedCategory] = useState<string>('F&B');
   const [searchQuery, setSearchQuery] = useState<string>('');
   
@@ -47,12 +50,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [selectedUmkm, setSelectedUmkm] = useState<UmkmModel | null>(null);
 
   useEffect(() => {
-    const unsubscribe = walletService.subscribe(() => {
+    const unsubWallet = walletService.subscribe(() => {
       setBalance(walletService.getBalance());
       setMonthlySpent(walletService.getCurrentMonthSpent());
       setCurrentMonth(walletService.getSelectedMonth());
     });
-    return unsubscribe;
+
+    const unsubSchedule = scheduleService.subscribe(() => {
+      setFirstLesson(scheduleService.getFirstLesson());
+    });
+
+    return () => {
+      unsubWallet();
+      unsubSchedule();
+    };
   }, []);
 
   const categories = ['Semua', 'F&B', 'Laundry', 'Homestay', 'Fotocopy', 'Holiday'];
@@ -109,18 +120,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           <View style={isTablet ? styles.desktopRow : styles.mobileCol}>
             <View style={isTablet ? styles.desktopCol : styles.sectionSpacer}>
               <FirstLessonCard
-                schedule={{
-                  id: '1',
-                  title: 'Informatics',
-                  time: '08',
-                  timePeriod: 'am',
-                  timeRange: '08:00 WIB - 10:00 WIB',
-                  lecturer: 'Mr. John Liebert',
-                  room: 'B103',
-                  duration: '2 Hours',
-                  headerColor: Colors.cardHeaderTeal,
-                  cardColor: Colors.cardBodyTeal,
-                }}
+                schedule={firstLesson}
                 onPressDetail={() => navigation?.navigate?.('Schedule')}
               />
             </View>

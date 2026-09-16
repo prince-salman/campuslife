@@ -6,7 +6,7 @@ import { ScheduleItem } from '../../models/schedule';
 import { notificationService } from '../../services/notificationService';
 
 interface FirstLessonCardProps {
-  schedule: ScheduleItem;
+  schedule?: ScheduleItem | null;
   onPressDetail?: () => void;
 }
 
@@ -17,9 +17,44 @@ export const FirstLessonCard: React.FC<FirstLessonCardProps> = ({
   const [reminded, setReminded] = useState(false);
 
   const handleReminder = async () => {
+    if (!schedule) return;
     setReminded(true);
-    await notificationService.sendClassReminder(schedule.title, schedule.room || 'B103', '08:00 WIB');
+    await notificationService.sendClassReminder(
+      schedule.title,
+      schedule.room || 'B103',
+      schedule.time ? `${schedule.time}:00 WIB` : '08:00 WIB'
+    );
   };
+
+  if (!schedule) {
+    return (
+      <Pressable onPress={onPressDetail} style={styles.card}>
+        <View style={styles.headerRow}>
+          <View style={[styles.badge, { backgroundColor: '#334155' }]}>
+            <Text style={styles.badgeText}>Jadwal Kuliah</Text>
+          </View>
+          <Text style={styles.timeRange}>Hari Ini</Text>
+        </View>
+
+        <Text style={styles.title} numberOfLines={1}>Tidak ada kelas hari ini</Text>
+        <Text style={styles.emptySubtitle}>
+          Semua agenda selesai atau belum ada jadwal terdaftar.
+        </Text>
+
+        <View style={styles.footerRow}>
+          <View style={styles.lecturerInfo}>
+            <Ionicons name="calendar-outline" size={14} color={Colors.textSecondary} />
+            <Text style={styles.lecturerText}>Kalender Akademik</Text>
+          </View>
+
+          <Pressable onPress={onPressDetail} style={styles.detailButton}>
+            <Text style={styles.detailButtonText}>Atur Jadwal</Text>
+            <Ionicons name="chevron-forward" size={14} color={Colors.yellowAccent} />
+          </Pressable>
+        </View>
+      </Pressable>
+    );
+  }
 
   return (
     <Pressable onPress={onPressDetail} style={styles.card}>
@@ -27,15 +62,15 @@ export const FirstLessonCard: React.FC<FirstLessonCardProps> = ({
         <View style={styles.badge}>
           <Text style={styles.badgeText}>First Lesson</Text>
         </View>
-        <Text style={styles.timeRange}>{schedule.timeRange || '08:00 WIB - 10:00 WIB'}</Text>
+        <Text style={styles.timeRange}>{schedule.timeRange || `${schedule.time}:00 WIB`}</Text>
       </View>
 
-      <Text style={styles.title}>{schedule.title}</Text>
+      <Text style={styles.title} numberOfLines={1}>{schedule.title}</Text>
 
       <View style={styles.footerRow}>
         <View style={styles.lecturerInfo}>
           <Ionicons name="person-outline" size={14} color={Colors.textSecondary} />
-          <Text style={styles.lecturerText}>{schedule.lecturer}</Text>
+          <Text style={styles.lecturerText} numberOfLines={1}>{schedule.lecturer}</Text>
         </View>
 
         <View style={styles.rightActions}>
@@ -98,7 +133,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: Colors.textWhite,
     letterSpacing: -0.4,
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.6)',
     marginBottom: 14,
+    lineHeight: 16,
   },
   footerRow: {
     flexDirection: 'row',
@@ -112,6 +153,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    flex: 1,
+    marginRight: 8,
   },
   lecturerText: {
     color: Colors.textSecondary,

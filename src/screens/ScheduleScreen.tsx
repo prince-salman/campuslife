@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   SafeAreaView,
+  Pressable,
   useWindowDimensions,
   Platform,
 } from 'react-native';
@@ -12,160 +13,98 @@ import { Colors } from '../constants/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScheduleCalendarHeader } from '../components/schedule/ScheduleCalendarHeader';
 import { ScheduleTimelineCard } from '../components/schedule/ScheduleTimelineCard';
-import { DaySchedule } from '../models/schedule';
+import { MonthPickerModal } from '../components/schedule/MonthPickerModal';
+import {
+  AddEditScheduleModal,
+  ScheduleFormData,
+} from '../components/schedule/AddEditScheduleModal';
+import { scheduleService } from '../services/scheduleService';
+import { DaySchedule, ScheduleItem } from '../models/schedule';
 import { Ionicons } from '@expo/vector-icons';
 
 export const ScheduleScreen: React.FC = () => {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const topPadding = Platform.OS === 'android' ? Math.max(insets.top, 38) : Math.max(insets.top, 12);
-  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(3); // Thu 14 default
-  const [monthYear] = useState<string>('June, 2026');
 
-  const weekSchedule: DaySchedule[] = [
-    {
-      dayName: 'Mon',
-      dayNumber: '11',
-      items: [
-        {
-          id: 'mon_1',
-          time: '08',
-          timePeriod: 'am',
-          title: 'Algorithms & Data Structures',
-          room: 'B101',
-          lecturer: 'Dr. Kenzo Tenma',
-          duration: '2.5 Hours',
-          headerColor: '#2E6F79',
-          cardColor: '#55A4B2',
-        },
-        {
-          id: 'mon_2',
-          time: '01',
-          timePeriod: 'pm',
-          title: 'Operating Systems',
-          room: 'Lab 2',
-          lecturer: 'Prof. Wolfgang Grimmer',
-          duration: '2 Hours',
-          headerColor: '#3B3878',
-          cardColor: '#6560B0',
-        },
-      ],
-    },
-    {
-      dayName: 'Tue',
-      dayNumber: '12',
-      items: [
-        {
-          id: 'tue_1',
-          time: '10',
-          timePeriod: 'am',
-          title: 'Database Management',
-          room: 'B204',
-          lecturer: 'Ms. Anna Liebert',
-          duration: '2 Hours',
-          headerColor: '#2E7958',
-          cardColor: '#57B288',
-        },
-      ],
-    },
-    {
-      dayName: 'Wed',
-      dayNumber: '13',
-      items: [
-        {
-          id: 'wed_1',
-          time: '08',
-          timePeriod: 'am',
-          title: 'Software Engineering',
-          room: 'C301',
-          lecturer: 'Dr. Julius Reichwein',
-          duration: '3 Hours',
-          headerColor: '#2E6F79',
-          cardColor: '#55A4B2',
-        },
-      ],
-    },
-    {
-      dayName: 'Thu',
-      dayNumber: '14',
-      items: [
-        {
-          id: 'thu_1',
-          time: '08',
-          timePeriod: 'am',
-          title: 'Informatics',
-          room: 'B103',
-          lecturer: 'Mr. John Liebert',
-          duration: '2 Hours',
-          headerColor: '#2E7979',
-          cardColor: '#5FB8B2',
-        },
-        {
-          id: 'thu_2',
-          time: '11',
-          timePeriod: 'am',
-          title: 'Linear Algebra',
-          room: 'A201',
-          lecturer: 'Dr. Johan',
-          duration: '2 Hours',
-          headerColor: '#274975',
-          cardColor: '#4D7FA9',
-        },
-        {
-          id: 'thu_3',
-          time: '02',
-          timePeriod: 'pm',
-          title: 'Web Development Lab',
-          room: 'Lab 1',
-          lecturer: 'Mr. Salman',
-          duration: '3 Hours',
-          headerColor: '#5A2E79',
-          cardColor: '#8C5FB8',
-        },
-      ],
-    },
-    {
-      dayName: 'Fri',
-      dayNumber: '15',
-      items: [
-        {
-          id: 'fri_1',
-          time: '09',
-          timePeriod: 'am',
-          title: 'Computer Networks',
-          room: 'B102',
-          lecturer: 'Mr. Richard Braun',
-          duration: '2 Hours',
-          headerColor: '#792E4D',
-          cardColor: '#B85F82',
-        },
-      ],
-    },
-    {
-      dayName: 'Sat',
-      dayNumber: '16',
-      items: [
-        {
-          id: 'sat_1',
-          time: '10',
-          timePeriod: 'am',
-          title: 'Public Speaking Seminar',
-          room: 'Auditorium',
-          lecturer: 'Guest Speaker',
-          duration: '3 Hours',
-          headerColor: '#755127',
-          cardColor: '#A87D4C',
-        },
-      ],
-    },
-    {
-      dayName: 'Sun',
-      dayNumber: '17',
-      items: [],
-    },
-  ];
+  const [weekSchedule, setWeekSchedule] = useState<DaySchedule[]>(scheduleService.getWeekSchedule());
+  const [monthYear, setMonthYear] = useState<string>(scheduleService.getSelectedMonthYear());
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(scheduleService.getSelectedDayIndex());
 
-  const currentDay = weekSchedule[selectedDayIndex];
+  const [monthPickerVisible, setMonthPickerVisible] = useState<boolean>(false);
+  const [addEditModalVisible, setAddEditModalVisible] = useState<boolean>(false);
+  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
+  const [editingItem, setEditingItem] = useState<ScheduleItem | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = scheduleService.subscribe(() => {
+      setWeekSchedule(scheduleService.getWeekSchedule());
+      setMonthYear(scheduleService.getSelectedMonthYear());
+      setSelectedDayIndex(scheduleService.getSelectedDayIndex());
+    });
+    return unsubscribe;
+  }, []);
+
+  const handleDaySelect = (index: number) => {
+    scheduleService.setSelectedDayIndex(index);
+  };
+
+  const handleAddNew = () => {
+    setEditingItem(null);
+    setModalMode('add');
+    setAddEditModalVisible(true);
+  };
+
+  const handleEditItem = (item: ScheduleItem) => {
+    setEditingItem(item);
+    setModalMode('edit');
+    setAddEditModalVisible(true);
+  };
+
+  const handleSaveSchedule = (data: ScheduleFormData) => {
+    if (modalMode === 'add') {
+      scheduleService.addScheduleItem({
+        dayIndex: data.dayIndex,
+        title: data.title,
+        lecturer: data.lecturer,
+        room: data.room,
+        time: data.time,
+        timePeriod: data.timePeriod,
+        duration: data.duration,
+        timeRange: data.timeRange,
+        headerColor: data.headerColor,
+        cardColor: data.cardColor,
+      });
+    } else if (modalMode === 'edit' && editingItem) {
+      scheduleService.updateScheduleItem({
+        dayIndex: data.dayIndex,
+        itemId: editingItem.id,
+        title: data.title,
+        lecturer: data.lecturer,
+        room: data.room,
+        time: data.time,
+        timePeriod: data.timePeriod,
+        duration: data.duration,
+        timeRange: data.timeRange,
+        headerColor: data.headerColor,
+        cardColor: data.cardColor,
+      });
+    }
+  };
+
+  const handleDeleteSchedule = (dayIdx: number, itemId: string) => {
+    scheduleService.deleteScheduleItem(dayIdx, itemId);
+  };
+
+  const handleSelectMonthYear = (newMonthYear: string) => {
+    scheduleService.setSelectedMonthYear(newMonthYear);
+  };
+
+  const currentDay = weekSchedule[selectedDayIndex] || {
+    dayName: 'Hari',
+    dayNumber: '01',
+    items: [],
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -174,9 +113,27 @@ export const ScheduleScreen: React.FC = () => {
           currentMonthYear={monthYear}
           days={weekSchedule}
           selectedIndex={selectedDayIndex}
-          onDaySelected={setSelectedDayIndex}
+          onDaySelected={handleDaySelect}
+          onMonthDropdownTap={() => setMonthPickerVisible(true)}
           topPadding={topPadding}
         />
+
+        {/* Action Header Bar */}
+        <View style={styles.actionHeaderBar}>
+          <View style={styles.dayInfoCol}>
+            <Text style={styles.dayInfoTitle}>
+              Jadwal {currentDay.dayName}, {currentDay.dayNumber} {monthYear.split(',')[0]}
+            </Text>
+            <Text style={styles.dayInfoSub}>
+              {currentDay.items.length} mata kuliah terdaftar
+            </Text>
+          </View>
+
+          <Pressable style={styles.addScheduleBtn} onPress={handleAddNew}>
+            <Ionicons name="add" size={16} color="#000000" />
+            <Text style={styles.addScheduleBtnText}>Tambah Jadwal</Text>
+          </Pressable>
+        </View>
 
         <ScrollView
           style={styles.scrollView}
@@ -188,16 +145,43 @@ export const ScheduleScreen: React.FC = () => {
               <Ionicons name="calendar-outline" size={54} color="rgba(255,255,255,0.2)" />
               <Text style={styles.emptyTitle}>Tidak Ada Jadwal Kuliah</Text>
               <Text style={styles.emptySubtitle}>
-                Hari {currentDay.dayName} ini tidak ada kelas perkuliahan aktif.
+                Hari {currentDay.dayName} ini belum ada agenda kuliah aktif.
               </Text>
+              <Pressable style={styles.emptyAddBtn} onPress={handleAddNew}>
+                <Ionicons name="add-circle-outline" size={18} color={Colors.accentYellow} />
+                <Text style={styles.emptyAddBtnText}>Tambah Jadwal Hari Ini</Text>
+              </Pressable>
             </View>
           ) : (
             currentDay.items.map((item) => (
-              <ScheduleTimelineCard key={item.id} item={item} />
+              <ScheduleTimelineCard
+                key={item.id}
+                item={item}
+                onMorePressed={() => handleEditItem(item)}
+              />
             ))
           )}
         </ScrollView>
       </View>
+
+      {/* Month Picker Modal */}
+      <MonthPickerModal
+        visible={monthPickerVisible}
+        currentMonthYear={monthYear}
+        onClose={() => setMonthPickerVisible(false)}
+        onSelect={handleSelectMonthYear}
+      />
+
+      {/* Add / Edit Schedule Modal */}
+      <AddEditScheduleModal
+        visible={addEditModalVisible}
+        mode={modalMode}
+        initialDayIndex={selectedDayIndex}
+        initialItem={editingItem}
+        onClose={() => setAddEditModalVisible(false)}
+        onSave={handleSaveSchedule}
+        onDelete={handleDeleteSchedule}
+      />
     </SafeAreaView>
   );
 };
@@ -215,13 +199,49 @@ const styles = StyleSheet.create({
     maxWidth: 960,
     alignSelf: 'center',
   },
+  actionHeaderBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 4,
+  },
+  dayInfoCol: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  dayInfoTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: Colors.textWhite,
+  },
+  dayInfoSub: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginTop: 2,
+  },
+  addScheduleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.accentYellow,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    gap: 4,
+  },
+  addScheduleBtnText: {
+    color: '#000000',
+    fontSize: 12,
+    fontWeight: '800',
+  },
   scrollView: {
     flex: 1,
     height: '100%',
   },
   timelineContent: {
     paddingHorizontal: 16,
-    paddingTop: 20,
+    paddingTop: 16,
     paddingBottom: 110,
     flexGrow: 1,
   },
@@ -229,17 +249,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 60,
+    gap: 8,
   },
   emptyTitle: {
     fontSize: 18,
     fontWeight: '800',
     color: Colors.textWhite,
-    marginTop: 14,
+    marginTop: 10,
   },
   emptySubtitle: {
     fontSize: 13,
     color: 'rgba(255, 255, 255, 0.6)',
-    marginTop: 6,
     textAlign: 'center',
+    maxWidth: 280,
+  },
+  emptyAddBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.4)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 14,
+    marginTop: 14,
+  },
+  emptyAddBtnText: {
+    color: Colors.accentYellow,
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
