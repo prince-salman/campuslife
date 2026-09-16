@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Colors } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,12 +23,12 @@ export const HeaderWidget: React.FC<HeaderWidgetProps> = ({
           <Text style={styles.avatarText}>{userName.charAt(0)}</Text>
         </Pressable>
         <View style={styles.textContainer}>
-          <Text style={styles.greetingText}>Hi, {userName}</Text>
-          <Text style={styles.subGreeting}>Welcome back to campus</Text>
+          <Text style={styles.greetingText} numberOfLines={1}>Hi, {userName}</Text>
+          <Text style={styles.subGreeting} numberOfLines={1}>Welcome back to campus</Text>
         </View>
       </View>
 
-      <Pressable onPress={onNotificationPress} style={styles.notificationButton}>
+      <Pressable onPress={onNotificationPress} style={styles.notificationButton} hitSlop={8}>
         <Ionicons name="notifications-outline" size={20} color={Colors.textWhite} />
         {hasUnread && <View style={styles.badgeDot} />}
       </Pressable>
@@ -41,16 +41,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 10,
+    width: '100%',
   },
   leftRow: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    marginRight: 12,
   },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: Colors.badgeRed,
     justifyContent: 'center',
     alignItems: 'center',
@@ -63,10 +66,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   textContainer: {
+    flex: 1,
     marginLeft: 12,
   },
   greetingText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
     color: Colors.textWhite,
     letterSpacing: -0.3,

@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { Colors } from '../constants/colors';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScheduleCalendarHeader } from '../components/schedule/ScheduleCalendarHeader';
 import { ScheduleTimelineCard } from '../components/schedule/ScheduleTimelineCard';
 import { DaySchedule } from '../models/schedule';
@@ -16,6 +17,8 @@ import { Ionicons } from '@expo/vector-icons';
 
 export const ScheduleScreen: React.FC = () => {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const topPadding = Platform.OS === 'android' ? Math.max(insets.top, 38) : Math.max(insets.top, 12);
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(3); // Thu 14 default
   const [monthYear] = useState<string>('June, 2026');
 
@@ -172,6 +175,7 @@ export const ScheduleScreen: React.FC = () => {
           days={weekSchedule}
           selectedIndex={selectedDayIndex}
           onDaySelected={setSelectedDayIndex}
+          topPadding={topPadding}
         />
 
         <ScrollView

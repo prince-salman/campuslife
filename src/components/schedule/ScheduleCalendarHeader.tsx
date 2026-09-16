@@ -10,6 +10,7 @@ interface ScheduleCalendarHeaderProps {
   selectedIndex: number;
   onDaySelected: (index: number) => void;
   onMonthDropdownTap?: () => void;
+  topPadding?: number;
 }
 
 export const ScheduleCalendarHeader: React.FC<ScheduleCalendarHeaderProps> = ({
@@ -18,9 +19,10 @@ export const ScheduleCalendarHeader: React.FC<ScheduleCalendarHeaderProps> = ({
   selectedIndex,
   onDaySelected,
   onMonthDropdownTap,
+  topPadding,
 }) => {
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, topPadding ? { paddingTop: topPadding } : null]}>
       <Pressable onPress={onMonthDropdownTap} style={styles.monthRow}>
         <Text style={styles.monthText}>{currentMonthYear}</Text>
         <Ionicons name="chevron-down" size={20} color={Colors.textWhite} style={styles.monthIcon} />

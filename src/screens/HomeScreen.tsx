@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../constants/colors';
 import { HeaderWidget } from '../components/common/HeaderWidget';
 import { FirstLessonCard } from '../components/home/FirstLessonCard';
@@ -28,6 +29,8 @@ interface HomeScreenProps {
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const topPadding = Platform.OS === 'android' ? Math.max(insets.top, 38) : Math.max(insets.top, 12);
   const isTablet = width >= 720;
 
   const [balance, setBalance] = useState<number>(walletService.getBalance());
@@ -167,7 +170,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={true}
       >
-        <View style={styles.responsiveContainer}>
+        <View style={[styles.responsiveContainer, { paddingTop: topPadding }]}>
           <HeaderWidget
             userName="Salman"
             hasUnread={true}

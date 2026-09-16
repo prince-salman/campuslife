@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../constants/colors';
 import { SearchBarWidget } from '../components/common/SearchBarWidget';
 import { CategoryTabs } from '../components/common/CategoryTabs';
@@ -123,6 +124,8 @@ const ALL_UMKM: UmkmModel[] = [
 
 export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const topPadding = Platform.OS === 'android' ? Math.max(insets.top, 38) : Math.max(insets.top, 12);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
 
@@ -155,7 +158,7 @@ export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
       >
         <View style={styles.responsiveContainer}>
           {/* Top Header */}
-          <View style={styles.topHeader}>
+          <View style={[styles.topHeader, { paddingTop: topPadding }]}>
             <View style={styles.appIconBox}>
               <Ionicons name="school" size={20} color={Colors.primary} />
             </View>
@@ -164,16 +167,20 @@ export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
               <TouchableOpacity
                 onPress={() => navigation?.navigate('Schedule')}
                 activeOpacity={0.7}
+                style={styles.pillItem}
               >
-                <Text style={styles.inactiveTabLabel}>Schedule</Text>
+                <Text style={styles.inactiveTabLabel}>Jadwal</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => navigation?.navigate('Finance')}
                 activeOpacity={0.7}
+                style={styles.pillItem}
               >
-                <Text style={styles.inactiveTabLabel}>Money_Management</Text>
+                <Text style={styles.inactiveTabLabel}>Keuangan</Text>
               </TouchableOpacity>
-              <Text style={styles.activeTabLabel}>UMKM</Text>
+              <View style={styles.pillItemActive}>
+                <Text style={styles.activeTabLabel}>UMKM</Text>
+              </View>
             </View>
 
             <View style={styles.avatarBorder}>
@@ -308,7 +315,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'web' ? 16 : 10,
     paddingBottom: 12,
   },
   appIconBox: {
@@ -322,12 +328,27 @@ const styles = StyleSheet.create({
   screenPillRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    backgroundColor: '#0F1829',
+    borderRadius: 18,
+    padding: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  pillItem: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+  },
+  pillItemActive: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
   },
   inactiveTabLabel: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.6)',
-    fontWeight: '500',
+    color: 'rgba(255,255,255,0.65)',
+    fontWeight: '600',
   },
   activeTabLabel: {
     fontSize: 12,
