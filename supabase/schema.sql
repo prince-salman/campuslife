@@ -3,7 +3,7 @@
 -- Project URL: https://nepsoinveldfsncrgdvn.supabase.co
 -- ==============================================================================
 
--- 1. Enable pgcrypto for password hashing in admin RPC if needed
+-- 1. EXTENSIONS
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- 2. PROFILES TABLE (User Accounts & Roles)
@@ -82,15 +82,13 @@ RETURNS TRIGGER AS $$
 DECLARE
     assigned_role TEXT := 'user';
 BEGIN
-    -- Validasi: User biasa wajib menggunakan email @student.president.ac.id
-    -- Pengecualian hanya untuk email admin tertentu yang telah disetujui (admin@...)
-    IF NEW.email NOT LIKE '%@student.president.ac.id' AND NEW.email NOT LIKE 'admin@%' THEN
+    -- Validasi: User mahasiswa wajib menggunakan email @student.president.ac.id
+    IF NEW.email IS NOT NULL AND NEW.email NOT LIKE '%@student.president.ac.id' AND NEW.email NOT LIKE 'admin@%' THEN
         RAISE EXCEPTION 'Pendaftaran akun mahasiswa wajib menggunakan email resmi President University (@student.president.ac.id)';
     END IF;
 
-    -- Pendaftaran publik selalu mendapatkan role = 'user'
-    -- Admin hanya jika email admin@campuslife.com saat setup awal
-    IF NEW.email = 'admin@campuslife.com' THEN
+    -- Pendaftaran publik selalu mendapatkan role = 'user', kecuali akun admin resmi
+    IF NEW.email = 'admin@campuslife.com' OR NEW.email LIKE 'admin@%' THEN
         assigned_role := 'admin';
     ELSE
         assigned_role := 'user';
@@ -99,15 +97,15 @@ BEGIN
     INSERT INTO public.profiles (id, email, full_name, role)
     VALUES (
         NEW.id,
-        NEW.email,
-        COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
+        COALESCE(NEW.email, ''),
+        COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(COALESCE(NEW.email, 'User'), '@', 1)),
         assigned_role
     )
     ON CONFLICT (id) DO UPDATE
     SET email = EXCLUDED.email,
         full_name = COALESCE(EXCLUDED.full_name, public.profiles.full_name);
 
-    -- Inisialisasi wallet untuk akun mahasiswa
+    -- Inisialisasi dompet mahasiswa
     IF assigned_role = 'user' THEN
         INSERT INTO public.wallets (user_id, balance)
         VALUES (NEW.id, 1000000)
@@ -133,7 +131,7 @@ ALTER TABLE public.schedules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wallets ENABLE ROW LEVEL SECURITY;
 
--- Helper function: cek apakah caller adalah admin
+-- Helper function: cek apakah pemanggil adalah admin
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -156,9 +154,9 @@ CREATE POLICY "Profiles can be updated by self and admin"
     USING (auth.uid() = id OR public.is_admin())
     WITH CHECK (auth.uid() = id OR public.is_admin());
 
--- UMKM POLICIES (Global Shared: Anyone reads, only Admin writes)
-DROP POLICY IF EXISTS "UMKM are readable by all authenticated and anon" ON public.umkm;
-CREATE POLICY "UMKM are readable by all authenticated and anon"
+-- UMKM POLICIES (Global Shared: Dibaca semua orang, hanya admin yang menulis)
+DROP POLICY IF EXISTS "UMKM are readable by all" ON public.umkm;
+CREATE POLICY "UMKM are readable by all"
     ON public.umkm FOR SELECT
     USING (true);
 
@@ -178,21 +176,21 @@ CREATE POLICY "UMKM deletable only by admin"
     ON public.umkm FOR DELETE
     USING (public.is_admin());
 
--- SCHEDULES POLICIES (Strictly per user - Admin has NO access)
+-- SCHEDULES POLICIES (Data Mahasiswa Terisolasi - Admin diblokir)
 DROP POLICY IF EXISTS "Schedules owned by user only" ON public.schedules;
 CREATE POLICY "Schedules owned by user only"
     ON public.schedules FOR ALL
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
--- TRANSACTIONS POLICIES (Strictly per user - Admin has NO access)
+-- TRANSACTIONS POLICIES (Data Keuangan Terisolasi - Admin diblokir)
 DROP POLICY IF EXISTS "Transactions owned by user only" ON public.transactions;
 CREATE POLICY "Transactions owned by user only"
     ON public.transactions FOR ALL
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
--- WALLETS POLICIES (Strictly per user - Admin has NO access)
+-- WALLETS POLICIES (Data Dompet Terisolasi - Admin diblokir)
 DROP POLICY IF EXISTS "Wallets owned by user only" ON public.wallets;
 CREATE POLICY "Wallets owned by user only"
     ON public.wallets FOR ALL
@@ -210,12 +208,10 @@ CREATE OR REPLACE FUNCTION public.admin_reset_user_password(
 )
 RETURNS JSONB AS $$
 BEGIN
-    -- Verifikasi bahwa pemanggil adalah admin
     IF NOT public.is_admin() THEN
         RAISE EXCEPTION 'Akses ditolak: Hanya admin yang dapat mereset password pengguna.';
     END IF;
 
-    -- Update encrypted password di auth.users
     UPDATE auth.users
     SET encrypted_password = crypt(new_password, gen_salt('bf')),
         updated_at = NOW()
@@ -267,7 +263,6 @@ BEGIN
         RAISE EXCEPTION 'Akses ditolak: Hanya admin yang dapat menghapus pengguna.';
     END IF;
 
-    -- Jangan biarkan admin menghapus dirinya sendiri
     IF target_user_id = auth.uid() THEN
         RAISE EXCEPTION 'Admin tidak dapat menghapus akunnya sendiri.';
     END IF;
@@ -282,7 +277,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ==============================================================================
--- 9. INITIAL SEED DATA: UMKM CATALOG
+-- 9. INITIAL SEED DATA: KATALOG UMKM KAMPUS
 -- ==============================================================================
 INSERT INTO public.umkm (id, name, category, price_tag, rating, reviews_count, banner_text, card_color_hex, image_url, phone, address, distance, opening_hours, services)
 VALUES
@@ -404,77 +399,3 @@ VALUES
     ]'::jsonb
 )
 ON CONFLICT (id) DO NOTHING;
-
--- ==============================================================================
--- 10. HELPER FUNCTION: CREATE SEED ADMIN AND STUDENT ACCOUNTS
--- ==============================================================================
-CREATE OR REPLACE FUNCTION public.seed_default_accounts()
-RETURNS TEXT AS $$
-DECLARE
-    admin_id UUID;
-    student_id UUID;
-BEGIN
-    -- 1. Buat akun Admin jika belum ada
-    SELECT id INTO admin_id FROM auth.users WHERE email = 'admin@campuslife.com';
-    IF admin_id IS NULL THEN
-        admin_id := gen_random_uuid();
-        INSERT INTO auth.users (
-            id, instance_id, email, encrypted_password, email_confirmed_at,
-            raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, aud
-        ) VALUES (
-            admin_id,
-            '00000000-0000-0000-0000-000000000000',
-            'admin@campuslife.com',
-            crypt('AdminPassword123!', gen_salt('bf')),
-            NOW(),
-            '{"provider":"email","providers":["email"]}',
-            '{"full_name":"Administrator CampusLife"}',
-            NOW(),
-            NOW(),
-            'authenticated',
-            'authenticated'
-        );
-    END IF;
-
-    -- Pastikan role admin tercatat di profiles
-    INSERT INTO public.profiles (id, email, full_name, role)
-    VALUES (admin_id, 'admin@campuslife.com', 'Administrator CampusLife', 'admin')
-    ON CONFLICT (id) DO UPDATE SET role = 'admin', full_name = 'Administrator CampusLife';
-
-    -- 2. Buat akun Mahasiswa jika belum ada
-    SELECT id INTO student_id FROM auth.users WHERE email = 'mahasiswa@student.president.ac.id';
-    IF student_id IS NULL THEN
-        student_id := gen_random_uuid();
-        INSERT INTO auth.users (
-            id, instance_id, email, encrypted_password, email_confirmed_at,
-            raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, aud
-        ) VALUES (
-            student_id,
-            '00000000-0000-0000-0000-000000000000',
-            'mahasiswa@student.president.ac.id',
-            crypt('StudentPassword123!', gen_salt('bf')),
-            NOW(),
-            '{"provider":"email","providers":["email"]}',
-            '{"full_name":"Derrian Kalalo"}',
-            NOW(),
-            NOW(),
-            'authenticated',
-            'authenticated'
-        );
-    END IF;
-
-    INSERT INTO public.profiles (id, email, full_name, role)
-    VALUES (student_id, 'mahasiswa@student.president.ac.id', 'Derrian Kalalo', 'user')
-    ON CONFLICT (id) DO UPDATE SET role = 'user', full_name = 'Derrian Kalalo';
-
-    -- Inisialisasi dompet mahasiswa jika belum ada
-    INSERT INTO public.wallets (user_id, balance)
-    VALUES (student_id, 1000025)
-    ON CONFLICT (user_id) DO NOTHING;
-
-    RETURN 'Default accounts created: admin@campuslife.com & mahasiswa@student.president.ac.id';
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Jalankan fungsi seed akun bawaan
-SELECT public.seed_default_accounts();
