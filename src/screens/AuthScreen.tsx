@@ -145,6 +145,53 @@ export const AuthScreen: React.FC = () => {
           </View>
         ) : null}
 
+        {/* Helper Card for Ready-to-Test Credentials */}
+        {!isRegisterMode && (
+          <View style={styles.testAccountCard}>
+            <View style={styles.testAccountHeader}>
+              <Ionicons name="key" size={14} color={Colors.accentYellow} />
+              <Text style={styles.testAccountTitle}>Kredensial Akun (Klik untuk Isi Otomatis)</Text>
+            </View>
+            <View style={styles.testAccountChipsRow}>
+              <Pressable
+                style={styles.accountChipAdmin}
+                onPress={() => {
+                  setEmail('admin@campuslife.com');
+                  setPassword('admin123');
+                  setErrorMessage('');
+                }}
+              >
+                <Ionicons name="shield-checkmark" size={16} color="#FACC15" />
+                <View style={{ marginLeft: 8, flex: 1 }}>
+                  <Text style={styles.accountChipRoleAdmin}>👑 Akun Admin (CRUD UMKM)</Text>
+                  <Text style={styles.accountChipEmail}>admin@campuslife.com • sandi: admin123</Text>
+                </View>
+                <View style={styles.fillBadge}>
+                  <Text style={styles.fillBadgeText}>Isi</Text>
+                </View>
+              </Pressable>
+
+              <Pressable
+                style={styles.accountChipStudent}
+                onPress={() => {
+                  setEmail('mahasiswa@student.president.ac.id');
+                  setPassword('student123');
+                  setErrorMessage('');
+                }}
+              >
+                <Ionicons name="school" size={16} color="#60A5FA" />
+                <View style={{ marginLeft: 8, flex: 1 }}>
+                  <Text style={styles.accountChipRoleStudent}>🎓 Akun Mahasiswa (Jadwal & Dompet)</Text>
+                  <Text style={styles.accountChipEmail}>mahasiswa@student... • sandi: student123</Text>
+                </View>
+                <View style={styles.fillBadge}>
+                  <Text style={styles.fillBadgeText}>Isi</Text>
+                </View>
+              </Pressable>
+            </View>
+          </View>
+        )}
+
         {/* Form Inputs */}
         <View style={styles.formCard}>
           {isRegisterMode && (
@@ -401,6 +448,75 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     flex: 1,
     fontWeight: '600',
+  },
+  testAccountCard: {
+    backgroundColor: '#0D1424',
+    borderWidth: 1,
+    borderColor: '#1F2E4D',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 16,
+  },
+  testAccountHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  testAccountTitle: {
+    color: Colors.accentYellow,
+    fontSize: 12,
+    fontWeight: '800',
+    marginLeft: 6,
+    letterSpacing: 0.3,
+  },
+  testAccountChipsRow: {
+    gap: 8,
+  },
+  accountChipAdmin: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(250, 204, 21, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(250, 204, 21, 0.3)',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+  },
+  accountChipRoleAdmin: {
+    color: '#FACC15',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  accountChipStudent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(96, 165, 250, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(96, 165, 250, 0.3)',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+  },
+  accountChipRoleStudent: {
+    color: '#93C5FD',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  accountChipEmail: {
+    color: '#94A3B8',
+    fontSize: 11,
+    marginTop: 2,
+  },
+  fillBadge: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  fillBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
   },
   formCard: {
     backgroundColor: '#0F1626',
