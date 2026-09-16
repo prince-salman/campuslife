@@ -93,4 +93,27 @@ describe('NotificationService Unit Tests', () => {
       })
     );
   });
+
+  test('should schedule upcoming class reminder before class starts', async () => {
+    const res = await notificationService.scheduleUpcomingClassReminder(
+      'Mobile Programming',
+      'B103',
+      '08:00 WIB',
+      15
+    );
+    expect(res.scheduled).toBe(true);
+    expect(res.message).toBeDefined();
+  });
+
+  test('should trigger delayed lockscreen test', async () => {
+    (global as any).window = {
+      electronAPI: {
+        isElectron: true,
+        sendNotification: jest.fn().mockResolvedValue(true),
+      },
+    };
+
+    const res = await notificationService.sendDelayedLockscreenTest(1);
+    expect(res).toBe(true);
+  });
 });

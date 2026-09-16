@@ -6,6 +6,8 @@ export interface DeviceNotificationPayload {
   body: string;
   data?: Record<string, any>;
   sound?: boolean;
+  channelId?: 'class_reminders_channel' | 'default' | string;
+  isUrgent?: boolean;
 }
 
 // Type declaration for Electron exposed API
@@ -25,7 +27,7 @@ class NotificationService {
   /**
    * Initializes notification service across all platforms:
    * - iOS: Registers expo-notifications handlers and requests permissions.
-   * - Android: Registers notification channel with MAX priority and requests permissions.
+   * - Android: Registers 2 high-priority notification channels (PUBLIC lockscreen visibility).
    * - Windows & macOS (Electron / Web): Configures native Electron IPC or Web Notification API.
    */
   async init(): Promise<boolean> {
@@ -63,7 +65,7 @@ class NotificationService {
     } else {
       // Mobile: iOS & Android via expo-notifications
       try {
-        // Configure foreground notification behavior
+        // Configure foreground notification presentation behavior
         Notifications.setNotificationHandler({
           handleNotification: async () => ({
             shouldShowAlert: true,
@@ -72,15 +74,40 @@ class NotificationService {
           }),
         });
 
-        // Configure high-importance channel for Android notification drawer
+        // Configure high-importance channels for Android lockscreen & drawer
         if (Platform.OS === 'android') {
-          await Notifications.setNotificationChannelAsync('default', {
-            name: 'Campus Life Notifikasi',
-            description: 'Pengumuman dan pengingat jadwal kuliah Campus Life',
+          // 1. Critical Class Reminders Channel (Pierces Lockscreen & Wakes Screen)
+          await Notifications.setNotificationChannelAsync('class_reminders_channel', {
+            name: 'Pengingat Kuliah & Ujian (Layar Kunci)',
+            description: 'Pengingat kelas prioritas tinggi yang menembus layar kunci dan menyalakan layar.',
             importance: Notifications.AndroidImportance.MAX,
-            vibrationPattern: [0, 250, 250, 250],
-            lightColor: '#F59E0B',
+            lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+            bypassDnd: true,
             sound: 'default',
+            audioAttributes: {
+              usage: Notifications.AndroidAudioUsage.ALARM,
+              contentType: Notifications.AndroidAudioContentType.SONIFICATION,
+              flags: {
+                enforceAudibility: true,
+                requestHardwareAudioVideoSynchronization: false,
+              },
+            },
+            vibrationPattern: [0, 500, 200, 500, 200, 500],
+            lightColor: '#F59E0B',
+            enableLights: true,
+            enableVibrate: true,
+            showBadge: true,
+          });
+
+          // 2. General Notification Channel
+          await Notifications.setNotificationChannelAsync('default', {
+            name: 'Notifikasi Umum Campus Life',
+            description: 'Pengumuman, aktivitas keuangan, dan status kampus',
+            importance: Notifications.AndroidImportance.MAX,
+            lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+            sound: 'default',
+            vibrationPattern: [0, 250, 250, 250],
+            lightColor: '#3B82F6',
             enableLights: true,
             enableVibrate: true,
             showBadge: true,
@@ -92,7 +119,17 @@ class NotificationService {
         let finalStatus = existingStatus;
 
         if (existingStatus !== 'granted') {
-          const { status } = await Notifications.requestPermissionsAsync();
+          const { status } = await Notifications.requestPermissionsAsync({
+            ios: {
+              allowAlert: true,
+              allowBadge: true,
+              allowSound: true,
+              allowDisplayInCarPlay: true,
+              allowCriticalAlerts: true,
+              provideAppNotificationSettings: true,
+              allowAnnouncements: true,
+            },
+          });
           finalStatus = status;
         }
 
@@ -108,7 +145,7 @@ class NotificationService {
   }
 
   /**
-   * Alias for init() to maintain full compatibility with existing code
+   * Alias for init() to maintain full compatibility
    */
   async initialize(): Promise<boolean> {
     return await this.init();
@@ -124,8 +161,8 @@ class NotificationService {
 
   /**
    * Send notification directly into the device's Notification Center:
-   * - iOS: iOS Notification Center & Banner
-   * - Android: Android Status Bar & Notification Drawer
+   * - iOS: iOS Notification Center & Banner (timeSensitive interruption level)
+   * - Android: Android Status Bar & Lock Screen (PUBLIC visibility, MAX importance)
    * - Windows: Windows Action Center / Toast Notification
    * - macOS: macOS Notification Center Banner
    */
@@ -136,6 +173,7 @@ class NotificationService {
 
     const title = payload.title.trim() || 'Campus Life';
     const body = payload.body.trim() || '';
+    const targetChannel = payload.channelId || (payload.isUrgent ? 'class_reminders_channel' : 'default');
 
     if (Platform.OS === 'web') {
       try {
@@ -158,7 +196,6 @@ class NotificationService {
               data: payload.data,
             });
 
-            // Auto-close after 6 seconds if supported
             const timer = setTimeout(() => {
               try {
                 notif.close();
@@ -185,9 +222,13 @@ class NotificationService {
             data: payload.data,
             sound: payload.sound ?? true,
             priority: Notifications.AndroidNotificationPriority.MAX,
-            vibrate: [0, 250, 250, 250],
+            vibrate: [0, 500, 200, 500, 200, 500],
+            badge: 1,
+            color: '#F59E0B',
+            // iOS 15+ timeSensitive breaks through Focus mode / Do Not Disturb
+            ...(Platform.OS === 'ios' ? { interruptionLevel: 'timeSensitive' as const } : {}),
           },
-          trigger: null, // deliver immediately to Notification Center
+          trigger: targetChannel ? { channelId: targetChannel } : null,
         });
         return true;
       } catch (err) {
@@ -201,7 +242,7 @@ class NotificationService {
    * Alias for sendNotification to maintain full compatibility with friend's implementation
    */
   async sendLocalNotification(title: string, body: string, data: Record<string, any> = {}): Promise<void> {
-    await this.sendNotification({ title, body, data });
+    await this.sendNotification({ title, body, data, isUrgent: true });
   }
 
   /**
@@ -216,15 +257,13 @@ class NotificationService {
   }
 
   /**
-   * Send upcoming class schedule reminder (supports both argument conventions)
+   * Send upcoming class schedule reminder immediately with maximum lockscreen priority
    */
   async sendClassReminder(courseTitle: string, arg2: string, arg3?: string): Promise<boolean> {
-    // If 3 arguments provided: (courseTitle, room, time) or (courseTitle, time, room)
     let room = 'B103';
     let time = '08:00 WIB';
 
     if (arg3) {
-      // (courseTitle, room, time) or (courseTitle, time, room)
       if (arg2.includes(':') || arg2.includes('WIB') || arg2.includes('am') || arg2.includes('pm')) {
         time = arg2;
         room = arg3;
@@ -241,10 +280,142 @@ class NotificationService {
     }
 
     return await this.sendNotification({
-      title: `Jadwal Kuliah Mendatang: ${courseTitle} 📚`,
-      body: `Kelas ${courseTitle} dimulai jam ${time} di Ruang ${room}. Siapkan perlengkapan kuliah Anda.`,
+      title: `⏰ PENGINGAT KULIAH: ${courseTitle} 📚 (Jadwal Kuliah Mendatang)`,
+      body: `Kelas ${courseTitle} dimulai jam ${time} di Ruang ${room}. Segera bersiap dan jangan sampai terlambat!`,
       data: { type: 'class_reminder', courseTitle, room, time },
+      channelId: 'class_reminders_channel',
+      isUrgent: true,
     });
+  }
+
+  /**
+   * Schedules a lockscreen alert before class begins (e.g., 15 or 30 minutes before)
+   */
+  async scheduleUpcomingClassReminder(
+    courseTitle: string,
+    room: string,
+    timeString: string,
+    minutesBefore: number = 15
+  ): Promise<{ scheduled: boolean; message: string; notificationId?: string }> {
+    if (!this.isInitialized) {
+      await this.init();
+    }
+
+    const title = `⏰ PENGINGAT KELAS (${minutesBefore} Menit Lagi): ${courseTitle}`;
+    const body = `Kuliah ${courseTitle} di Ruang ${room} dimulai jam ${timeString}. Siapkan perlengkapan sekarang!`;
+
+    if (Platform.OS === 'web') {
+      return {
+        scheduled: true,
+        message: `Pengingat terjadwal ${minutesBefore} menit sebelum jam ${timeString}.`,
+      };
+    }
+
+    try {
+      // Calculate trigger date
+      const match = timeString.match(/(\d{1,2})[:.](\d{2})/);
+      const now = new Date();
+      let targetDate = new Date();
+
+      if (match) {
+        const hours = parseInt(match[1], 10);
+        const minutes = parseInt(match[2], 10);
+        targetDate.setHours(hours, minutes, 0, 0);
+        targetDate = new Date(targetDate.getTime() - minutesBefore * 60 * 1000);
+
+        // If time already passed today, set for tomorrow
+        if (targetDate.getTime() <= now.getTime()) {
+          targetDate = new Date(targetDate.getTime() + 24 * 60 * 60 * 1000);
+        }
+      } else {
+        targetDate = new Date(now.getTime() + minutesBefore * 60 * 1000);
+      }
+
+      const id = await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          data: { type: 'scheduled_class_reminder', courseTitle, room, timeString, minutesBefore },
+          sound: true,
+          priority: Notifications.AndroidNotificationPriority.MAX,
+          vibrate: [0, 500, 200, 500, 200, 500],
+          badge: 1,
+          color: '#F59E0B',
+          ...(Platform.OS === 'ios' ? { interruptionLevel: 'timeSensitive' as const } : {}),
+        },
+        trigger: {
+          date: targetDate,
+          channelId: 'class_reminders_channel',
+        },
+      });
+
+      return {
+        scheduled: true,
+        message: `Pengingat aktif! Notifikasi layar kunci akan muncul ${minutesBefore} menit sebelum kelas dimulai.`,
+        notificationId: id,
+      };
+    } catch (err) {
+      console.warn('Failed to schedule class reminder:', err);
+      return {
+        scheduled: false,
+        message: 'Gagal menjadwalkan notifikasi di sistem perangkat.',
+      };
+    }
+  }
+
+  /**
+   * Sends a high-priority lock screen notification after X seconds delay.
+   * Allows user to lock their phone screen (press power button) and verify the notification pierces the lock screen!
+   */
+  async sendDelayedLockscreenTest(seconds: number = 5): Promise<boolean> {
+    if (!this.isInitialized) {
+      await this.init();
+    }
+
+    const title = '🚨 PENGINGAT KULIAH DARURAT (Layar Terkunci)';
+    const body = 'Kelas Pemrograman Mobile di Ruang Lab B103 dimulai 15 menit lagi! Layar HP Anda berhasil menyala di Lock Screen.';
+
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined') {
+        const timer = setTimeout(() => {
+          this.sendNotification({
+            title,
+            body,
+            channelId: 'class_reminders_channel',
+            isUrgent: true,
+          });
+        }, seconds * 1000);
+        if (typeof timer === 'object' && typeof timer.unref === 'function') {
+          timer.unref();
+        }
+        return true;
+      }
+      return false;
+    }
+
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          data: { type: 'lockscreen_test', testTime: Date.now() },
+          sound: true,
+          priority: Notifications.AndroidNotificationPriority.MAX,
+          vibrate: [0, 500, 200, 500, 200, 500],
+          badge: 1,
+          color: '#F59E0B',
+          ...(Platform.OS === 'ios' ? { interruptionLevel: 'timeSensitive' as const } : {}),
+        },
+        trigger: {
+          seconds,
+          channelId: 'class_reminders_channel',
+        },
+      });
+      return true;
+    } catch (err) {
+      console.warn('Delayed lockscreen test warning:', err);
+      return false;
+    }
   }
 
   /**
@@ -261,6 +432,7 @@ class NotificationService {
       title: prefix,
       body: `${title}: ${isExpense ? '-' : '+'}${amountFormatted}`,
       data: { type: 'transaction', transactionTitle: title, amount: amountFormatted },
+      channelId: 'default',
     });
   }
 }

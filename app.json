@@ -1,4 +1,4 @@
-﻿{
+{
   "expo": {
     "name": "CampusLife",
     "slug": "campus-life",
@@ -13,14 +13,35 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.campuslife.app"
+      "bundleIdentifier": "com.campuslife.app",
+      "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"]
+      }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#080D1A"
       },
-      "package": "com.campuslife.app"
+      "package": "com.campuslife.app",
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "WAKE_LOCK",
+        "SCHEDULE_EXACT_ALARM",
+        "USE_EXACT_ALARM",
+        "POST_NOTIFICATIONS"
+      ]
     },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#F59E0B",
+          "defaultChannel": "class_reminders_channel"
+        }
+      ]
+    ],
     "web": {
       "bundler": "metro"
     }

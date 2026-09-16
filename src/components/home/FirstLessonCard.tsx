@@ -19,10 +19,22 @@ export const FirstLessonCard: React.FC<FirstLessonCardProps> = ({
   const handleReminder = async () => {
     if (!schedule) return;
     setReminded(true);
+    const timeStr = schedule.time ? `${schedule.time}:00 WIB` : '08:00 WIB';
+    const roomStr = schedule.room || 'B103';
+
+    // 1. Send immediate test lockscreen notification
     await notificationService.sendClassReminder(
       schedule.title,
-      schedule.room || 'B103',
-      schedule.time ? `${schedule.time}:00 WIB` : '08:00 WIB'
+      roomStr,
+      timeStr
+    );
+
+    // 2. Schedule lock screen alert 15 minutes before class begins
+    await notificationService.scheduleUpcomingClassReminder(
+      schedule.title,
+      roomStr,
+      timeStr,
+      15
     );
   };
 
@@ -85,7 +97,7 @@ export const FirstLessonCard: React.FC<FirstLessonCardProps> = ({
               color={reminded ? Colors.accentYellow : Colors.textWhite}
             />
             <Text style={[styles.reminderBtnText, reminded && styles.reminderBtnTextActive]}>
-              {reminded ? 'Diingatkan' : 'Ingatkan'}
+              {reminded ? 'Alarm Aktif' : 'Ingatkan'}
             </Text>
           </Pressable>
 
