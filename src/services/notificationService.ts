@@ -112,6 +112,20 @@ class NotificationService {
             enableVibrate: true,
             showBadge: true,
           });
+
+          // 3. Fallback Channel (used when trigger is null on Android)
+          await Notifications.setNotificationChannelAsync('expo_notifications_fallback_notification_channel', {
+            name: 'Campus Life Notifikasi Layar Kunci',
+            description: 'Pengingat prioritas tinggi di layar kunci dan bilah status',
+            importance: Notifications.AndroidImportance.MAX,
+            lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+            sound: 'default',
+            vibrationPattern: [0, 500, 200, 500, 200, 500],
+            lightColor: '#F59E0B',
+            enableLights: true,
+            enableVibrate: true,
+            showBadge: true,
+          });
         }
 
         // Check and request permissions
@@ -228,7 +242,7 @@ class NotificationService {
             // iOS 15+ timeSensitive breaks through Focus mode / Do Not Disturb
             ...(Platform.OS === 'ios' ? { interruptionLevel: 'timeSensitive' as const } : {}),
           },
-          trigger: targetChannel ? { channelId: targetChannel } : null,
+          trigger: null, // deliver immediately to system notification drawer & lockscreen
         });
         return true;
       } catch (err) {
