@@ -13,6 +13,7 @@ import { Colors } from '../../constants/colors';
 import { useAuth } from '../../context/AuthContext';
 import { umkmService } from '../../services/umkmService';
 import { adminUserService } from '../../services/adminUserService';
+import { adService } from '../../services/adService';
 
 interface AdminDashboardScreenProps {
   navigation: any;
@@ -25,6 +26,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ navi
 
   const [umkmCount, setUmkmCount] = useState<number>(umkmService.getUmkmList().length);
   const [userCount, setUserCount] = useState<number>(adminUserService.getUsers().length);
+  const [adCount, setAdCount] = useState<number>(adService.getAds().length);
 
   useEffect(() => {
     // Initial fetch from remote
@@ -39,9 +41,14 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ navi
       setUserCount(adminUserService.getUsers().length);
     });
 
+    const unsubAds = adService.subscribe(() => {
+      setAdCount(adService.getAds().length);
+    });
+
     return () => {
       unsubUmkm();
       unsubUser();
+      unsubAds();
     };
   }, []);
 
@@ -93,6 +100,14 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ navi
             <Text style={styles.metricValue}>{userCount}</Text>
             <Text style={styles.metricLabel}>Pengguna Terdaftar</Text>
           </View>
+
+          <View style={[styles.metricCard, { borderColor: '#38BDF8' }]}>
+            <View style={styles.metricIconBox}>
+              <Ionicons name="megaphone" size={24} color="#38BDF8" />
+            </View>
+            <Text style={styles.metricValue}>{adCount}</Text>
+            <Text style={styles.metricLabel}>Iklan Banner Aktif</Text>
+          </View>
         </View>
 
         {/* Privacy Note */}
@@ -108,6 +123,22 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ navi
 
         {/* Quick Actions */}
         <Text style={styles.sectionTitle}>AKSI UTAMA ADMINISTRATOR</Text>
+
+        <Pressable
+          style={styles.actionCard}
+          onPress={() => navigation.navigate('AdminAds')}
+        >
+          <View style={[styles.actionIconBox, { backgroundColor: '#102A4A' }]}>
+            <Ionicons name="megaphone" size={24} color="#38BDF8" />
+          </View>
+          <View style={{ marginLeft: 14, flex: 1 }}>
+            <Text style={styles.actionTitle}>Kelola Layanan Iklan & Promo</Text>
+            <Text style={styles.actionDesc}>
+              Atur kartu banner promosi (Laundry Express, Percetakan, dll) yang tampil di beranda mahasiswa.
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
+        </Pressable>
 
         <Pressable
           style={styles.actionCard}

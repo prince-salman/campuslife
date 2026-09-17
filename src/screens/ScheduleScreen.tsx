@@ -37,6 +37,12 @@ export const ScheduleScreen: React.FC = () => {
   const [editingItem, setEditingItem] = useState<ScheduleItem | null>(null);
 
   useEffect(() => {
+    // Sinkronisasi otomatis ke tanggal, hari ini, dan bulan sekarang sesuai settingan perangkat
+    scheduleService.resetToCurrentDeviceDate();
+    setWeekSchedule(scheduleService.getWeekSchedule());
+    setMonthYear(scheduleService.getSelectedMonthYear());
+    setSelectedDayIndex(scheduleService.getSelectedDayIndex());
+
     const unsubscribe = scheduleService.subscribe(() => {
       setWeekSchedule(scheduleService.getWeekSchedule());
       setMonthYear(scheduleService.getSelectedMonthYear());
@@ -72,6 +78,8 @@ export const ScheduleScreen: React.FC = () => {
         timePeriod: data.timePeriod,
         duration: data.duration,
         timeRange: data.timeRange,
+        endTime: data.endTime,
+        reminderMinutes: data.reminderMinutes,
         headerColor: data.headerColor,
         cardColor: data.cardColor,
       });
@@ -86,6 +94,8 @@ export const ScheduleScreen: React.FC = () => {
         timePeriod: data.timePeriod,
         duration: data.duration,
         timeRange: data.timeRange,
+        endTime: data.endTime,
+        reminderMinutes: data.reminderMinutes,
         headerColor: data.headerColor,
         cardColor: data.cardColor,
       });

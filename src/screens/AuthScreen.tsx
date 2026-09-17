@@ -17,7 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import { validateStudentEmail, STUDENT_EMAIL_DOMAIN } from '../utils/authValidators';
 
 export const AuthScreen: React.FC = () => {
-  const { login, register, quickLogin, isLoading } = useAuth();
+  const { login, register, isLoading } = useAuth();
 
   const [isRegisterMode, setIsRegisterMode] = useState<boolean>(false);
   const [fullName, setFullName] = useState<string>('');
@@ -145,53 +145,6 @@ export const AuthScreen: React.FC = () => {
           </View>
         ) : null}
 
-        {/* Helper Card for Ready-to-Test Credentials */}
-        {!isRegisterMode && (
-          <View style={styles.testAccountCard}>
-            <View style={styles.testAccountHeader}>
-              <Ionicons name="key" size={14} color={Colors.accentYellow} />
-              <Text style={styles.testAccountTitle}>Kredensial Akun (Klik untuk Isi Otomatis)</Text>
-            </View>
-            <View style={styles.testAccountChipsRow}>
-              <Pressable
-                style={styles.accountChipAdmin}
-                onPress={() => {
-                  setEmail('admin@campuslife.com');
-                  setPassword('admin123');
-                  setErrorMessage('');
-                }}
-              >
-                <Ionicons name="shield-checkmark" size={16} color="#FACC15" />
-                <View style={{ marginLeft: 8, flex: 1 }}>
-                  <Text style={styles.accountChipRoleAdmin}>👑 Akun Admin (CRUD UMKM)</Text>
-                  <Text style={styles.accountChipEmail}>admin@campuslife.com • sandi: admin123</Text>
-                </View>
-                <View style={styles.fillBadge}>
-                  <Text style={styles.fillBadgeText}>Isi</Text>
-                </View>
-              </Pressable>
-
-              <Pressable
-                style={styles.accountChipStudent}
-                onPress={() => {
-                  setEmail('mahasiswa@student.president.ac.id');
-                  setPassword('student123');
-                  setErrorMessage('');
-                }}
-              >
-                <Ionicons name="school" size={16} color="#60A5FA" />
-                <View style={{ marginLeft: 8, flex: 1 }}>
-                  <Text style={styles.accountChipRoleStudent}>🎓 Akun Mahasiswa (Jadwal & Dompet)</Text>
-                  <Text style={styles.accountChipEmail}>mahasiswa@student... • sandi: student123</Text>
-                </View>
-                <View style={styles.fillBadge}>
-                  <Text style={styles.fillBadgeText}>Isi</Text>
-                </View>
-              </Pressable>
-            </View>
-          </View>
-        )}
-
         {/* Form Inputs */}
         <View style={styles.formCard}>
           {isRegisterMode && (
@@ -291,39 +244,6 @@ export const AuthScreen: React.FC = () => {
               </Text>
             )}
           </Pressable>
-        </View>
-
-        {/* Quick Demo Login Options */}
-        <View style={styles.demoSection}>
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>ATAU MASUK CEPAT (UJI COBA)</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          <View style={styles.demoButtonsRow}>
-            <Pressable
-              style={styles.demoButtonStudent}
-              onPress={() => quickLogin('user')}
-            >
-              <Ionicons name="person" size={16} color="#FFFFFF" />
-              <View style={{ marginLeft: 8 }}>
-                <Text style={styles.demoButtonTitle}>Akun Mahasiswa</Text>
-                <Text style={styles.demoButtonSub}>Jadwal, Keuangan, UMKM</Text>
-              </View>
-            </Pressable>
-
-            <Pressable
-              style={styles.demoButtonAdmin}
-              onPress={() => quickLogin('admin')}
-            >
-              <Ionicons name="shield" size={16} color="#000000" />
-              <View style={{ marginLeft: 8 }}>
-                <Text style={styles.demoButtonAdminTitle}>Akun Admin</Text>
-                <Text style={styles.demoButtonAdminSub}>CRUD UMKM & User</Text>
-              </View>
-            </Pressable>
-          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -449,75 +369,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontWeight: '600',
   },
-  testAccountCard: {
-    backgroundColor: '#0D1424',
-    borderWidth: 1,
-    borderColor: '#1F2E4D',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 16,
-  },
-  testAccountHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  testAccountTitle: {
-    color: Colors.accentYellow,
-    fontSize: 12,
-    fontWeight: '800',
-    marginLeft: 6,
-    letterSpacing: 0.3,
-  },
-  testAccountChipsRow: {
-    gap: 8,
-  },
-  accountChipAdmin: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(250, 204, 21, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(250, 204, 21, 0.3)',
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-  },
-  accountChipRoleAdmin: {
-    color: '#FACC15',
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  accountChipStudent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(96, 165, 250, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(96, 165, 250, 0.3)',
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-  },
-  accountChipRoleStudent: {
-    color: '#93C5FD',
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  accountChipEmail: {
-    color: '#94A3B8',
-    fontSize: 11,
-    marginTop: 2,
-  },
-  fillBadge: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  fillBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700',
-  },
   formCard: {
     backgroundColor: '#0F1626',
     borderRadius: 16,
@@ -571,63 +422,5 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontSize: 15,
     fontWeight: '800',
-  },
-  demoSection: {
-    marginTop: 24,
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#1E293B',
-  },
-  dividerText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: 'rgba(255,255,255,0.4)',
-    marginHorizontal: 10,
-    letterSpacing: 0.5,
-  },
-  demoButtonsRow: {
-    gap: 10,
-  },
-  demoButtonStudent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#162238',
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#2A3C5E',
-  },
-  demoButtonTitle: {
-    color: Colors.textWhite,
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  demoButtonSub: {
-    color: Colors.textSecondary,
-    fontSize: 11,
-  },
-  demoButtonAdmin: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.accentYellow,
-    padding: 12,
-    borderRadius: 12,
-  },
-  demoButtonAdminTitle: {
-    color: '#000000',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  demoButtonAdminSub: {
-    color: 'rgba(0,0,0,0.7)',
-    fontSize: 11,
-    fontWeight: '600',
   },
 });

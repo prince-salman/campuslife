@@ -12,6 +12,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { ScheduleItem } from '../../models/schedule';
+import { ScheduleService } from '../../services/scheduleService';
+import { notificationService } from '../../services/notificationService';
 
 export interface ScheduleFormData {
   dayIndex: number;
@@ -21,7 +23,9 @@ export interface ScheduleFormData {
   time: string;
   timePeriod: string;
   duration: string;
-  timeRange: string;
+  endTime?: string;
+  timeRange?: string;
+  reminderMinutes?: number;
   headerColor: string;
   cardColor: string;
 }
@@ -38,13 +42,23 @@ interface AddEditScheduleModalProps {
 
 const DAYS_NAMES = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 
-const COLOR_THEMES = [
-  { name: 'Teal', header: '#2E7979', card: '#5FB8B2' },
-  { name: 'Navy', header: '#274975', card: '#4D7FA9' },
-  { name: 'Purple', header: '#5A2E79', card: '#8C5FB8' },
-  { name: 'Green', header: '#2E7958', card: '#57B288' },
-  { name: 'Rose', header: '#792E4D', card: '#B85F82' },
-  { name: 'Amber', header: '#755127', card: '#A87D4C' },
+const DURATION_PRESETS = ['1 Jam', '1.5 Jam', '2 Jam', '2.5 Jam', '3 Jam'];
+const REMINDER_PRESETS = [
+  { label: '10 Menit', value: 10 },
+  { label: '15 Menit', value: 15 },
+  { label: '30 Menit', value: 30 },
+  { label: '60 Menit', value: 60 },
+  { label: 'Nonaktif', value: 0 },
+];
+
+const THEMES_BY_DAY = [
+  { header: '#2E6F79', card: '#55A4B2' }, // Sen
+  { header: '#2E7958', card: '#57B288' }, // Sel
+  { header: '#3B3878', card: '#6560B0' }, // Rab
+  { header: '#2E7979', card: '#5FB8B2' }, // Kam
+  { header: '#792E4D', card: '#B85F82' }, // Jum
+  { header: '#755127', card: '#A87D4C' }, // Sab
+  { header: '#274975', card: '#4D7FA9' }, // Min
 ];
 
 export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
@@ -63,8 +77,7 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
   const [time, setTime] = useState<string>('08');
   const [timePeriod, setTimePeriod] = useState<string>('am');
   const [duration, setDuration] = useState<string>('2 Jam');
-  const [timeRange, setTimeRange] = useState<string>('08:00 WIB - 10:00 WIB');
-  const [selectedColorIndex, setSelectedColorIndex] = useState<number>(0);
+  const [reminderMinutes, setReminderMinutes] = useState<number>(15);
 
   useEffect(() => {
     if (mode === 'edit' && initialItem) {
@@ -74,26 +87,22 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
       setTime(initialItem.time);
       setTimePeriod(initialItem.timePeriod || 'am');
       setDuration(initialItem.duration || '2 Jam');
-      setTimeRange(initialItem.timeRange || `${initialItem.time}:00 WIB`);
+      setReminderMinutes(initialItem.reminderMinutes !== undefined ? initialItem.reminderMinutes : 15);
       setDayIndex(initialDayIndex);
-
-      const colorIdx = COLOR_THEMES.findIndex(
-        (c) => c.header.toLowerCase() === initialItem.headerColor.toLowerCase()
-      );
-      setSelectedColorIndex(colorIdx >= 0 ? colorIdx : 0);
     } else {
-      // Add mode defaults
       setTitle('');
       setLecturer('');
       setRoom('');
       setTime('08');
       setTimePeriod('am');
       setDuration('2 Jam');
-      setTimeRange('08:00 WIB - 10:00 WIB');
+      setReminderMinutes(15);
       setDayIndex(initialDayIndex >= 0 ? initialDayIndex : 0);
-      setSelectedColorIndex(0);
     }
   }, [visible, mode, initialItem, initialDayIndex]);
+
+  // Kalkulasi Jam Selesai & Rentang Waktu Otomatis secara Realtime
+  const calculated = ScheduleService.calculateEndTime(time, timePeriod, duration);
 
   const handleSave = () => {
     const cleanTitle = title.trim();
@@ -101,16 +110,12 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
       Alert.alert('Perhatian', 'Silakan masukkan nama mata kuliah / kegiatan.');
       return;
     }
-    if (cleanTitle.length > 100) {
-      Alert.alert('Perhatian', 'Nama mata kuliah maksimal 100 karakter.');
-      return;
-    }
 
     const cleanLecturer = lecturer.trim() || 'Dosen Pengampu';
     const cleanRoom = room.trim() || 'R. Kuliah';
-    const theme = COLOR_THEMES[selectedColorIndex] || COLOR_THEMES[0];
+    const theme = THEMES_BY_DAY[dayIndex % THEMES_BY_DAY.length];
 
-    onSave({
+    const finalData: ScheduleFormData = {
       dayIndex,
       title: cleanTitle,
       lecturer: cleanLecturer,
@@ -118,10 +123,22 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
       time: time.trim() || '08',
       timePeriod,
       duration: duration.trim() || '2 Jam',
-      timeRange: timeRange.trim() || `${time}:00 WIB`,
+      endTime: calculated.endTime,
+      timeRange: calculated.timeRange,
+      reminderMinutes,
       headerColor: theme.header,
       cardColor: theme.card,
-    });
+    };
+
+    onSave(finalData);
+
+    if (reminderMinutes > 0) {
+      notificationService.sendNotification({
+        title: `⏰ Pengingat Kuliah: ${cleanTitle}`,
+        body: `Kelas di ${cleanRoom} (${calculated.timeRange}). Anda akan diingatkan ${reminderMinutes} menit sebelum mulai.`,
+        isUrgent: false,
+      }).catch(() => {});
+    }
 
     onClose();
   };
@@ -172,8 +189,8 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
           </View>
 
           <ScrollView style={styles.scrollBody} showsVerticalScrollIndicator={false}>
-            {/* Hari Kuliah */}
-            <Text style={styles.inputLabel}>Pilih Hari</Text>
+            {/* 1. Pilih Hari */}
+            <Text style={styles.inputLabel}>Hari Kuliah *</Text>
             <View style={styles.daysRow}>
               {DAYS_NAMES.map((name, idx) => (
                 <Pressable
@@ -196,43 +213,43 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
               ))}
             </View>
 
-            {/* Title */}
+            {/* 2. Mata Kuliah */}
             <Text style={styles.inputLabel}>Mata Kuliah / Kegiatan *</Text>
             <TextInput
               style={styles.input}
-              placeholder="Contoh: Kecerdasan Buatan"
+              placeholder="Contoh: Kecerdasan Buatan / Pemrograman Web"
               placeholderTextColor="rgba(255, 255, 255, 0.4)"
               value={title}
               onChangeText={setTitle}
             />
 
-            {/* Lecturer */}
-            <Text style={styles.inputLabel}>Dosen / Pengajar</Text>
+            {/* 3. Dosen Pengampu */}
+            <Text style={styles.inputLabel}>Dosen Pengampu *</Text>
             <TextInput
               style={styles.input}
-              placeholder="Contoh: Dr. Budi Santoso"
+              placeholder="Contoh: Dr. Budi Santoso, M.Kom"
               placeholderTextColor="rgba(255, 255, 255, 0.4)"
               value={lecturer}
               onChangeText={setLecturer}
             />
 
-            {/* Room */}
-            <Text style={styles.inputLabel}>Ruangan</Text>
+            {/* 4. Ruangan Kelas */}
+            <Text style={styles.inputLabel}>Ruangan Kelas *</Text>
             <TextInput
               style={styles.input}
-              placeholder="Contoh: B103 / Lab Komputer"
+              placeholder="Contoh: B103 / Lab Komputer 2"
               placeholderTextColor="rgba(255, 255, 255, 0.4)"
               value={room}
               onChangeText={setRoom}
             />
 
-            {/* Time & Period Row */}
+            {/* 5. Jam Mulai & Periode (AM / PM) */}
             <View style={styles.twoColRow}>
               <View style={styles.colHalf}>
-                <Text style={styles.inputLabel}>Jam (Angka)</Text>
+                <Text style={styles.inputLabel}>Jam Mulai (01 - 12)</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="08"
+                  placeholder="08 atau 08:30"
                   placeholderTextColor="rgba(255, 255, 255, 0.4)"
                   value={time}
                   onChangeText={setTime}
@@ -240,7 +257,7 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
               </View>
 
               <View style={styles.colHalf}>
-                <Text style={styles.inputLabel}>Periode</Text>
+                <Text style={styles.inputLabel}>Periode Waktu</Text>
                 <View style={styles.periodToggleRow}>
                   <Pressable
                     onPress={() => setTimePeriod('am')}
@@ -255,7 +272,7 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
                         timePeriod === 'am' && styles.periodBtnTextActive,
                       ]}
                     >
-                      AM
+                      AM (Pagi)
                     </Text>
                   </Pressable>
                   <Pressable
@@ -271,54 +288,71 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
                         timePeriod === 'pm' && styles.periodBtnTextActive,
                       ]}
                     >
-                      PM
+                      PM (Siang/Sore)
                     </Text>
                   </Pressable>
                 </View>
               </View>
             </View>
 
-            {/* Time Range & Duration */}
-            <View style={styles.twoColRow}>
-              <View style={styles.colHalf}>
-                <Text style={styles.inputLabel}>Rentang Waktu</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="08:00 - 10:00 WIB"
-                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                  value={timeRange}
-                  onChangeText={setTimeRange}
-                />
-              </View>
-
-              <View style={styles.colHalf}>
-                <Text style={styles.inputLabel}>Durasi</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="2 Jam"
-                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                  value={duration}
-                  onChangeText={setDuration}
-                />
-              </View>
-            </View>
-
-            {/* Card Color Theme */}
-            <Text style={styles.inputLabel}>Tema Warna Kartu</Text>
-            <View style={styles.colorPaletteRow}>
-              {COLOR_THEMES.map((theme, idx) => (
+            {/* 6. Durasi */}
+            <Text style={styles.inputLabel}>Durasi Kelas</Text>
+            <View style={styles.presetChipsRow}>
+              {DURATION_PRESETS.map((item) => (
                 <Pressable
-                  key={theme.name}
-                  onPress={() => setSelectedColorIndex(idx)}
+                  key={item}
+                  onPress={() => setDuration(item)}
                   style={[
-                    styles.colorCircle,
-                    { backgroundColor: theme.card },
-                    selectedColorIndex === idx && styles.colorCircleSelected,
+                    styles.presetChip,
+                    duration === item && styles.presetChipActive,
                   ]}
                 >
-                  {selectedColorIndex === idx && (
-                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-                  )}
+                  <Text
+                    style={[
+                      styles.presetChipText,
+                      duration === item && styles.presetChipTextActive,
+                    ]}
+                  >
+                    {item}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            {/* 7. Jam Selesai Terisi Otomatis (Live Calculation) */}
+            <View style={styles.autoCalcCard}>
+              <View style={styles.autoCalcHeader}>
+                <Ionicons name="time-outline" size={18} color={Colors.accentYellow} />
+                <Text style={styles.autoCalcTitle}>Jam Selesai (Otomatis)</Text>
+              </View>
+              <Text style={styles.autoCalcResult}>{calculated.endTime}</Text>
+              <Text style={styles.autoCalcSub}>
+                Rentang: <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>{calculated.timeRange}</Text>
+              </Text>
+            </View>
+
+            {/* 8. Pengingat Sebelum Kelas (Reminder) */}
+            <Text style={styles.inputLabel}>
+              <Ionicons name="notifications-outline" size={13} color={Colors.accentYellow} /> Pengingat Sebelum Kelas Dimulai
+            </Text>
+            <View style={styles.presetChipsRow}>
+              {REMINDER_PRESETS.map((item) => (
+                <Pressable
+                  key={item.label}
+                  onPress={() => setReminderMinutes(item.value)}
+                  style={[
+                    styles.presetChip,
+                    reminderMinutes === item.value && styles.presetChipActive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.presetChipText,
+                      reminderMinutes === item.value && styles.presetChipTextActive,
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
                 </Pressable>
               ))}
             </View>
@@ -326,9 +360,9 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
             {/* Action Buttons */}
             <View style={styles.actionButtonsContainer}>
               <Pressable style={styles.saveBtn} onPress={handleSave}>
-                <Ionicons name="save-outline" size={18} color="#000000" />
+                <Ionicons name="checkmark-circle" size={18} color="#000000" />
                 <Text style={styles.saveBtnText}>
-                  {mode === 'edit' ? 'Perbarui Jadwal' : 'Simpan Jadwal'}
+                  {mode === 'edit' ? 'Perbarui Jadwal Kuliah' : 'Simpan Jadwal Kuliah'}
                 </Text>
               </Pressable>
 
@@ -360,7 +394,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: 20,
-    maxHeight: '88%',
+    maxHeight: '90%',
     borderWidth: 1,
     borderColor: '#1E293B',
   },
@@ -368,7 +402,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
     paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#1E293B',
@@ -392,7 +426,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.75)',
+    color: 'rgba(255, 255, 255, 0.85)',
     marginBottom: 6,
     marginTop: 10,
   },
@@ -450,6 +484,7 @@ const styles = StyleSheet.create({
     padding: 4,
     borderWidth: 1,
     borderColor: '#1F2F5E',
+    gap: 4,
   },
   periodBtn: {
     flex: 1,
@@ -461,7 +496,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.accentYellow,
   },
   periodBtnText: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '600',
     color: 'rgba(255, 255, 255, 0.6)',
   },
@@ -469,28 +504,68 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontWeight: '800',
   },
-  colorPaletteRow: {
+  presetChipsRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 4,
-    marginBottom: 16,
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 2,
+    marginBottom: 4,
   },
-  colorCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  presetChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  presetChipActive: {
+    backgroundColor: Colors.accentYellow,
+    borderColor: Colors.accentYellow,
+  },
+  presetChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.textWhite,
+  },
+  presetChipTextActive: {
+    color: '#000000',
+    fontWeight: '800',
+  },
+  autoCalcCard: {
+    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.35)',
+    borderRadius: 14,
+    padding: 12,
+    marginTop: 12,
+    marginBottom: 6,
+  },
+  autoCalcHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
+    gap: 6,
+    marginBottom: 4,
   },
-  colorCircleSelected: {
-    borderColor: '#FFFFFF',
-    transform: [{ scale: 1.1 }],
+  autoCalcTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.accentYellow,
+  },
+  autoCalcResult: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: Colors.textWhite,
+    letterSpacing: 0.5,
+  },
+  autoCalcSub: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: 2,
   },
   actionButtonsContainer: {
     gap: 10,
-    marginTop: 10,
+    marginTop: 16,
     marginBottom: 16,
   },
   saveBtn: {

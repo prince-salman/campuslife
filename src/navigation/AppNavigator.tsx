@@ -10,6 +10,7 @@ import { ScheduleScreen } from '../screens/ScheduleScreen';
 import { FinanceScreen } from '../screens/FinanceScreen';
 import { UmkmScreen } from '../screens/UmkmScreen';
 import { AdminDashboardScreen } from '../screens/admin/AdminDashboardScreen';
+import { AdminAdsScreen } from '../screens/admin/AdminAdsScreen';
 import { AdminUmkmScreen } from '../screens/admin/AdminUmkmScreen';
 import { AdminUsersScreen } from '../screens/admin/AdminUsersScreen';
 
@@ -22,6 +23,7 @@ export type StudentTabParamList = {
 
 export type AdminTabParamList = {
   AdminDashboard: undefined;
+  AdminAds: undefined;
   AdminUmkm: undefined;
   AdminUsers: undefined;
 };
@@ -62,6 +64,8 @@ export const AppNavigator: React.FC = () => {
 
             if (route.name === 'AdminDashboard') {
               iconName = focused ? 'speedometer' : 'speedometer-outline';
+            } else if (route.name === 'AdminAds') {
+              iconName = focused ? 'megaphone' : 'megaphone-outline';
             } else if (route.name === 'AdminUmkm') {
               iconName = focused ? 'storefront' : 'storefront-outline';
             } else if (route.name === 'AdminUsers') {
@@ -76,6 +80,11 @@ export const AppNavigator: React.FC = () => {
           name="AdminDashboard"
           component={AdminDashboardScreen}
           options={{ tabBarLabel: 'Dashboard' }}
+        />
+        <AdminTab.Screen
+          name="AdminAds"
+          component={AdminAdsScreen}
+          options={{ tabBarLabel: 'Kelola Iklan' }}
         />
         <AdminTab.Screen
           name="AdminUmkm"

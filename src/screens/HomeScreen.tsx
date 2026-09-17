@@ -26,6 +26,8 @@ import { TransactionType } from '../models/transaction';
 import { UmkmModel } from '../models/umkm';
 import { ScheduleItem } from '../models/schedule';
 import { umkmService } from '../services/umkmService';
+import { adService } from '../services/adService';
+import { PromoBannerModel } from '../models/banner';
 import { useAuth } from '../context/AuthContext';
 import { Alert } from 'react-native';
 
@@ -47,6 +49,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('F&B');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [umkmList, setUmkmList] = useState<UmkmModel[]>(umkmService.getUmkmList());
+  const [banners, setBanners] = useState<PromoBannerModel[]>(adService.getAds());
   
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [modalType, setModalType] = useState<TransactionType>('income');
@@ -74,31 +77,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       setFirstLesson(scheduleService.getFirstLesson());
     });
 
+    const unsubAds = adService.subscribe(() => {
+      setBanners(adService.getAds());
+    });
+
     return () => {
       unsubUmkm();
       unsubWallet();
       unsubSchedule();
+      unsubAds();
     };
   }, [user?.id]);
 
   const categories = ['Semua', 'F&B', 'Laundry', 'Homestay', 'Fotocopy', 'Holiday'];
-
-  const banners = [
-    {
-      id: 'b1',
-      title: 'Laundry\nExpress',
-      subtitle: 'Menerima Laundry :',
-      services: ['Baju', 'Sepatu', 'Selimut', 'Alas Lantai', 'Sprei', 'Jaket'],
-      contact: '+123-456-7890',
-    },
-    {
-      id: 'b2',
-      title: 'Percetakan &\nFotocopy',
-      subtitle: 'Layanan Kilat Mahasiswa :',
-      services: ['Skripsi', 'Jilid Hardcover', 'Poster A3', 'Stiker'],
-      contact: '+123-888-9999',
-    },
-  ];
 
   const filteredUmkm = umkmList.filter((item) => {
     const matchesCategory =

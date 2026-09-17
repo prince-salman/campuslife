@@ -14,7 +14,9 @@ export interface UmkmModel {
   bannerText: string;
   cardColorHex: string;
   imageUrl?: string;
+  whatsapp?: string;
   phone?: string;
+  mapsUrl?: string;
   address?: string;
   distance?: string;
   openingHours?: string;

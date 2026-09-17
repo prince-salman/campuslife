@@ -7,6 +7,8 @@ export interface ScheduleItem {
   room: string;
   lecturer: string;
   duration: string;
+  endTime?: string;
+  reminderMinutes?: number;
   headerColor: string;
   cardColor: string;
 }

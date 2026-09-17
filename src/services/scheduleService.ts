@@ -11,6 +11,8 @@ export interface AddScheduleParams {
   timePeriod: string;
   duration: string;
   timeRange?: string;
+  endTime?: string;
+  reminderMinutes?: number;
   headerColor?: string;
   cardColor?: string;
 }
@@ -25,11 +27,13 @@ export interface UpdateScheduleParams {
   timePeriod?: string;
   duration?: string;
   timeRange?: string;
+  endTime?: string;
+  reminderMinutes?: number;
   headerColor?: string;
   cardColor?: string;
 }
 
-class ScheduleService {
+export class ScheduleService {
   private static instance: ScheduleService;
   private listeners: Set<Listener> = new Set();
 
@@ -188,6 +192,87 @@ class ScheduleService {
     },
   ];
 
+  private constructor() {
+    this.resetToCurrentDeviceDate();
+  }
+
+  public resetToCurrentDeviceDate(): void {
+    const now = new Date();
+    const MONTH_NAMES = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    this.selectedMonthYear = `${MONTH_NAMES[now.getMonth()]}, ${now.getFullYear()}`;
+
+    // JS getDay(): 0 is Sunday, 1 is Monday ... 6 is Saturday
+    // In CampusLife: 0 is Senin, 1 is Selasa ... 6 is Minggu
+    const dayOfWeek = (now.getDay() + 6) % 7;
+    this.selectedDayIndex = dayOfWeek;
+
+    // Synchronize day numbers for this current week
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - dayOfWeek);
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(startOfWeek);
+      d.setDate(startOfWeek.getDate() + i);
+      if (this.weekSchedule[i]) {
+        this.weekSchedule[i].dayNumber = String(d.getDate()).padStart(2, '0');
+      }
+    }
+  }
+
+  public static calculateEndTime(
+    startTimeStr: string,
+    period: string,
+    durationStr: string
+  ): { endTime: string; timeRange: string } {
+    let startHour = 8;
+    let startMin = 0;
+    const cleanTime = (startTimeStr || '08').trim();
+    if (cleanTime.includes(':')) {
+      const parts = cleanTime.split(':');
+      startHour = parseInt(parts[0], 10) || 8;
+      startMin = parseInt(parts[1], 10) || 0;
+    } else {
+      startHour = parseInt(cleanTime, 10) || 8;
+      startMin = 0;
+    }
+
+    const normPeriod = (period || 'am').toLowerCase();
+    let hour24 = startHour;
+    if (normPeriod === 'pm' && hour24 < 12) {
+      hour24 += 12;
+    } else if (normPeriod === 'am' && hour24 === 12) {
+      hour24 = 0;
+    }
+
+    let durationMinutes = 120;
+    const cleanDur = (durationStr || '2 Jam').toLowerCase();
+    if (cleanDur.includes('jam') || cleanDur.includes('hour')) {
+      const num = parseFloat(cleanDur.replace(/[^0-9.]/g, '')) || 2;
+      durationMinutes = Math.round(num * 60);
+    } else if (cleanDur.includes('menit') || cleanDur.includes('min')) {
+      durationMinutes = parseInt(cleanDur.replace(/[^0-9]/g, ''), 10) || 60;
+    } else {
+      const num = parseFloat(cleanDur) || 2;
+      durationMinutes = Math.round(num * 60);
+    }
+
+    const startTotal = hour24 * 60 + startMin;
+    const endTotal = (startTotal + durationMinutes) % (24 * 60);
+    const endH = Math.floor(endTotal / 60);
+    const endM = endTotal % 60;
+
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const startFormatted = `${pad(hour24)}:${pad(startMin)} WIB`;
+    const endFormatted = `${pad(endH)}:${pad(endM)} WIB`;
+
+    return {
+      endTime: endFormatted,
+      timeRange: `${startFormatted} - ${endFormatted}`,
+    };
+  }
+
   public static getInstance(): ScheduleService {
     if (!ScheduleService.instance) {
       ScheduleService.instance = new ScheduleService();
@@ -250,13 +335,19 @@ class ScheduleService {
   }
 
   /**
-   * Menambahkan jadwal baru
+   * Menambahkan jadwal baru dengan jam selesai dan timeRange otomatis
    */
   public addScheduleItem(params: AddScheduleParams): ScheduleItem {
     const day = this.weekSchedule[params.dayIndex];
     if (!day) {
       throw new Error(`Hari dengan index ${params.dayIndex} tidak ditemukan`);
     }
+
+    const calc = ScheduleService.calculateEndTime(
+      params.time,
+      params.timePeriod,
+      params.duration
+    );
 
     const newItem: ScheduleItem = {
       id: `sched_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
@@ -266,7 +357,9 @@ class ScheduleService {
       time: params.time.trim(),
       timePeriod: params.timePeriod.trim() || 'am',
       duration: params.duration.trim() || '2 Jam',
-      timeRange: params.timeRange?.trim() || `${params.time}:00 WIB`,
+      endTime: params.endTime || calc.endTime,
+      timeRange: params.timeRange?.trim() || calc.timeRange,
+      reminderMinutes: params.reminderMinutes !== undefined ? params.reminderMinutes : 15,
       headerColor: params.headerColor || '#2E7979',
       cardColor: params.cardColor || '#5FB8B2',
     };
@@ -287,15 +380,23 @@ class ScheduleService {
     if (itemIndex === -1) return false;
 
     const existing = day.items[itemIndex];
+    const updatedTime = params.time !== undefined ? params.time.trim() : existing.time;
+    const updatedPeriod = params.timePeriod !== undefined ? params.timePeriod.trim() : existing.timePeriod;
+    const updatedDuration = params.duration !== undefined ? params.duration.trim() : existing.duration;
+
+    const calc = ScheduleService.calculateEndTime(updatedTime, updatedPeriod, updatedDuration);
+
     day.items[itemIndex] = {
       ...existing,
       title: params.title !== undefined ? params.title.trim() : existing.title,
       lecturer: params.lecturer !== undefined ? params.lecturer.trim() : existing.lecturer,
       room: params.room !== undefined ? params.room.trim() : existing.room,
-      time: params.time !== undefined ? params.time.trim() : existing.time,
-      timePeriod: params.timePeriod !== undefined ? params.timePeriod.trim() : existing.timePeriod,
-      duration: params.duration !== undefined ? params.duration.trim() : existing.duration,
-      timeRange: params.timeRange !== undefined ? params.timeRange.trim() : existing.timeRange,
+      time: updatedTime,
+      timePeriod: updatedPeriod,
+      duration: updatedDuration,
+      endTime: params.endTime !== undefined ? params.endTime : calc.endTime,
+      timeRange: params.timeRange !== undefined ? params.timeRange.trim() : calc.timeRange,
+      reminderMinutes: params.reminderMinutes !== undefined ? params.reminderMinutes : existing.reminderMinutes,
       headerColor: params.headerColor || existing.headerColor,
       cardColor: params.cardColor || existing.cardColor,
     };

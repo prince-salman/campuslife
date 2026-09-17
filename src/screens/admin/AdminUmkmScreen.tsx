@@ -11,11 +11,12 @@ import {
   Alert,
   Platform,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
-import { UmkmModel } from '../../models/umkm';
+import { UmkmModel, UmkmServiceItem } from '../../models/umkm';
 import { umkmService } from '../../services/umkmService';
 
 export const AdminUmkmScreen: React.FC = () => {
@@ -33,10 +34,14 @@ export const AdminUmkmScreen: React.FC = () => {
   const [formCategory, setFormCategory] = useState<string>('F&B');
   const [formPriceTag, setFormPriceTag] = useState<string>('15K');
   const [formBannerText, setFormBannerText] = useState<string>('');
-  const [formPhone, setFormPhone] = useState<string>('');
+  const [formImageUrl, setFormImageUrl] = useState<string>('');
+  const [formWhatsapp, setFormWhatsapp] = useState<string>('');
+  const [formMapsUrl, setFormMapsUrl] = useState<string>('');
+  const [formRating, setFormRating] = useState<string>('4.8');
   const [formAddress, setFormAddress] = useState<string>('');
   const [formDistance, setFormDistance] = useState<string>('');
   const [formOpeningHours, setFormOpeningHours] = useState<string>('');
+  const [formServices, setFormServices] = useState<UmkmServiceItem[]>([]);
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
   useEffect(() => {
@@ -65,10 +70,16 @@ export const AdminUmkmScreen: React.FC = () => {
     setFormCategory('F&B');
     setFormPriceTag('15K');
     setFormBannerText('');
-    setFormPhone('+62 812-');
-    setFormAddress('Kawasan Kampus President University');
+    setFormImageUrl('');
+    setFormWhatsapp('+62 812-');
+    setFormMapsUrl('');
+    setFormRating('4.8');
+    setFormAddress('Kawasan Kampus President University, Cikarang');
     setFormDistance('100 m dari Kampus');
     setFormOpeningHours('08:00 – 21:00 WIB');
+    setFormServices([
+      { name: 'Menu / Jasa Utama', price: 'Rp 15.000', description: 'Deskripsi menu / layanan' },
+    ]);
     setModalVisible(true);
   };
 
@@ -78,11 +89,38 @@ export const AdminUmkmScreen: React.FC = () => {
     setFormCategory(item.category);
     setFormPriceTag(item.priceTag);
     setFormBannerText(item.bannerText || '');
-    setFormPhone(item.phone || '');
+    setFormImageUrl(item.imageUrl || '');
+    setFormWhatsapp(item.whatsapp || item.phone || '');
+    setFormMapsUrl(item.mapsUrl || '');
+    setFormRating(item.rating ? String(item.rating) : '4.8');
     setFormAddress(item.address || '');
     setFormDistance(item.distance || '');
     setFormOpeningHours(item.openingHours || '');
+    setFormServices(
+      item.services && item.services.length > 0
+        ? JSON.parse(JSON.stringify(item.services))
+        : []
+    );
     setModalVisible(true);
+  };
+
+  const handleAddService = () => {
+    setFormServices((prev) => [
+      ...prev,
+      { name: '', price: '', description: '' },
+    ]);
+  };
+
+  const handleUpdateService = (index: number, field: keyof UmkmServiceItem, value: string) => {
+    setFormServices((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+
+  const handleRemoveService = (index: number) => {
+    setFormServices((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSave = async () => {
@@ -90,6 +128,18 @@ export const AdminUmkmScreen: React.FC = () => {
       Alert.alert('Peringatan', 'Nama UMKM wajib diisi.');
       return;
     }
+
+    const parsedRating = parseFloat(formRating) || 4.8;
+    const clampedRating = Math.min(5.0, Math.max(1.0, parsedRating));
+
+    // Filter valid services
+    const cleanedServices = formServices
+      .filter((s) => s.name.trim().length > 0)
+      .map((s) => ({
+        name: s.name.trim(),
+        price: s.price.trim() || 'Rp -',
+        description: s.description?.trim() || '',
+      }));
 
     setIsSaving(true);
     try {
@@ -99,11 +149,16 @@ export const AdminUmkmScreen: React.FC = () => {
           name: formName.trim(),
           category: formCategory,
           priceTag: formPriceTag.trim(),
+          rating: clampedRating,
           bannerText: formBannerText.trim() || formName.trim().toUpperCase(),
-          phone: formPhone.trim(),
+          imageUrl: formImageUrl.trim(),
+          whatsapp: formWhatsapp.trim(),
+          phone: formWhatsapp.trim(),
+          mapsUrl: formMapsUrl.trim(),
           address: formAddress.trim(),
           distance: formDistance.trim(),
           openingHours: formOpeningHours.trim(),
+          services: cleanedServices,
         });
       } else {
         // Create
@@ -111,11 +166,15 @@ export const AdminUmkmScreen: React.FC = () => {
           name: formName.trim(),
           category: formCategory,
           priceTag: formPriceTag.trim(),
+          rating: clampedRating,
           bannerText: formBannerText.trim() || formName.trim().toUpperCase(),
-          phone: formPhone.trim(),
+          imageUrl: formImageUrl.trim() || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop',
+          whatsapp: formWhatsapp.trim(),
+          mapsUrl: formMapsUrl.trim(),
           address: formAddress.trim(),
           distance: formDistance.trim(),
           openingHours: formOpeningHours.trim(),
+          services: cleanedServices,
         });
       }
       setModalVisible(false);
@@ -208,6 +267,10 @@ export const AdminUmkmScreen: React.FC = () => {
               <Text style={styles.priceTag}>{item.priceTag}</Text>
             </View>
 
+            {item.imageUrl ? (
+              <Image source={{ uri: item.imageUrl }} style={styles.cardThumbnail} resizeMode="cover" />
+            ) : null}
+
             <Text style={styles.cardName}>{item.name}</Text>
             <Text style={styles.cardAddress} numberOfLines={1}>
               {item.address || 'Kawasan Kampus'}
@@ -219,9 +282,15 @@ export const AdminUmkmScreen: React.FC = () => {
                 <Text style={styles.metaText}>{item.rating || 4.8}</Text>
               </View>
               <View style={[styles.metaItem, { marginLeft: 12 }]}>
-                <Ionicons name="call-outline" size={13} color={Colors.textSecondary} />
-                <Text style={styles.metaText}>{item.phone || '-'}</Text>
+                <Ionicons name="logo-whatsapp" size={13} color="#25D366" />
+                <Text style={styles.metaText}>{item.whatsapp || item.phone || '-'}</Text>
               </View>
+              {item.mapsUrl ? (
+                <View style={[styles.metaItem, { marginLeft: 12 }]}>
+                  <Ionicons name="location" size={13} color={Colors.accentYellow} />
+                  <Text style={styles.metaText}>Maps</Text>
+                </View>
+              ) : null}
             </View>
 
             {/* Action Buttons: Edit & Delete */}
@@ -292,38 +361,60 @@ export const AdminUmkmScreen: React.FC = () => {
                 ))}
               </View>
 
-              <Text style={styles.inputLabel}>Label Harga Rata-rata</Text>
+              {/* Thumbnail Image URL & Preview */}
+              <Text style={styles.inputLabel}>URL Gambar Thumbnail Lapak</Text>
               <TextInput
                 style={styles.modalInput}
-                placeholder="Contoh: 15K atau Rp 15.000"
+                placeholder="https://images.unsplash.com/... atau URL gambar web"
                 placeholderTextColor="rgba(255,255,255,0.3)"
-                value={formPriceTag}
-                onChangeText={setFormPriceTag}
+                value={formImageUrl}
+                onChangeText={setFormImageUrl}
+                autoCapitalize="none"
+              />
+              {formImageUrl && (formImageUrl.startsWith('http://') || formImageUrl.startsWith('https://')) ? (
+                <View style={styles.thumbnailPreviewBox}>
+                  <Image source={{ uri: formImageUrl }} style={styles.thumbnailPreviewImage} resizeMode="cover" />
+                  <Text style={styles.thumbnailPreviewLabel}>✓ Preview Gambar Thumbnail</Text>
+                </View>
+              ) : null}
+
+              {/* Rating Manual */}
+              <Text style={styles.inputLabel}>Rating UMKM (1.0 - 5.0) *</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Contoh: 4.8"
+                placeholderTextColor="rgba(255,255,255,0.3)"
+                value={formRating}
+                onChangeText={setFormRating}
+                keyboardType="decimal-pad"
               />
 
-              <Text style={styles.inputLabel}>Tagline / Banner</Text>
+              {/* WhatsApp (Nomor Telepon Biasa Dihapus) */}
+              <Text style={styles.inputLabel}>Nomor WhatsApp Lapak *</Text>
               <TextInput
                 style={styles.modalInput}
-                placeholder="Contoh: KOKOES DESSERT"
+                placeholder="Contoh: 08123456789 atau +62 812-3456-7890"
                 placeholderTextColor="rgba(255,255,255,0.3)"
-                value={formBannerText}
-                onChangeText={setFormBannerText}
-              />
-
-              <Text style={styles.inputLabel}>Nomor WhatsApp / Telepon</Text>
-              <TextInput
-                style={styles.modalInput}
-                placeholder="+62 812-3456-7890"
-                placeholderTextColor="rgba(255,255,255,0.3)"
-                value={formPhone}
-                onChangeText={setFormPhone}
+                value={formWhatsapp}
+                onChangeText={setFormWhatsapp}
                 keyboardType="phone-pad"
               />
 
-              <Text style={styles.inputLabel}>Alamat Lengkap</Text>
+              {/* Link / Koordinat Google Maps */}
+              <Text style={styles.inputLabel}>Link / Koordinat Google Maps</Text>
               <TextInput
                 style={styles.modalInput}
-                placeholder="Jl. Kaliurang KM 5 / Kantin Mahasiswa"
+                placeholder="Contoh: https://maps.app.goo.gl/... atau -6.2891, 107.1692"
+                placeholderTextColor="rgba(255,255,255,0.3)"
+                value={formMapsUrl}
+                onChangeText={setFormMapsUrl}
+                autoCapitalize="none"
+              />
+
+              <Text style={styles.inputLabel}>Alamat Lengkap / Lokasi Lapak</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Jl. Kaliurang KM 5 / Kantin Mahasiswa Blok B"
                 placeholderTextColor="rgba(255,255,255,0.3)"
                 value={formAddress}
                 onChangeText={setFormAddress}
@@ -338,7 +429,16 @@ export const AdminUmkmScreen: React.FC = () => {
                 onChangeText={setFormDistance}
               />
 
-              <Text style={styles.inputLabel}>Jam Buka</Text>
+              <Text style={styles.inputLabel}>Label Harga Rata-rata (Price Tag)</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Contoh: 15K atau Rp 15.000"
+                placeholderTextColor="rgba(255,255,255,0.3)"
+                value={formPriceTag}
+                onChangeText={setFormPriceTag}
+              />
+
+              <Text style={styles.inputLabel}>Jam Buka / Operasional</Text>
               <TextInput
                 style={styles.modalInput}
                 placeholder="09:00 – 21:00 WIB"
@@ -346,6 +446,70 @@ export const AdminUmkmScreen: React.FC = () => {
                 value={formOpeningHours}
                 onChangeText={setFormOpeningHours}
               />
+
+              <Text style={styles.inputLabel}>Tagline / Banner Card</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Contoh: BAKSO FAVORIT KAMPUS"
+                placeholderTextColor="rgba(255,255,255,0.3)"
+                value={formBannerText}
+                onChangeText={setFormBannerText}
+              />
+
+              {/* Dynamic Menu & Services Section */}
+              <View style={styles.servicesHeaderContainer}>
+                <View>
+                  <Text style={styles.servicesSectionTitle}>Daftar Menu & Jasa yang Ditawarkan</Text>
+                  <Text style={styles.servicesSectionSub}>
+                    {formServices.length} item terdaftar
+                  </Text>
+                </View>
+                <Pressable style={styles.addServiceButton} onPress={handleAddService}>
+                  <Ionicons name="add" size={14} color="#000000" />
+                  <Text style={styles.addServiceButtonText}>Tambah Item</Text>
+                </Pressable>
+              </View>
+
+              {formServices.map((service, idx) => (
+                <View key={`svc-${idx}`} style={styles.serviceItemBox}>
+                  <View style={styles.serviceItemHeader}>
+                    <Text style={styles.serviceItemBadge}>Menu #{idx + 1}</Text>
+                    <Pressable
+                      style={styles.deleteServiceBtn}
+                      onPress={() => handleRemoveService(idx)}
+                    >
+                      <Ionicons name="trash-outline" size={16} color="#FF6B6B" />
+                    </Pressable>
+                  </View>
+
+                  <Text style={styles.subInputLabel}>Nama Menu / Jasa *</Text>
+                  <TextInput
+                    style={styles.modalSubInput}
+                    placeholder="Contoh: Ayam Geprek Sambal Bawang"
+                    placeholderTextColor="rgba(255,255,255,0.3)"
+                    value={service.name}
+                    onChangeText={(val) => handleUpdateService(idx, 'name', val)}
+                  />
+
+                  <Text style={styles.subInputLabel}>Harga *</Text>
+                  <TextInput
+                    style={styles.modalSubInput}
+                    placeholder="Contoh: Rp 15.000 atau 15K"
+                    placeholderTextColor="rgba(255,255,255,0.3)"
+                    value={service.price}
+                    onChangeText={(val) => handleUpdateService(idx, 'price', val)}
+                  />
+
+                  <Text style={styles.subInputLabel}>Deskripsi Singkat (Opsional)</Text>
+                  <TextInput
+                    style={styles.modalSubInput}
+                    placeholder="Contoh: Nasi hangat + ayam krispi + sambal pedas"
+                    placeholderTextColor="rgba(255,255,255,0.3)"
+                    value={service.description || ''}
+                    onChangeText={(val) => handleUpdateService(idx, 'description', val)}
+                  />
+                </View>
+              ))}
 
               <Pressable
                 style={[styles.saveButton, isSaving && { opacity: 0.6 }]}
@@ -481,6 +645,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '900',
     color: Colors.accentYellow,
+  },
+  cardThumbnail: {
+    width: '100%',
+    height: 120,
+    borderRadius: 10,
+    marginBottom: 8,
+    backgroundColor: '#0F1626',
   },
   cardName: {
     fontSize: 16,
@@ -630,5 +801,98 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontSize: 14,
     fontWeight: '800',
+  },
+  thumbnailPreviewBox: {
+    marginTop: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#24324D',
+    backgroundColor: '#070A13',
+  },
+  thumbnailPreviewImage: {
+    width: '100%',
+    height: 120,
+  },
+  thumbnailPreviewLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#55A4B2',
+    padding: 6,
+    textAlign: 'center',
+    backgroundColor: '#0F1626',
+  },
+  servicesHeaderContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 18,
+    marginBottom: 10,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#1A2338',
+  },
+  servicesSectionTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: Colors.textWhite,
+  },
+  servicesSectionSub: {
+    fontSize: 10,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  addServiceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.accentYellow,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+  addServiceButtonText: {
+    color: '#000000',
+    fontSize: 11,
+    fontWeight: '800',
+    marginLeft: 3,
+  },
+  serviceItemBox: {
+    backgroundColor: '#070A13',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#1D2A42',
+    padding: 12,
+    marginBottom: 10,
+  },
+  serviceItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  serviceItemBadge: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: Colors.accentYellow,
+  },
+  deleteServiceBtn: {
+    padding: 4,
+  },
+  subInputLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#8FA7D8',
+    marginTop: 6,
+    marginBottom: 3,
+  },
+  modalSubInput: {
+    backgroundColor: '#0F1626',
+    borderWidth: 1,
+    borderColor: '#24324D',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    height: 38,
+    color: Colors.textWhite,
+    fontSize: 12,
   },
 });

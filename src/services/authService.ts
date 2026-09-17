@@ -26,7 +26,7 @@ export const DEMO_STUDENT: UserProfile = {
   role: 'user',
 };
 
-class AuthService {
+export class AuthService {
   private static instance: AuthService;
 
   public static getInstance(): AuthService {
@@ -44,46 +44,13 @@ class AuthService {
     const rawEmail = (email || '').trim().toLowerCase();
     const rawPass = (password || '').trim();
 
-    // Shortcuts: 'admin' -> 'admin@campuslife.com', 'mahasiswa'/'student' -> 'mahasiswa@student.president.ac.id'
-    let cleanEmail = rawEmail;
-    if (rawEmail === 'admin') cleanEmail = 'admin@campuslife.com';
-    if (rawEmail === 'mahasiswa' || rawEmail === 'student') cleanEmail = 'mahasiswa@student.president.ac.id';
-
-    // 1. Admin credentials handling
-    const isAdminEmail = cleanEmail === 'admin@campuslife.com' || cleanEmail.startsWith('admin@');
-    if (isAdminEmail) {
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: 'admin@campuslife.com',
-          password: rawPass || 'AdminPassword123!',
-        });
-        if (data?.user && !error) {
-          return await this.fetchProfile(data.user.id, data.user.email || 'admin@campuslife.com');
-        }
-      } catch {
-        // Fall through to DEMO_ADMIN
-      }
-      return DEMO_ADMIN;
+    if (!rawEmail || !rawPass) {
+      throw new Error('Email dan kata sandi wajib diisi.');
     }
 
-    // 2. Default student credentials handling
-    const isDefaultStudent = cleanEmail === 'mahasiswa@student.president.ac.id';
-    if (isDefaultStudent) {
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: 'mahasiswa@student.president.ac.id',
-          password: rawPass || 'StudentPassword123!',
-        });
-        if (data?.user && !error) {
-          return await this.fetchProfile(data.user.id, data.user.email || 'mahasiswa@student.president.ac.id');
-        }
-      } catch {
-        // Fall through to DEMO_STUDENT
-      }
-      return DEMO_STUDENT;
-    }
+    const cleanEmail = rawEmail;
 
-    // 3. Regular login with Supabase remote Auth (e.g. for student registered accounts)
+    // Secure authentication via Supabase Auth
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
@@ -94,26 +61,25 @@ class AuthService {
         return await this.fetchProfile(data.user.id, data.user.email || cleanEmail);
       }
 
-      // If Supabase returns an error (e.g., "Email not confirmed"), allow student domain entry
-      if (cleanEmail.endsWith('@student.president.ac.id') && rawPass.length >= 6) {
-        return {
-          id: `student_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
-          email: cleanEmail,
-          fullName: cleanEmail.split('@')[0].replace('.', ' ').toUpperCase(),
-          role: 'user',
-        };
+      if (error) {
+        const isUnconfirmed = error.message.toLowerCase().includes('email not confirmed');
+        if (isUnconfirmed && cleanEmail.endsWith('@student.president.ac.id') && rawPass.length >= 6) {
+          return {
+            id: `student_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
+            email: cleanEmail,
+            fullName: cleanEmail.split('@')[0].replace('.', ' ').toUpperCase(),
+            role: 'user',
+          };
+        }
+        throw new Error(
+          error.message === 'Invalid login credentials'
+            ? 'Email atau kata sandi yang Anda masukkan salah.'
+            : error.message
+        );
       }
 
-      throw new Error(error?.message || 'Gagal masuk. Periksa kembali email dan kata sandi Anda.');
+      throw new Error('Gagal masuk. Periksa kembali email dan kata sandi Anda.');
     } catch (err: any) {
-      if (cleanEmail.endsWith('@student.president.ac.id') && rawPass.length >= 6) {
-        return {
-          id: `student_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
-          email: cleanEmail,
-          fullName: cleanEmail.split('@')[0].replace('.', ' ').toUpperCase(),
-          role: 'user',
-        };
-      }
       throw err;
     }
   }

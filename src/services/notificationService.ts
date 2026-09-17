@@ -69,18 +69,29 @@ class NotificationService {
       try {
         // Configure foreground notification presentation behavior
         Notifications.setNotificationHandler({
-          handleNotification: async () => ({
-            shouldShowAlert: true,
-            shouldPlaySound: true,
-            shouldSetBadge: true,
-          }),
+          handleNotification: async (notification) => {
+            const data = notification?.request?.content?.data as Record<string, any> | undefined;
+            const trigger = notification?.request?.trigger as any;
+            const channelId = trigger?.channelId;
+            const isSilent =
+              channelId === 'silent_channel' ||
+              channelId === 'dnd_channel' ||
+              data?.mode === 'silent' ||
+              data?.mode === 'dnd';
+
+            return {
+              shouldShowAlert: true,
+              shouldPlaySound: !isSilent,
+              shouldSetBadge: true,
+            };
+          },
         });
 
-        // Configure high-importance channels for Android lockscreen & drawer
+        // Configure high-importance channels for Android lockscreen, drawer & pop-up
         if (Platform.OS === 'android') {
           // 1. Critical Class Reminders Channel (Pierces Lockscreen & Wakes Screen)
           await Notifications.setNotificationChannelAsync('class_reminders_channel', {
-            name: 'Pengingat Kuliah & Ujian (Layar Kunci)',
+            name: 'Pengingat Kuliah & Ujian (Prioritas Tinggi)',
             description: 'Pengingat kelas prioritas tinggi yang menembus layar kunci dan menyalakan layar.',
             importance: Notifications.AndroidImportance.MAX,
             lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
@@ -101,12 +112,58 @@ class NotificationService {
             showBadge: true,
           });
 
-          // 2. General Notification Channel
+          // 2. Mode Biasa Channel: Suara + Getar + Pop-up
+          await Notifications.setNotificationChannelAsync('normal_channel', {
+            name: 'Mode Biasa (Suara + Getar + Pop-up)',
+            description: 'Notifikasi dengan nada dering, getaran, dan pop-up banner di layar',
+            importance: Notifications.AndroidImportance.MAX,
+            lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+            bypassDnd: true,
+            sound: 'default',
+            vibrationPattern: [0, 500, 200, 500, 200, 500],
+            lightColor: '#F59E0B',
+            enableLights: true,
+            enableVibrate: true,
+            showBadge: true,
+          });
+
+          // 3. Mode Silent Channel: Pop-up + Getar (Tanpa Suara)
+          await Notifications.setNotificationChannelAsync('silent_channel', {
+            name: 'Mode Silent (Pop-up + Getar)',
+            description: 'Notifikasi hening tanpa suara tapi tetap memunculkan getaran dan pop-up banner di layar',
+            importance: Notifications.AndroidImportance.MAX,
+            lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+            bypassDnd: true,
+            sound: null,
+            vibrationPattern: [0, 500, 200, 500],
+            lightColor: '#3B82F6',
+            enableLights: true,
+            enableVibrate: true,
+            showBadge: true,
+          });
+
+          // 4. Mode DND Channel: Pop-up Saja (Tembus DND, Tanpa Suara, Tanpa Getar)
+          await Notifications.setNotificationChannelAsync('dnd_channel', {
+            name: 'Mode DND (Pop-up Banner Saja)',
+            description: 'Notifikasi khusus tembus Do Not Disturb (DND) berupa pop-up banner visual di layar',
+            importance: Notifications.AndroidImportance.MAX,
+            lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+            bypassDnd: true,
+            sound: null,
+            vibrationPattern: null,
+            lightColor: '#A855F7',
+            enableLights: true,
+            enableVibrate: false,
+            showBadge: true,
+          });
+
+          // 5. General Notification Channel
           await Notifications.setNotificationChannelAsync('default', {
             name: 'Notifikasi Umum Campus Life',
             description: 'Pengumuman, aktivitas keuangan, dan status kampus',
             importance: Notifications.AndroidImportance.MAX,
             lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+            bypassDnd: true,
             sound: 'default',
             vibrationPattern: [0, 250, 250, 250],
             lightColor: '#3B82F6',
@@ -115,12 +172,13 @@ class NotificationService {
             showBadge: true,
           });
 
-          // 3. Fallback Channel (used when trigger is null on Android)
+          // 6. Fallback Channel
           await Notifications.setNotificationChannelAsync('expo_notifications_fallback_notification_channel', {
             name: 'Campus Life Notifikasi Layar Kunci',
             description: 'Pengingat prioritas tinggi di layar kunci dan bilah status',
             importance: Notifications.AndroidImportance.MAX,
             lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+            bypassDnd: true,
             sound: 'default',
             vibrationPattern: [0, 500, 200, 500, 200, 500],
             lightColor: '#F59E0B',
@@ -231,25 +289,43 @@ class NotificationService {
     } else {
       // 3. Mobile (iOS & Android)
       try {
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title,
-            body,
-            data: payload.data,
-            sound: payload.sound ?? true,
-            priority: Notifications.AndroidNotificationPriority.MAX,
-            vibrate: [0, 500, 200, 500, 200, 500],
-            badge: 1,
-            color: '#F59E0B',
-            // iOS 15+ timeSensitive breaks through Focus mode / Do Not Disturb
-            ...(Platform.OS === 'ios' ? { interruptionLevel: 'timeSensitive' as const } : {}),
-          },
-          trigger: null, // deliver immediately to system notification drawer & lockscreen
-        });
+        const isMuted = targetChannel === 'silent_channel' || targetChannel === 'dnd_channel';
+        const isVibrateDisabled = targetChannel === 'dnd_channel';
 
-        if (payload.isUrgent) {
-          await this.wakeDeviceScreen(5000);
+        const notificationContent = {
+          title,
+          body,
+          data: payload.data,
+          sound: payload.sound !== undefined ? payload.sound : (isMuted ? false : true),
+          priority: Notifications.AndroidNotificationPriority.MAX,
+          vibrate: isVibrateDisabled ? undefined : [0, 500, 200, 500, 200, 500],
+          badge: 1,
+          color: '#F59E0B',
+          // iOS 15+ timeSensitive breaks through Focus mode / Do Not Disturb
+          ...(Platform.OS === 'ios' ? { interruptionLevel: 'timeSensitive' as const } : {}),
+        };
+
+        try {
+          // In Expo Android, a trigger with only { channelId } without seconds/date creates
+          // an unschedulable ChannelAwareTrigger. Using { seconds: 1, channelId } creates
+          // a compliant SchedulableNotificationTrigger that delivers in 1s.
+          await Notifications.scheduleNotificationAsync({
+            content: notificationContent,
+            trigger:
+              Platform.OS === 'android' && targetChannel
+                ? ({ seconds: 1, channelId: targetChannel } as any)
+                : null,
+          });
+        } catch (schedErr) {
+          // Fallback to null trigger (immediate delivery to default/fallback channel)
+          await Notifications.scheduleNotificationAsync({
+            content: notificationContent,
+            trigger: null,
+          });
         }
+
+        // Always wake device screen so user sees pop-up immediately
+        await this.wakeDeviceScreen(6000);
         return true;
       } catch (err) {
         console.warn('Failed to dispatch mobile notification:', err);
@@ -399,15 +475,38 @@ class NotificationService {
 
   /**
    * Sends a high-priority lock screen notification after X seconds delay.
-   * Allows user to lock their phone screen (press power button) and verify the notification pierces the lock screen!
+   * Supports:
+   * - 'normal': Suara + Getar + Pop-up Banner
+   * - 'silent': Pop-up Banner + Getar (Hening)
+   * - 'dnd': Pop-up Banner Saja (Tembus DND)
    */
-  async sendDelayedLockscreenTest(seconds: number = 5): Promise<boolean> {
+  async sendDelayedLockscreenTest(
+    seconds: number = 5,
+    mode: 'normal' | 'silent' | 'dnd' = 'normal'
+  ): Promise<boolean> {
     if (!this.isInitialized) {
       await this.init();
     }
 
-    const title = '🚨 PENGINGAT KULIAH DARURAT (Layar Terkunci)';
-    const body = 'Kelas Pemrograman Mobile di Ruang Lab B103 dimulai 15 menit lagi! Layar HP Anda berhasil menyala di Lock Screen.';
+    const channelMap: Record<string, string> = {
+      normal: 'normal_channel',
+      silent: 'silent_channel',
+      dnd: 'dnd_channel',
+    };
+    const targetChannel = channelMap[mode] || 'class_reminders_channel';
+
+    const titleMap: Record<string, string> = {
+      normal: '🔔 PENGINGAT KULIAH (Mode Biasa: Suara + Getar + Pop-up)',
+      silent: '📳 PENGINGAT KULIAH (Mode Silent: Pop-up + Getar)',
+      dnd: '🌙 PENGINGAT KULIAH (Mode DND: Pop-up Saja)',
+    };
+    const title = titleMap[mode] || '🔔 PENGINGAT KULIAH (Layar Kunci)';
+    const body =
+      mode === 'dnd'
+        ? 'Kelas Informatics di Lab B103 dimulai 15 menit lagi! [Mode DND: Pop-up visual muncul tanpa suara].'
+        : mode === 'silent'
+        ? 'Kelas Informatics di Lab B103 dimulai 15 menit lagi! [Mode Silent: Getar + Pop-up visual].'
+        : 'Kelas Informatics di Lab B103 dimulai 15 menit lagi! [Mode Biasa: Suara + Getar + Pop-up].';
 
     if (Platform.OS === 'web') {
       if (typeof window !== 'undefined') {
@@ -415,7 +514,7 @@ class NotificationService {
           this.sendNotification({
             title,
             body,
-            channelId: 'class_reminders_channel',
+            channelId: targetChannel,
             isUrgent: true,
           });
         }, seconds * 1000);
@@ -428,30 +527,38 @@ class NotificationService {
     }
 
     try {
+      const isMuted = mode === 'silent' || mode === 'dnd';
+      const isVibrateDisabled = mode === 'dnd';
+
       await Notifications.scheduleNotificationAsync({
         content: {
           title,
           body,
-          data: { type: 'lockscreen_test', testTime: Date.now() },
-          sound: true,
+          data: { type: 'lockscreen_test', mode, testTime: Date.now() },
+          sound: !isMuted,
           priority: Notifications.AndroidNotificationPriority.MAX,
-          vibrate: [0, 500, 200, 500, 200, 500],
+          vibrate: isVibrateDisabled ? undefined : [0, 500, 200, 500, 200, 500],
           badge: 1,
           color: '#F59E0B',
           ...(Platform.OS === 'ios' ? { interruptionLevel: 'timeSensitive' as const } : {}),
         },
         trigger: {
           seconds,
-          channelId: 'class_reminders_channel',
-        },
+          channelId: targetChannel,
+        } as any,
       });
 
+      // Schedule native hardware screen wake up
       if (Platform.OS === 'android') {
-        const timer = setTimeout(() => {
-          this.wakeDeviceScreen(6000);
-        }, seconds * 1000);
-        if (typeof timer === 'object' && typeof timer.unref === 'function') {
-          timer.unref();
+        if (WakeScreenModule?.scheduleWakeScreen) {
+          await WakeScreenModule.scheduleWakeScreen(seconds);
+        } else {
+          const timer = setTimeout(() => {
+            this.wakeDeviceScreen(6000);
+          }, seconds * 1000);
+          if (typeof timer === 'object' && typeof timer.unref === 'function') {
+            timer.unref();
+          }
         }
       }
 

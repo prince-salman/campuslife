@@ -1,4 +1,4 @@
-import { scheduleService } from '../src/services/scheduleService';
+import { scheduleService, ScheduleService } from '../src/services/scheduleService';
 
 describe('ScheduleService Unit Tests', () => {
   test('should return initial week schedule with 7 days', () => {
@@ -92,5 +92,32 @@ describe('ScheduleService Unit Tests', () => {
     expect(listener).toHaveBeenCalled();
 
     unsub();
+  });
+
+  test('should correctly calculate end time and time range automatically', () => {
+    // 08:00 AM + 2 Jam -> 10:00 WIB
+    const res1 = ScheduleService.calculateEndTime('08', 'am', '2 Jam');
+    expect(res1.endTime).toBe('10:00 WIB');
+    expect(res1.timeRange).toBe('08:00 WIB - 10:00 WIB');
+
+    // 01:30 PM + 2.5 Jam -> 16:00 WIB
+    const res2 = ScheduleService.calculateEndTime('01:30', 'pm', '2.5 Jam');
+    expect(res2.endTime).toBe('16:00 WIB');
+    expect(res2.timeRange).toBe('13:30 WIB - 16:00 WIB');
+
+    // 11:00 AM + 90 Menit -> 12:30 WIB
+    const res3 = ScheduleService.calculateEndTime('11:00', 'am', '90 Menit');
+    expect(res3.endTime).toBe('12:30 WIB');
+  });
+
+  test('should reset calendar to current device date and month', () => {
+    scheduleService.resetToCurrentDeviceDate();
+    const monthYear = scheduleService.getSelectedMonthYear();
+    const currentYear = new Date().getFullYear();
+    expect(monthYear).toContain(String(currentYear));
+
+    const selectedIndex = scheduleService.getSelectedDayIndex();
+    expect(selectedIndex).toBeGreaterThanOrEqual(0);
+    expect(selectedIndex).toBeLessThanOrEqual(6);
   });
 });

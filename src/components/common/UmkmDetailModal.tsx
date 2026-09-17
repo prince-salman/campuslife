@@ -68,39 +68,15 @@ export const UmkmDetailModal: React.FC<UmkmDetailModalProps> = ({
   const categoryIcon = getCategoryIcon(item.category);
   const servicesTitle = getServicesSectionTitle(item.category);
 
-  // Phone call action
-  const handleCall = async () => {
-    if (!item.phone) {
-      Alert.alert('Info', 'Nomor telepon tidak tersedia.');
-      return;
-    }
-    const cleanNumber = item.phone.replace(/[^0-9+]/g, '');
-    const url = `tel:${cleanNumber}`;
-    try {
-      if (Platform.OS === 'web') {
-        if (typeof window !== 'undefined') {
-          window.open(url, '_self');
-        }
-        return;
-      }
-      const canOpen = await Linking.canOpenURL(url);
-      if (canOpen) {
-        await Linking.openURL(url);
-      } else {
-        Alert.alert('Kontak Telepon', `Nomor: ${item.phone}`);
-      }
-    } catch {
-      Alert.alert('Kontak Telepon', `Nomor: ${item.phone}`);
-    }
-  };
+  const whatsappNumber = item.whatsapp || item.phone;
 
   // WhatsApp direct action
   const handleWhatsApp = async () => {
-    if (!item.phone) {
+    if (!whatsappNumber) {
       Alert.alert('Info', 'Kontak WhatsApp tidak tersedia.');
       return;
     }
-    let clean = item.phone.replace(/[^0-9]/g, '');
+    let clean = whatsappNumber.replace(/[^0-9]/g, '');
     if (clean.startsWith('0')) {
       clean = '62' + clean.slice(1);
     }
@@ -118,14 +94,21 @@ export const UmkmDetailModal: React.FC<UmkmDetailModalProps> = ({
       }
       await Linking.openURL(waUrl);
     } catch {
-      Alert.alert('Kontak WhatsApp', `Nomor WA: ${item.phone}`);
+      Alert.alert('Kontak WhatsApp', `Nomor WA: ${whatsappNumber}`);
     }
   };
 
-  // Google Maps navigation action
+  // Google Maps navigation action (supports direct URL or coordinates)
   const handleOpenMaps = async () => {
-    const query = encodeURIComponent(`${item.name} ${item.address || 'Kampus'}`);
-    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
+    let mapsUrl = '';
+    if (item.mapsUrl && (item.mapsUrl.startsWith('http://') || item.mapsUrl.startsWith('https://'))) {
+      mapsUrl = item.mapsUrl;
+    } else if (item.mapsUrl && item.mapsUrl.trim().length > 0) {
+      mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.mapsUrl.trim())}`;
+    } else {
+      const query = encodeURIComponent(`${item.name} ${item.address || 'Kampus'}`);
+      mapsUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
+    }
 
     try {
       if (Platform.OS === 'web') {
@@ -241,35 +224,24 @@ export const UmkmDetailModal: React.FC<UmkmDetailModalProps> = ({
 
               {/* Quick Action Buttons */}
               <View style={styles.actionButtonsRow}>
-                {item.phone ? (
-                  <>
-                    <TouchableOpacity
-                      style={[styles.actionBtn, styles.waBtn]}
-                      activeOpacity={0.82}
-                      onPress={handleWhatsApp}
-                    >
-                      <Ionicons name="logo-whatsapp" size={18} color="#FFFFFF" />
-                      <Text style={styles.waBtnText}>WhatsApp</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.actionBtn, styles.callBtn]}
-                      activeOpacity={0.82}
-                      onPress={handleCall}
-                    >
-                      <Ionicons name="call" size={18} color={Colors.textWhite} />
-                      <Text style={styles.callBtnText}>Telepon</Text>
-                    </TouchableOpacity>
-                  </>
+                {whatsappNumber ? (
+                  <TouchableOpacity
+                    style={[styles.actionBtn, styles.waBtn, { flex: 1 }]}
+                    activeOpacity={0.82}
+                    onPress={handleWhatsApp}
+                  >
+                    <Ionicons name="logo-whatsapp" size={18} color="#FFFFFF" />
+                    <Text style={styles.waBtnText}>Chat WhatsApp</Text>
+                  </TouchableOpacity>
                 ) : null}
 
                 <TouchableOpacity
-                  style={[styles.actionBtn, styles.mapsBtn]}
+                  style={[styles.actionBtn, styles.mapsBtn, { flex: 1 }]}
                   activeOpacity={0.82}
                   onPress={handleOpenMaps}
                 >
                   <Ionicons name="navigate" size={18} color={Colors.textDark} />
-                  <Text style={styles.mapsBtnText}>Maps</Text>
+                  <Text style={styles.mapsBtnText}>Buka Maps</Text>
                 </TouchableOpacity>
               </View>
 
@@ -293,12 +265,12 @@ export const UmkmDetailModal: React.FC<UmkmDetailModalProps> = ({
                 </View>
               </TouchableOpacity>
 
-              {/* Phone Information Card if available */}
-              {item.phone ? (
+              {/* WhatsApp Information Card if available */}
+              {whatsappNumber ? (
                 <View style={styles.phoneInfoCard}>
-                  <Ionicons name="call-outline" size={18} color="#8FA7D8" />
+                  <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
                   <Text style={styles.phoneInfoText}>
-                    Kontak: <Text style={styles.phoneHighlight}>{item.phone}</Text>
+                    WhatsApp: <Text style={styles.phoneHighlight}>{whatsappNumber}</Text>
                   </Text>
                 </View>
               ) : null}

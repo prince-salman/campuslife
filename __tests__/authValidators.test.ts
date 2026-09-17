@@ -67,4 +67,33 @@ describe('authValidators', () => {
       expect(validateFullName('D').isValid).toBe(false);
     });
   });
+
+  describe('Security Check & Access Control', () => {
+    it('should enforce student domain strictly and prevent spoofing', () => {
+      const spoofAttempts = [
+        'student@president.ac.id.attacker.com',
+        'admin@president.ac.id',
+        'evil@student.president.ac.id.phishing.net',
+        'derrian@president.edu',
+      ];
+      spoofAttempts.forEach((email) => {
+        expect(validateStudentEmail(email).isValid).toBe(false);
+      });
+    });
+
+    it('should prevent password length bypass attacks', () => {
+      expect(validatePassword('12345').isValid).toBe(false);
+      expect(validatePassword('     ').isValid).toBe(false);
+      expect(validatePassword('abc').isValid).toBe(false);
+      expect(validatePassword('validpass123').isValid).toBe(true);
+    });
+
+    it('should reject empty or invalid credentials', async () => {
+      const { AuthService } = require('../src/services/authService');
+      const auth = AuthService.getInstance();
+
+      await expect(auth.login('', '')).rejects.toThrow('Email dan kata sandi wajib diisi.');
+      await expect(auth.login('admin@campuslife.com', '')).rejects.toThrow('Email dan kata sandi wajib diisi.');
+    });
+  });
 });

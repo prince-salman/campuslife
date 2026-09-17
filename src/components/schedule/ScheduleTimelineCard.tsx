@@ -14,16 +14,18 @@ export const ScheduleTimelineCard: React.FC<ScheduleTimelineCardProps> = ({
   item,
   onMorePressed,
 }) => {
-  const [hasReminder, setHasReminder] = useState(false);
+  const [hasReminder, setHasReminder] = useState(
+    item.reminderMinutes !== undefined ? item.reminderMinutes > 0 : false
+  );
 
   const handleReminder = async () => {
-    setHasReminder(!hasReminder);
-    if (!hasReminder) {
-      const timeStr = `${item.time}:00 ${item.timePeriod}`;
-      // Immediate lockscreen notification
+    const nextState = !hasReminder;
+    setHasReminder(nextState);
+    if (nextState) {
+      const timeStr = item.timeRange || `${item.time}:00 ${item.timePeriod}`;
+      const minutes = item.reminderMinutes && item.reminderMinutes > 0 ? item.reminderMinutes : 15;
       await notificationService.sendClassReminder(item.title, item.room, timeStr);
-      // Scheduled 15-minute prior lockscreen alert
-      await notificationService.scheduleUpcomingClassReminder(item.title, item.room, timeStr, 15);
+      await notificationService.scheduleUpcomingClassReminder(item.title, item.room, timeStr, minutes);
     }
   };
 
@@ -71,12 +73,14 @@ export const ScheduleTimelineCard: React.FC<ScheduleTimelineCardProps> = ({
           <View style={styles.durationRow}>
             <View style={styles.durationLeft}>
               <Ionicons name="time" size={14} color={Colors.textWhite} />
-              <Text style={styles.durationText}>{item.duration}</Text>
+              <Text style={styles.durationText}>{item.timeRange || item.duration}</Text>
             </View>
             {hasReminder && (
               <View style={styles.reminderActiveTag}>
                 <Ionicons name="alarm" size={12} color={Colors.accentYellow} />
-                <Text style={styles.reminderActiveText}>Alarm H-15m Aktif</Text>
+                <Text style={styles.reminderActiveText}>
+                  Pengingat H-{item.reminderMinutes && item.reminderMinutes > 0 ? item.reminderMinutes : 15}m Aktif
+                </Text>
               </View>
             )}
           </View>

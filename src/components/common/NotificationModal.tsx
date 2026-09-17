@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
-import { notificationService } from '../../services/notificationService';
 
 interface NotificationModalProps {
   visible: boolean;
@@ -31,39 +30,6 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
   visible,
   onClose,
 }) => {
-  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
-  const [isSending, setIsSending] = useState<boolean>(false);
-  const [lockCountdown, setLockCountdown] = useState<number | null>(null);
-  const [showGuide, setShowGuide] = useState<boolean>(false);
-
-  // Countdown timer effect for Lock Screen testing
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (lockCountdown !== null && lockCountdown > 0) {
-      timer = setTimeout(() => {
-        setLockCountdown(lockCountdown - 1);
-      }, 1000);
-    } else if (lockCountdown === 0) {
-      setLockCountdown(null);
-      setFeedbackMessage('Notifikasi layar kunci telah dikirim! Periksa layar HP Anda.');
-      setTimeout(() => setFeedbackMessage(null), 5000);
-    }
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [lockCountdown]);
-
-  const platformLabel =
-    Platform.OS === 'ios'
-      ? 'iOS Lock Screen & Notification Center'
-      : Platform.OS === 'android'
-      ? 'Android Lock Screen & Notification Drawer'
-      : Platform.OS === 'web'
-      ? typeof window !== 'undefined' && window.electronAPI?.isElectron
-        ? 'Desktop Native Notification Center'
-        : 'Browser / Desktop Action Center'
-      : 'Device Notification Center';
-
   const notifications: NotificationItem[] = [
     {
       id: '1',
@@ -100,47 +66,6 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
     },
   ];
 
-  const triggerNotification = async (title: string, body: string, isUrgent = false) => {
-    setIsSending(true);
-    setFeedbackMessage(null);
-    try {
-      const success = await notificationService.sendNotification({
-        title,
-        body,
-        isUrgent,
-        channelId: isUrgent ? 'class_reminders_channel' : 'default',
-        data: { timestamp: Date.now() },
-      });
-
-      if (success) {
-        setFeedbackMessage(`Notifikasi terkirim ke ${platformLabel}!`);
-      } else {
-        setFeedbackMessage('Izin notifikasi belum aktif atau diblokir sistem HP.');
-      }
-    } catch (err) {
-      setFeedbackMessage('Gagal mengirim notifikasi.');
-    } finally {
-      setIsSending(false);
-      setTimeout(() => {
-        setFeedbackMessage(null);
-      }, 4000);
-    }
-  };
-
-  const handleSendInstantTest = () => {
-    triggerNotification(
-      'CampusLife Notification Center 🔔',
-      'Halo Salman! Notifikasi ini berhasil muncul dengan prioritas tinggi di layar HP Anda.',
-      true
-    );
-  };
-
-  const handleLockscreenTest = async () => {
-    setLockCountdown(5);
-    setFeedbackMessage('⏰ Hitung mundur 5 detik! Segera tekan tombol POWER untuk mengunci layar HP.');
-    await notificationService.sendDelayedLockscreenTest(5);
-  };
-
   return (
     <Modal
       visible={visible}
@@ -161,127 +86,24 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
             </Pressable>
           </View>
 
-          {/* Device Platform & Lockscreen Status Badge */}
-          <View style={styles.platformBadge}>
-            <View style={styles.activeDot} />
-            <View style={styles.badgeTextCol}>
-              <Text style={styles.platformBadgeText}>
-                Target: <Text style={styles.platformHighlight}>{platformLabel}</Text>
-              </Text>
-              <Text style={styles.lockscreenStatusText}>
-                Prioritas Maksimal • Tembus Lock Screen Aktif
+          {/* Mode Notifikasi Otomatis (Mengikuti Sistem HP) */}
+          <View style={styles.deviceModeCard}>
+            <View style={styles.deviceModeIconBox}>
+              <Ionicons name="phone-portrait-outline" size={18} color={Colors.accentYellow} />
+            </View>
+            <View style={{ flex: 1, marginLeft: 10 }}>
+              <Text style={styles.deviceModeTitle}>Sinkronisasi Pengaturan HP</Text>
+              <Text style={styles.deviceModeSub}>
+                Notifikasi otomatis mengikuti profil suara, getar, atau Jangan Ganggu (DND) perangkat Anda.
               </Text>
             </View>
           </View>
 
-          {/* Lock Screen Test Button (Urgent Breakthrough Feature) */}
-          <Pressable
-            style={[
-              styles.lockTestButton,
-              lockCountdown !== null && styles.lockTestButtonActive,
-            ]}
-            onPress={handleLockscreenTest}
-            disabled={lockCountdown !== null}
-          >
-            <Ionicons
-              name={lockCountdown !== null ? 'hourglass' : 'lock-closed'}
-              size={18}
-              color="#000000"
-            />
-            <Text style={styles.lockTestButtonText}>
-              {lockCountdown !== null
-                ? `KUNCI HP SEKARANG (${lockCountdown}s...)`
-                : 'Tes Tembus Layar Terkunci (Hitung Mundur 5s)'}
-            </Text>
-          </Pressable>
-
-          {/* Instant Test Button */}
-          <Pressable
-            style={[styles.testButton, isSending && styles.testButtonDisabled]}
-            onPress={handleSendInstantTest}
-            disabled={isSending || lockCountdown !== null}
-          >
-            <Ionicons name="paper-plane" size={15} color={Colors.textWhite} />
-            <Text style={styles.testButtonText}>
-              {isSending ? 'Mengirim...' : 'Tes Munculkan Notifikasi Instan'}
-            </Text>
-          </Pressable>
-
-          {/* Feedback message banner */}
-          {feedbackMessage && (
-            <View
-              style={[
-                styles.feedbackBanner,
-                lockCountdown !== null && styles.feedbackBannerWarning,
-              ]}
-            >
-              <Ionicons
-                name={lockCountdown !== null ? 'alert-circle' : 'checkmark-circle'}
-                size={16}
-                color={lockCountdown !== null ? '#F59E0B' : '#22C55E'}
-              />
-              <Text
-                style={[
-                  styles.feedbackText,
-                  lockCountdown !== null && styles.feedbackTextWarning,
-                ]}
-              >
-                {feedbackMessage}
-              </Text>
-            </View>
-          )}
-
-          {/* Guide Toggle */}
-          <Pressable
-            style={styles.guideToggle}
-            onPress={() => setShowGuide(!showGuide)}
-          >
-            <Ionicons
-              name={showGuide ? 'chevron-up' : 'information-circle-outline'}
-              size={15}
-              color={Colors.accentYellow}
-            />
-            <Text style={styles.guideToggleText}>
-              {showGuide
-                ? 'Sembunyikan Tips Pengaturan HP'
-                : 'Tips Agar Notifikasi Selalu Tembus di HP (Samsung, Xiaomi, Oppo)'}
-            </Text>
-          </Pressable>
-
-          {/* Student Lock Screen Guide Content */}
-          {showGuide && (
-            <View style={styles.guideBox}>
-              <Text style={styles.guideTitle}>
-                Agar HP Mahasiswa Tidak Menyembunyikan Pengingat:
-              </Text>
-              <Text style={styles.guideItem}>
-                • <Text style={styles.guideBold}>Notifikasi Layar Kunci</Text>: Buka Pengaturan HP &gt; Notifikasi &gt; Layar Kunci &gt; pilih "Tampilkan semua konten".
-              </Text>
-              <Text style={styles.guideItem}>
-                • <Text style={styles.guideBold}>Penghemat Baterai</Text>: Atur aplikasi Campus Life ke "Tanpa Pembatasan" agar alarm kuliah tidak ditunda saat layar mati.
-              </Text>
-              <Text style={styles.guideItem}>
-                • <Text style={styles.guideBold}>Popup Banner</Text>: Izinkan "Tampilkan banner melayang / Pop-up" untuk kelas darurat.
-              </Text>
-            </View>
-          )}
-
-          <Text style={styles.hintText}>
-            Ketuk notifikasi untuk menguji pengiriman ke layar perangkat:
-          </Text>
+          <Text style={styles.hintText}>Pemberitahuan Terkini</Text>
 
           <ScrollView style={styles.listContainer} showsVerticalScrollIndicator={false}>
             {notifications.map((item) => (
-              <Pressable
-                key={item.id}
-                style={({ pressed }) => [
-                  styles.notificationItem,
-                  pressed && styles.notificationItemPressed,
-                ]}
-                onPress={() =>
-                  triggerNotification(item.title, item.description, item.isUrgent)
-                }
-              >
+              <View key={item.id} style={styles.notificationItem}>
                 <View style={[styles.iconBox, { backgroundColor: item.iconColor + '20' }]}>
                   <Ionicons name={item.iconName} size={20} color={item.iconColor} />
                 </View>
@@ -290,21 +112,19 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                     <Text style={styles.itemTitle}>{item.title}</Text>
                     {item.isUrgent && (
                       <View style={styles.urgentTag}>
-                        <Text style={styles.urgentTagText}>Prioritas</Text>
+                        <Text style={styles.urgentTagText}>Penting</Text>
                       </View>
                     )}
                   </View>
                   <Text style={styles.itemDescription}>{item.description}</Text>
-                  <Text style={styles.itemTime}>
-                    {item.time} • Ketuk untuk kirim ke layar HP
-                  </Text>
+                  <Text style={styles.itemTime}>{item.time}</Text>
                 </View>
-              </Pressable>
+              </View>
             ))}
           </ScrollView>
 
-          <Pressable style={styles.footerBtn} onPress={onClose}>
-            <Text style={styles.footerBtnText}>Tutup</Text>
+          <Pressable style={styles.doneBtn} onPress={onClose}>
+            <Text style={styles.doneBtnText}>Tutup</Text>
           </Pressable>
         </View>
       </View>
@@ -315,20 +135,25 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.82)',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
+    padding: 20,
   },
   contentCard: {
     width: '100%',
-    maxWidth: 490,
-    backgroundColor: '#10172A',
-    borderRadius: 22,
+    maxWidth: 440,
+    backgroundColor: '#0A0F2C',
+    borderRadius: 24,
+    padding: 20,
+    maxHeight: '80%',
     borderWidth: 1,
     borderColor: '#1E293B',
-    padding: 20,
-    maxHeight: '90%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
   },
   headerRow: {
     flexDirection: 'row',
@@ -352,168 +177,58 @@ const styles = StyleSheet.create({
   closeBtn: {
     padding: 4,
   },
-  platformBadge: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  activeDot: {
-    width: 9,
-    height: 9,
-    borderRadius: 4.5,
-    backgroundColor: '#22C55E',
-    marginTop: 3,
-  },
-  badgeTextCol: {
-    flex: 1,
-  },
-  platformBadgeText: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.75)',
-    fontWeight: '500',
-  },
-  platformHighlight: {
-    color: Colors.accentYellow,
-    fontWeight: '700',
-  },
-  lockscreenStatusText: {
-    fontSize: 10,
-    color: '#34D399',
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  lockTestButton: {
+  deviceModeCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#F59E0B',
-    borderRadius: 14,
-    paddingVertical: 12,
-    marginBottom: 8,
-  },
-  lockTestButtonActive: {
-    backgroundColor: '#EF4444',
-  },
-  lockTestButtonText: {
-    color: '#000000',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  testButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#1E293B',
-    borderRadius: 12,
-    paddingVertical: 10,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-  },
-  testButtonDisabled: {
-    opacity: 0.5,
-  },
-  testButtonText: {
-    color: Colors.textWhite,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  feedbackBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
-    borderColor: 'rgba(34, 197, 94, 0.4)',
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
-    marginBottom: 10,
-  },
-  feedbackBannerWarning: {
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
-    borderColor: 'rgba(245, 158, 11, 0.4)',
-  },
-  feedbackText: {
-    color: '#22C55E',
-    fontSize: 12,
-    fontWeight: '600',
-    flex: 1,
-  },
-  feedbackTextWarning: {
-    color: '#F59E0B',
-  },
-  guideToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 6,
-    marginBottom: 6,
-  },
-  guideToggleText: {
-    fontSize: 11,
-    color: Colors.accentYellow,
-    fontWeight: '600',
-    textDecorationLine: 'underline',
-  },
-  guideBox: {
-    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
+    backgroundColor: 'rgba(245, 158, 11, 0.08)',
     borderWidth: 1,
     borderColor: 'rgba(245, 158, 11, 0.3)',
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 14,
   },
-  guideTitle: {
-    fontSize: 11,
+  deviceModeIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deviceModeTitle: {
+    fontSize: 13,
     fontWeight: '700',
-    color: Colors.textWhite,
-    marginBottom: 4,
-  },
-  guideItem: {
-    fontSize: 10.5,
-    color: 'rgba(255, 255, 255, 0.75)',
-    lineHeight: 15,
-    marginBottom: 3,
-  },
-  guideBold: {
     color: Colors.accentYellow,
-    fontWeight: '600',
+  },
+  deviceModeSub: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: 2,
+    lineHeight: 15,
   },
   hintText: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.5)',
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'rgba(255, 255, 255, 0.6)',
     marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   listContainer: {
-    marginBottom: 14,
+    marginBottom: 16,
   },
   notificationItem: {
     flexDirection: 'row',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 12,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.06)',
     gap: 12,
     alignItems: 'flex-start',
   },
-  notificationItemPressed: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-  },
   iconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
@@ -528,46 +243,45 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   itemTitle: {
-    fontSize: 13.5,
+    fontSize: 14,
     fontWeight: '700',
     color: Colors.textWhite,
+    flex: 1,
   },
   urgentTag: {
-    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    backgroundColor: 'rgba(239, 68, 68, 0.2)',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.5)',
+    borderColor: 'rgba(239, 68, 68, 0.4)',
+    marginLeft: 6,
   },
   urgentTagText: {
-    fontSize: 9,
-    color: Colors.accentYellow,
+    fontSize: 10,
     fontWeight: '700',
+    color: '#EF4444',
   },
   itemDescription: {
-    fontSize: 11.5,
+    fontSize: 12,
     color: 'rgba(255, 255, 255, 0.7)',
     lineHeight: 16,
-    marginBottom: 3,
+    marginBottom: 4,
   },
   itemTime: {
-    fontSize: 10,
+    fontSize: 11,
     color: 'rgba(255, 255, 255, 0.4)',
-    fontWeight: '500',
   },
-  footerBtn: {
-    backgroundColor: '#1E293B',
+  doneBtn: {
+    backgroundColor: Colors.accentYellow,
+    height: 44,
     borderRadius: 14,
-    paddingVertical: 12,
-    alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
   },
-  footerBtnText: {
-    color: Colors.textWhite,
+  doneBtnText: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
+    color: '#000000',
   },
 });
