@@ -58,8 +58,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   useEffect(() => {
     if (user?.id) {
-      walletService.setUserId(user.id);
-      scheduleService.setUserId(user.id);
+      walletService.setUserId(user.id).then(() => {
+        setBalance(walletService.getBalance());
+        setMonthlySpent(walletService.getCurrentMonthSpent());
+        setCurrentMonth(walletService.getSelectedMonth());
+      });
+      scheduleService.setUserId(user.id).then(() => {
+        setFirstLesson(scheduleService.getFirstLesson());
+      });
     }
 
     umkmService.fetchUmkmList().then(setUmkmList).catch(() => {});

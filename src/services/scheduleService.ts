@@ -1,6 +1,30 @@
 import { DaySchedule, ScheduleItem } from '../models/schedule';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from './supabase';
 
 type Listener = () => void;
+
+const DEMO_STUDENT_ID = '3b52c06a-1539-4c17-8df3-f534d6651909';
+const STORAGE_PREFIX = '@campuslife_schedule_user_';
+
+const scheduleMemoryStore: Record<string, string> = {};
+const safeScheduleStorage = {
+  getItem: async (key: string): Promise<string | null> => {
+    try {
+      const val = await AsyncStorage.getItem(key);
+      if (val !== null && val !== undefined) return val;
+      return scheduleMemoryStore[key] || null;
+    } catch {
+      return scheduleMemoryStore[key] || null;
+    }
+  },
+  setItem: async (key: string, value: string): Promise<void> => {
+    scheduleMemoryStore[key] = value;
+    try {
+      await AsyncStorage.setItem(key, value);
+    } catch {}
+  },
+};
 
 export interface AddScheduleParams {
   dayIndex: number;
@@ -33,16 +57,9 @@ export interface UpdateScheduleParams {
   cardColor?: string;
 }
 
-export class ScheduleService {
-  private static instance: ScheduleService;
-  private listeners: Set<Listener> = new Set();
-
-  private selectedMonthYear: string = 'Juni, 2026';
-  private selectedDayIndex: number = 3; // Thu 14 default
-
-  private weekSchedule: DaySchedule[] = [
-    {
-      dayName: 'Sen',
+const DEFAULT_DEMO_WEEK_SCHEDULE: DaySchedule[] = [
+  {
+    dayName: 'Sen',
       dayNumber: '11',
       items: [
         {
@@ -192,8 +209,118 @@ export class ScheduleService {
     },
   ];
 
+export class ScheduleService {
+  private static instance: ScheduleService;
+  private listeners: Set<Listener> = new Set();
+
+  private currentUserId: string | null = null;
+  private selectedMonthYear: string = 'September, 2026';
+  private selectedDayIndex: number = 3;
+  private weekSchedule: DaySchedule[] = [];
+
   private constructor() {
+    this.weekSchedule = this.getSampleDemoSchedule();
     this.resetToCurrentDeviceDate();
+  }
+
+  public static getInstance(): ScheduleService {
+    if (!ScheduleService.instance) {
+      ScheduleService.instance = new ScheduleService();
+    }
+    return ScheduleService.instance;
+  }
+
+  public subscribe(listener: Listener): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  private notify(): void {
+    this.listeners.forEach((listener) => listener());
+  }
+
+  public createEmptyWeekSchedule(baseDate: Date = new Date()): DaySchedule[] {
+    const dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+    const dayOfWeek = (baseDate.getDay() + 6) % 7;
+    const startOfWeek = new Date(baseDate);
+    startOfWeek.setDate(baseDate.getDate() - dayOfWeek);
+
+    return dayNames.map((name, idx) => {
+      const d = new Date(startOfWeek);
+      d.setDate(startOfWeek.getDate() + idx);
+      return {
+        dayName: name,
+        dayNumber: String(d.getDate()).padStart(2, '0'),
+        items: [],
+      };
+    });
+  }
+
+  public getSampleDemoSchedule(baseDate: Date = new Date()): DaySchedule[] {
+    const dayOfWeek = (baseDate.getDay() + 6) % 7;
+    const startOfWeek = new Date(baseDate);
+    startOfWeek.setDate(baseDate.getDate() - dayOfWeek);
+
+    return DEFAULT_DEMO_WEEK_SCHEDULE.map((day, idx) => {
+      const d = new Date(startOfWeek);
+      d.setDate(startOfWeek.getDate() + idx);
+      return {
+        ...day,
+        dayNumber: String(d.getDate()).padStart(2, '0'),
+        items: day.items.map((it) => ({ ...it })),
+      };
+    });
+  }
+
+  private getStorageKey(userId: string): string {
+    return `${STORAGE_PREFIX}${userId}`;
+  }
+
+  /**
+   * Set user context and load their private isolated schedule.
+   * New registrations start with clean empty calendar schedule.
+   * Existing accounts retain their preserved schedule.
+   */
+  public async setUserId(userId: string | null): Promise<void> {
+    this.currentUserId = userId;
+
+    if (!userId) {
+      this.weekSchedule = this.createEmptyWeekSchedule();
+      this.notify();
+      return;
+    }
+
+    // Set immediate isolated in-memory default before async read
+    if (userId === DEMO_STUDENT_ID) {
+      this.weekSchedule = this.getSampleDemoSchedule();
+    } else {
+      this.weekSchedule = this.createEmptyWeekSchedule();
+    }
+
+    try {
+      const storageKey = this.getStorageKey(userId);
+      const savedData = await safeScheduleStorage.getItem(storageKey);
+
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        if (Array.isArray(parsed) && parsed.length === 7) {
+          this.weekSchedule = parsed;
+          this.syncCurrentWeekDates();
+        }
+      } else {
+        await this.saveToStorage();
+      }
+
+      this.syncWithSupabase(userId);
+    } catch {
+      // Fallback
+    }
+
+    this.notify();
+  }
+
+  public getUserId(): string | null {
+    return this.currentUserId;
   }
 
   public resetToCurrentDeviceDate(): void {
@@ -204,12 +331,14 @@ export class ScheduleService {
     ];
     this.selectedMonthYear = `${MONTH_NAMES[now.getMonth()]}, ${now.getFullYear()}`;
 
-    // JS getDay(): 0 is Sunday, 1 is Monday ... 6 is Saturday
-    // In CampusLife: 0 is Senin, 1 is Selasa ... 6 is Minggu
     const dayOfWeek = (now.getDay() + 6) % 7;
     this.selectedDayIndex = dayOfWeek;
+    this.syncCurrentWeekDates();
+  }
 
-    // Synchronize day numbers for this current week
+  private syncCurrentWeekDates(): void {
+    const now = new Date();
+    const dayOfWeek = (now.getDay() + 6) % 7;
     const startOfWeek = new Date(now);
     startOfWeek.setDate(now.getDate() - dayOfWeek);
     for (let i = 0; i < 7; i++) {
@@ -271,22 +400,6 @@ export class ScheduleService {
       endTime: endFormatted,
       timeRange: `${startFormatted} - ${endFormatted}`,
     };
-  }
-
-  public static getInstance(): ScheduleService {
-    if (!ScheduleService.instance) {
-      ScheduleService.instance = new ScheduleService();
-    }
-    return ScheduleService.instance;
-  }
-
-  public subscribe(listener: Listener): () => void {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
-  }
-
-  private notify(): void {
-    this.listeners.forEach((listener) => listener());
   }
 
   public getWeekSchedule(): DaySchedule[] {
@@ -365,7 +478,13 @@ export class ScheduleService {
     };
 
     day.items.push(newItem);
+    this.saveToStorage();
     this.notify();
+
+    if (this.currentUserId) {
+      this.syncInsertToSupabase(this.currentUserId, params.dayIndex, newItem);
+    }
+
     return newItem;
   }
 
@@ -401,7 +520,13 @@ export class ScheduleService {
       cardColor: params.cardColor || existing.cardColor,
     };
 
+    this.saveToStorage();
     this.notify();
+
+    if (this.currentUserId) {
+      this.syncUpdateToSupabase(day.items[itemIndex]);
+    }
+
     return true;
   }
 
@@ -417,19 +542,108 @@ export class ScheduleService {
     const deleted = day.items.length < initialLen;
 
     if (deleted) {
+      this.saveToStorage();
       this.notify();
+
+      if (this.currentUserId) {
+        this.syncDeleteFromSupabase(itemId);
+      }
     }
     return deleted;
   }
 
-  private currentUserId: string | null = null;
-
-  public setUserId(userId: string | null): void {
-    this.currentUserId = userId;
+  private async saveToStorage(): Promise<void> {
+    if (!this.currentUserId) return;
+    try {
+      const storageKey = this.getStorageKey(this.currentUserId);
+      await safeScheduleStorage.setItem(storageKey, JSON.stringify(this.weekSchedule));
+    } catch (e) {
+      console.warn('Failed to save schedule storage:', e);
+    }
   }
 
-  public getUserId(): string | null {
-    return this.currentUserId;
+  private async syncWithSupabase(userId: string): Promise<void> {
+    try {
+      const { data, error } = await supabase
+        .from('schedules')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (!error && data && data.length > 0) {
+        const freshWeek = this.createEmptyWeekSchedule();
+        for (const row of data) {
+          const dayIdx = Number(row.day_index);
+          if (freshWeek[dayIdx]) {
+            freshWeek[dayIdx].items.push({
+              id: row.id,
+              title: row.title,
+              lecturer: row.lecturer || '',
+              room: row.room || '',
+              time: row.time || '08',
+              timePeriod: row.time_period || 'am',
+              duration: row.duration || '2 Jam',
+              timeRange: row.time_range || '',
+              headerColor: row.header_color || '#2E7979',
+              cardColor: row.card_color || '#5FB8B2',
+            });
+          }
+        }
+        this.weekSchedule = freshWeek;
+        await this.saveToStorage();
+        this.notify();
+      }
+    } catch {
+      // Offline fallback
+    }
+  }
+
+  private async syncInsertToSupabase(userId: string, dayIndex: number, item: ScheduleItem): Promise<void> {
+    try {
+      await supabase.from('schedules').insert({
+        id: item.id,
+        user_id: userId,
+        day_index: dayIndex,
+        day_name: this.weekSchedule[dayIndex]?.dayName || 'Sen',
+        day_number: this.weekSchedule[dayIndex]?.dayNumber || '01',
+        title: item.title,
+        lecturer: item.lecturer,
+        room: item.room,
+        time: item.time,
+        time_period: item.timePeriod,
+        time_range: item.timeRange,
+        duration: item.duration,
+        header_color: item.headerColor,
+        card_color: item.cardColor,
+      });
+    } catch {
+      // Offline fallback
+    }
+  }
+
+  private async syncUpdateToSupabase(item: ScheduleItem): Promise<void> {
+    try {
+      await supabase.from('schedules').update({
+        title: item.title,
+        lecturer: item.lecturer,
+        room: item.room,
+        time: item.time,
+        time_period: item.timePeriod,
+        time_range: item.timeRange,
+        duration: item.duration,
+        header_color: item.headerColor,
+        card_color: item.cardColor,
+      }).eq('id', item.id);
+    } catch {
+      // Offline fallback
+    }
+  }
+
+  private async syncDeleteFromSupabase(itemId: string): Promise<void> {
+    try {
+      await supabase.from('schedules').delete().eq('id', itemId);
+    } catch {
+      // Offline fallback
+    }
   }
 }
 

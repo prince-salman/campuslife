@@ -120,4 +120,57 @@ describe('ScheduleService Unit Tests', () => {
     expect(selectedIndex).toBeGreaterThanOrEqual(0);
     expect(selectedIndex).toBeLessThanOrEqual(6);
   });
+
+  describe('Per-User Schedule Privacy & Isolation', () => {
+    test('new user starts with clean empty schedule on all days', async () => {
+      await scheduleService.setUserId('new_student_schedule_user_1');
+      const week = scheduleService.getWeekSchedule();
+      expect(week).toHaveLength(7);
+      for (const day of week) {
+        expect(day.items).toEqual([]);
+      }
+      expect(scheduleService.getFirstLesson()).toBeNull();
+    });
+
+    test('schedule added by User A is completely isolated and not visible to User B', async () => {
+      // 1. User A adds a class
+      await scheduleService.setUserId('user_charlie_111');
+      const charlieWeekBefore = scheduleService.getWeekSchedule();
+      expect(charlieWeekBefore[0].items).toHaveLength(0);
+
+      scheduleService.addScheduleItem({
+        dayIndex: 0,
+        title: 'Cyber Security Ethics',
+        lecturer: 'Dr. John',
+        room: 'Lab 4',
+        time: '08',
+        timePeriod: 'am',
+        duration: '2 Jam',
+      });
+
+      const charlieWeekAfter = scheduleService.getWeekSchedule();
+      expect(charlieWeekAfter[0].items).toHaveLength(1);
+      expect(charlieWeekAfter[0].items[0].title).toBe('Cyber Security Ethics');
+
+      // 2. Switch to User B
+      await scheduleService.setUserId('user_diana_222');
+      const dianaWeek = scheduleService.getWeekSchedule();
+      expect(dianaWeek[0].items).toHaveLength(0);
+      expect(scheduleService.getFirstLesson()).toBeNull();
+
+      // 3. Switch back to User A
+      await scheduleService.setUserId('user_charlie_111');
+      const charlieWeekReload = scheduleService.getWeekSchedule();
+      expect(charlieWeekReload[0].items).toHaveLength(1);
+      expect(charlieWeekReload[0].items[0].title).toBe('Cyber Security Ethics');
+    });
+
+    test('demo student account preserves test schedule classes', async () => {
+      await scheduleService.setUserId('3b52c06a-1539-4c17-8df3-f534d6651909');
+      const demoWeek = scheduleService.getWeekSchedule();
+      expect(demoWeek).toHaveLength(7);
+      const totalItems = demoWeek.reduce((sum, d) => sum + d.items.length, 0);
+      expect(totalItems).toBeGreaterThan(0);
+    });
+  });
 });

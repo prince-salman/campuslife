@@ -115,4 +115,61 @@ describe('Wallet Security & Business Logic Unit Tests', () => {
     expect(result.success).toBe(false);
     expect(result.error).toContain('maksimal 100 karakter');
   });
+
+  describe('Per-User Wallet Isolation & Default Rp 0 Balance', () => {
+    test('newly registered user starts with strictly 0 balance and empty transactions', async () => {
+      const { walletService } = require('../src/services/walletService');
+      await walletService.setUserId('new_student_user_123');
+
+      expect(walletService.getBalance()).toBe(0);
+      expect(walletService.getTransactions()).toEqual([]);
+      expect(walletService.getCurrentMonthSpent()).toBe(0);
+    });
+
+    test('balance and transactions of User A do not affect User B (privacy isolation)', async () => {
+      const { walletService } = require('../src/services/walletService');
+
+      // User A starts with 0 and receives 100,000 income
+      await walletService.setUserId('user_alice_456');
+      expect(walletService.getBalance()).toBe(0);
+      await walletService.addTransaction({
+        title: 'Uang Saku',
+        amount: 100000,
+        type: 'income',
+      });
+      expect(walletService.getBalance()).toBe(100000);
+      expect(walletService.getTransactions().length).toBe(1);
+
+      // Switch to User B: User B must have 0 balance and empty transactions
+      await walletService.setUserId('user_bob_789');
+      expect(walletService.getBalance()).toBe(0);
+      expect(walletService.getTransactions()).toEqual([]);
+
+      // User B spends 20,000 (after receiving 50,000)
+      await walletService.addTransaction({
+        title: 'Transfer Teman',
+        amount: 50000,
+        type: 'income',
+      });
+      await walletService.addTransaction({
+        title: 'Kopi Kenangan',
+        amount: 20000,
+        type: 'spent',
+      });
+      expect(walletService.getBalance()).toBe(30000);
+
+      // Switch back to User A: User A still has exactly 100,000 and 1 transaction!
+      await walletService.setUserId('user_alice_456');
+      expect(walletService.getBalance()).toBe(100000);
+      expect(walletService.getTransactions().length).toBe(1);
+      expect(walletService.getTransactions()[0].title).toBe('Uang Saku');
+    });
+
+    test('demo student account preserves initial test balance', async () => {
+      const { walletService } = require('../src/services/walletService');
+      await walletService.setUserId('3b52c06a-1539-4c17-8df3-f534d6651909');
+      expect(walletService.getBalance()).toBeGreaterThan(0);
+      expect(walletService.getTransactions().length).toBeGreaterThan(0);
+    });
+  });
 });

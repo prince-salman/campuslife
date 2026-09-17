@@ -45,12 +45,13 @@ export const FinanceScreen: React.FC<FinanceScreenProps> = ({ navigation }) => {
   const [balance, setBalance] = useState<number>(walletService.getBalance());
   const [isBalanceVisible, setIsBalanceVisible] = useState<boolean>(true);
   const [selectedTab, setSelectedTab] = useState<TransactionType>('spent');
-  const [selectedMonthIndex, setSelectedMonthIndex] = useState<number>(7);
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState<number>(new Date().getMonth());
   
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [modalType, setModalType] = useState<TransactionType>('income');
 
   useEffect(() => {
+    setBalance(walletService.getBalance());
     const unsubscribe = walletService.subscribe(() => {
       setBalance(walletService.getBalance());
     });

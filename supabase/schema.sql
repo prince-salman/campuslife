@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS public.transactions (
 
 CREATE TABLE IF NOT EXISTS public.wallets (
     user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    balance NUMERIC(14, 2) NOT NULL DEFAULT 1000000,
+    balance NUMERIC(14, 2) NOT NULL DEFAULT 0,
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -105,10 +105,10 @@ BEGIN
     SET email = EXCLUDED.email,
         full_name = COALESCE(EXCLUDED.full_name, public.profiles.full_name);
 
-    -- Inisialisasi dompet mahasiswa
+    -- Inisialisasi dompet mahasiswa (Default 0 Rupiah untuk akun baru)
     IF assigned_role = 'user' THEN
         INSERT INTO public.wallets (user_id, balance)
-        VALUES (NEW.id, 1000000)
+        VALUES (NEW.id, 0)
         ON CONFLICT (user_id) DO NOTHING;
     END IF;
 

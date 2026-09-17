@@ -95,5 +95,25 @@ describe('authValidators', () => {
       await expect(auth.login('', '')).rejects.toThrow('Email dan kata sandi wajib diisi.');
       await expect(auth.login('admin@campuslife.com', '')).rejects.toThrow('Email dan kata sandi wajib diisi.');
     });
+
+    it('should validate registration inputs and reject invalid attempts', async () => {
+      const { AuthService } = require('../src/services/authService');
+      const auth = AuthService.getInstance();
+
+      // 1. Non-student email rejected
+      await expect(
+        auth.register('test@gmail.com', 'validpass123', 'Test User')
+      ).rejects.toThrow('Pendaftaran akun mahasiswa wajib menggunakan email resmi President University');
+
+      // 2. Short password rejected
+      await expect(
+        auth.register('test.user@student.president.ac.id', '123', 'Test User')
+      ).rejects.toThrow('Kata sandi minimal terdiri dari 6 karakter.');
+
+      // 3. Empty / single-character name rejected
+      await expect(
+        auth.register('test.user@student.president.ac.id', 'validpass123', 'T')
+      ).rejects.toThrow('Nama lengkap wajib diisi minimal 2 karakter.');
+    });
   });
 });
