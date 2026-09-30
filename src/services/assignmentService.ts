@@ -6,83 +6,12 @@ import { sanitizeExternalUrl, sanitizeInput } from '../utils/security';
 
 type Listener = () => void;
 
-const ASSIGNMENTS_STORAGE_KEY = '@campuslife_assignments_v3';
+const ASSIGNMENTS_STORAGE_KEY = '@campuslife_assignments_v5';
 const COMPLETED_TASKS_PREFIX = '@campuslife_task_done_';
 
 export const AVAILABLE_CLASSES = ['IT 1'];
 
-const INITIAL_DEMO_ASSIGNMENTS: AssignmentTask[] = [
-  {
-    id: 'task_it1_1',
-    className: 'IT 1',
-    courseName: 'Web Programming',
-    title: 'Praktikum 1: Responsive Layout HTML5 & Flexbox',
-    description: 'Implementasikan layout halaman web portfolio responsif menggunakan HTML5 semantik dan CSS Flexbox. Pastikan tampilan rapi di layar mobile dan desktop sesuai materi Ibu Anggraini Dyah Ayu Sekarlangit.',
-    deadlineDate: '2026-10-05',
-    deadlineTime: '23:59 WIB',
-    priority: 'high',
-    status: 'pending',
-    submissionLink: 'https://ecampus.president.ac.id/course/view.php?id=15963',
-    createdBy: 'Muhammad Salman (Class Manager IT 1)',
-    createdAt: '2026-09-28T08:00:00.000Z',
-  },
-  {
-    id: 'task_it1_2',
-    className: 'IT 1',
-    courseName: 'Calculus',
-    title: 'Problem Set 1: Limit Fungsi & Turunan Parsial',
-    description: 'Kerjakan soal latihan bab limit fungsi trigonometri dan aplikasi turunan pertama untuk optimasi nilai ekstrim. Tulis tangan rapi di kertas folio bergaris dan scan ke format PDF untuk Pak Hendra Jayanto.',
-    deadlineDate: '2026-10-07',
-    deadlineTime: '23:59 WIB',
-    priority: 'high',
-    status: 'pending',
-    submissionLink: 'https://ecampus.president.ac.id/',
-    createdBy: 'Muhammad Salman (Class Manager IT 1)',
-    createdAt: '2026-09-28T09:30:00.000Z',
-  },
-  {
-    id: 'task_it1_3',
-    className: 'IT 1',
-    courseName: 'Programming Concepts',
-    title: 'Lab Work: Struktur Perulangan & Array 2D (C++)',
-    description: 'Selesaikan 4 problem studi kasus matriks 2 dimensi dan algoritma sorting menggunakan bahasa C++. Pastikan program lolos seluruh test case dan kumpulkan file source code .cpp sebelum kelas Pak Rikip Ginanjar.',
-    deadlineDate: '2026-10-08',
-    deadlineTime: '23:59 WIB',
-    priority: 'medium',
-    status: 'pending',
-    submissionLink: 'https://ecampus.president.ac.id/',
-    createdBy: 'Muhammad Salman (Class Manager IT 1)',
-    createdAt: '2026-09-28T10:00:00.000Z',
-  },
-  {
-    id: 'task_it1_4',
-    className: 'IT 1',
-    courseName: 'Discrete Mathematics',
-    title: 'Tugas Logika Proposisi & Tabel Kebenaran',
-    description: 'Buktikan ekuivalensi logis dari pernyataan majemuk menggunakan hukum-hukum aljabar proposisi dan buat tabel kebenaran lengkap untuk tugas kuliah Ibu Rosalina.',
-    deadlineDate: '2026-10-14',
-    deadlineTime: '14:00 WIB',
-    priority: 'medium',
-    status: 'pending',
-    submissionLink: 'https://ecampus.president.ac.id/',
-    createdBy: 'Muhammad Salman (Class Manager IT 1)',
-    createdAt: '2026-09-28T11:00:00.000Z',
-  },
-  {
-    id: 'task_it1_5',
-    className: 'IT 1',
-    courseName: 'Computer Network',
-    title: 'Desain Topologi Jaringan & Subnetting IPv4 VLSM',
-    description: 'Rancang simulasi topologi jaringan komputer dengan pembagian subnet IP address menggunakan metode VLSM pada Cisco Packet Tracer (.pkt) sesuai instruksi Pak Abdul Ghofir.',
-    deadlineDate: '2026-10-15',
-    deadlineTime: '23:59 WIB',
-    priority: 'high',
-    status: 'pending',
-    submissionLink: 'https://ecampus.president.ac.id/',
-    createdBy: 'Muhammad Salman (Class Manager IT 1)',
-    createdAt: '2026-09-28T14:00:00.000Z',
-  },
-];
+const INITIAL_DEMO_ASSIGNMENTS: AssignmentTask[] = [];
 
 export interface CreateAssignmentInput {
   className: string;

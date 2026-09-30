@@ -21,6 +21,15 @@ export const UmkmGrid: React.FC<UmkmGridProps> = ({ items, onItemPress }) => {
 
   const cardWidth = getResponsiveCardWidth();
 
+  if (items.length === 0) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Ionicons name="storefront-outline" size={32} color={Colors.textSecondary} />
+        <Text style={styles.emptyText}>Belum ada lapak UMKM terdaftar</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.grid}>
       {items.map((item) => (
@@ -94,5 +103,21 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: Colors.textWhite,
     opacity: 0.7,
+  },
+  emptyContainer: {
+    width: '100%',
+    paddingVertical: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0F1626',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#1D283E',
+  },
+  emptyText: {
+    color: Colors.textSecondary,
+    fontSize: 12,
+    marginTop: 8,
+    fontWeight: '600',
   },
 });

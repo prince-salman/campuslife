@@ -5,7 +5,7 @@ import { supabase } from './supabase';
 type Listener = () => void;
 
 const DEMO_STUDENT_ID = '3b52c06a-1539-4c17-8df3-f534d6651909';
-const STORAGE_PREFIX = '@campuslife_wallet_user_';
+const STORAGE_PREFIX = '@campuslife_wallet_user_v6_';
 
 const walletMemoryStore: Record<string, string> = {};
 const safeWalletStorage = {

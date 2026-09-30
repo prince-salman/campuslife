@@ -7,7 +7,7 @@ type Listener = () => void;
 class UmkmService {
   private static instance: UmkmService;
   private listeners: Set<Listener> = new Set();
-  private umkmList: UmkmModel[] = [...INITIAL_MOCK_UMKM];
+  private umkmList: UmkmModel[] = [];
   private isLoadedFromRemote: boolean = false;
 
   public static getInstance(): UmkmService {
@@ -42,7 +42,7 @@ class UmkmService {
         return this.umkmList;
       }
 
-      if (data && data.length > 0) {
+      if (data) {
 
         const mapped: UmkmModel[] = data.map((item: any) => {
           let address = item.address || '';
