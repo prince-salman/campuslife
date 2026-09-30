@@ -14,6 +14,7 @@ import { useAuth } from '../../context/AuthContext';
 import { umkmService } from '../../services/umkmService';
 import { adminUserService } from '../../services/adminUserService';
 import { adService } from '../../services/adService';
+import { assignmentService } from '../../services/assignmentService';
 
 interface AdminDashboardScreenProps {
   navigation: any;
@@ -27,6 +28,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ navi
   const [umkmCount, setUmkmCount] = useState<number>(umkmService.getUmkmList().length);
   const [userCount, setUserCount] = useState<number>(adminUserService.getUsers().length);
   const [adCount, setAdCount] = useState<number>(adService.getAds().length);
+  const [taskCount, setTaskCount] = useState<number>(assignmentService.getAssignments('IT 1').length);
 
   useEffect(() => {
     // Initial fetch from remote
@@ -45,10 +47,15 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ navi
       setAdCount(adService.getAds().length);
     });
 
+    const unsubAssignments = assignmentService.subscribe(() => {
+      setTaskCount(assignmentService.getAssignments('IT 1').length);
+    });
+
     return () => {
       unsubUmkm();
       unsubUser();
       unsubAds();
+      unsubAssignments();
     };
   }, []);
 
@@ -83,7 +90,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ navi
           <Ionicons name="cloud-done-outline" size={20} color="#4ADE80" />
         </View>
 
-        {/* Metric Cards */}
+        {/* Metric Cards Grid */}
         <View style={styles.metricsRow}>
           <View style={[styles.metricCard, { borderColor: '#55A4B2' }]}>
             <View style={styles.metricIconBox}>
@@ -100,13 +107,23 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ navi
             <Text style={styles.metricValue}>{userCount}</Text>
             <Text style={styles.metricLabel}>Pengguna Terdaftar</Text>
           </View>
+        </View>
 
+        <View style={styles.metricsRow}>
           <View style={[styles.metricCard, { borderColor: '#38BDF8' }]}>
             <View style={styles.metricIconBox}>
               <Ionicons name="megaphone" size={24} color="#38BDF8" />
             </View>
             <Text style={styles.metricValue}>{adCount}</Text>
             <Text style={styles.metricLabel}>Iklan Banner Aktif</Text>
+          </View>
+
+          <View style={[styles.metricCard, { borderColor: Colors.accentYellow }]}>
+            <View style={styles.metricIconBox}>
+              <Ionicons name="briefcase" size={24} color={Colors.accentYellow} />
+            </View>
+            <Text style={[styles.metricValue, { color: Colors.accentYellow }]}>{taskCount}</Text>
+            <Text style={styles.metricLabel}>Tugas Aktif (IT 1)</Text>
           </View>
         </View>
 
@@ -116,13 +133,29 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ navi
           <View style={{ marginLeft: 12, flex: 1 }}>
             <Text style={styles.privacyTitle}>Kebijakan Privasi Mahasiswa</Text>
             <Text style={styles.privacyDesc}>
-              Sesuai aturan keamanan data, menu **Jadwal Kuliah** dan **Keuangan Pribadi** tidak dapat diakses oleh akun Admin. Hanya pemilik akun yang dapat mengelola jadwal dan transaksinya.
+              Sesuai aturan keamanan data, menu Jadwal Kuliah dan Keuangan Pribadi tidak dapat diakses oleh akun Admin. Hanya pemilik akun yang dapat mengelola jadwal dan transaksinya.
             </Text>
           </View>
         </View>
 
         {/* Quick Actions */}
         <Text style={styles.sectionTitle}>AKSI UTAMA ADMINISTRATOR</Text>
+
+        <Pressable
+          style={styles.actionCard}
+          onPress={() => navigation.navigate('AdminAssignments')}
+        >
+          <View style={[styles.actionIconBox, { backgroundColor: '#2E2612' }]}>
+            <Ionicons name="briefcase" size={24} color={Colors.accentYellow} />
+          </View>
+          <View style={{ marginLeft: 14, flex: 1 }}>
+            <Text style={styles.actionTitle}>Kelola Jadwal Tugas (IT 1)</Text>
+            <Text style={styles.actionDesc}>
+              Kelola tugas kuliah kelas IT 1, atur tenggat waktu, dan broadcast pengingat ke HP mahasiswa.
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
+        </Pressable>
 
         <Pressable
           style={styles.actionCard}

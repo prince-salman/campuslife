@@ -7,8 +7,10 @@ import {
   Text,
   useWindowDimensions,
   Platform,
+  Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { HeaderWidget } from '../components/common/HeaderWidget';
 import { FirstLessonCard } from '../components/home/FirstLessonCard';
@@ -22,9 +24,11 @@ import { NotificationModal } from '../components/common/NotificationModal';
 import { UmkmDetailModal } from '../components/common/UmkmDetailModal';
 import { walletService } from '../services/walletService';
 import { scheduleService } from '../services/scheduleService';
+import { assignmentService } from '../services/assignmentService';
 import { TransactionType } from '../models/transaction';
 import { UmkmModel } from '../models/umkm';
 import { ScheduleItem } from '../models/schedule';
+import { AssignmentTask } from '../models/assignment';
 import { umkmService } from '../services/umkmService';
 import { adService } from '../services/adService';
 import { PromoBannerModel } from '../models/banner';
@@ -50,6 +54,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [umkmList, setUmkmList] = useState<UmkmModel[]>(umkmService.getUmkmList());
   const [banners, setBanners] = useState<PromoBannerModel[]>(adService.getAds());
+  const [nearestTask, setNearestTask] = useState<AssignmentTask | null>(
+    assignmentService.getAssignments(user?.managedClass || 'IT 1')[0] || null
+  );
   
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [modalType, setModalType] = useState<TransactionType>('income');
@@ -87,13 +94,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       setBanners(adService.getAds());
     });
 
+    const unsubAssignments = assignmentService.subscribe(() => {
+      const classTasks = assignmentService.getAssignments(user?.managedClass || 'IT 1');
+      setNearestTask(classTasks[0] || null);
+    });
+
     return () => {
       unsubUmkm();
       unsubWallet();
       unsubSchedule();
       unsubAds();
+      unsubAssignments();
     };
-  }, [user?.id]);
+  }, [user?.id, user?.managedClass]);
 
   const categories = ['Semua', 'F&B', 'Laundry', 'Homestay', 'Fotocopy', 'Holiday'];
 
@@ -143,6 +156,28 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             onProfilePress={handleProfilePress}
             onLogoutPress={logout}
           />
+
+          {/* Quick Assignment Reminder Banner */}
+          {nearestTask && (
+            <Pressable
+              style={styles.taskBanner}
+              onPress={() => navigation?.navigate?.('Schedule')}
+            >
+              <View style={styles.taskBannerIcon}>
+                <Ionicons name="clipboard" size={18} color={Colors.accentYellow} />
+              </View>
+              <View style={{ flex: 1, marginLeft: 10 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={styles.taskBannerClass}>[{nearestTask.className}]</Text>
+                  <Text style={styles.taskBannerTitle} numberOfLines={1}>{nearestTask.title}</Text>
+                </View>
+                <Text style={styles.taskBannerDeadline} numberOfLines={1}>
+                  Tenggat: {nearestTask.deadlineDate} ({nearestTask.deadlineTime}) - {nearestTask.courseName}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
+            </Pressable>
+          )}
 
           {/* Responsive Dashboard: Side-by-side on tablet/desktop, stacked on mobile */}
           <View style={isTablet ? styles.desktopRow : styles.mobileCol}>
@@ -254,5 +289,41 @@ const styles = StyleSheet.create({
     color: Colors.textWhite,
     marginBottom: 12,
     letterSpacing: -0.3,
+  },
+  taskBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0F1626',
+    borderWidth: 1,
+    borderColor: 'rgba(247, 206, 69, 0.4)',
+    borderRadius: 14,
+    padding: 12,
+    marginTop: 10,
+    marginBottom: 4,
+  },
+  taskBannerIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'rgba(247, 206, 69, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  taskBannerClass: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: Colors.accentYellow,
+    marginRight: 6,
+  },
+  taskBannerTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: Colors.textWhite,
+    flex: 1,
+  },
+  taskBannerDeadline: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 2,
   },
 });

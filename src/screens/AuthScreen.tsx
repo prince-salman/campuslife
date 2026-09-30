@@ -17,7 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import { validateStudentEmail, STUDENT_EMAIL_DOMAIN } from '../utils/authValidators';
 
 export const AuthScreen: React.FC = () => {
-  const { login, register, isLoading } = useAuth();
+  const { login, register, quickLogin, isLoading } = useAuth();
 
   const [isRegisterMode, setIsRegisterMode] = useState<boolean>(false);
   const [fullName, setFullName] = useState<string>('');
@@ -245,6 +245,58 @@ export const AuthScreen: React.FC = () => {
             )}
           </Pressable>
         </View>
+
+        {/* Quick Demo Access Bar */}
+        {!isRegisterMode && (
+          <View style={styles.demoSection}>
+            <View style={styles.demoDividerRow}>
+              <View style={styles.demoDividerLine} />
+              <Text style={styles.demoDividerText}>AKUN DEMO PENGUJIAN</Text>
+              <View style={styles.demoDividerLine} />
+            </View>
+
+            <View style={styles.demoButtonsContainer}>
+              <Pressable
+                style={[styles.demoCard, { borderColor: '#55A4B2' }]}
+                onPress={() => quickLogin('user')}
+                disabled={isLoading}
+              >
+                <Ionicons name="person" size={16} color="#55A4B2" />
+                <View style={{ marginLeft: 8, flex: 1 }}>
+                  <Text style={styles.demoCardTitle}>Mahasiswa (IT 1)</Text>
+                  <Text style={styles.demoCardSub}>Lihat jadwal & ceklist tugas kelas</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={Colors.textSecondary} />
+              </Pressable>
+
+              <Pressable
+                style={[styles.demoCard, { borderColor: '#A380FF' }]}
+                onPress={() => quickLogin('class_manager')}
+                disabled={isLoading}
+              >
+                <Ionicons name="briefcase" size={16} color="#A380FF" />
+                <View style={{ marginLeft: 8, flex: 1 }}>
+                  <Text style={[styles.demoCardTitle, { color: '#C4B5FD' }]}>Class Manager (IT 1)</Text>
+                  <Text style={styles.demoCardSub}>Buat & kelola tugas kuliah IT 1</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={Colors.textSecondary} />
+              </Pressable>
+
+              <Pressable
+                style={[styles.demoCard, { borderColor: Colors.accentYellow }]}
+                onPress={() => quickLogin('admin')}
+                disabled={isLoading}
+              >
+                <Ionicons name="shield-checkmark" size={16} color={Colors.accentYellow} />
+                <View style={{ marginLeft: 8, flex: 1 }}>
+                  <Text style={[styles.demoCardTitle, { color: Colors.accentYellow }]}>Administrator</Text>
+                  <Text style={styles.demoCardSub}>Akses penuh dashboard sistem</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={Colors.textSecondary} />
+              </Pressable>
+            </View>
+          </View>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -422,5 +474,46 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontSize: 15,
     fontWeight: '800',
+  },
+  demoSection: {
+    marginTop: 20,
+  },
+  demoDividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  demoDividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#1E293B',
+  },
+  demoDividerText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: Colors.textSecondary,
+    marginHorizontal: 10,
+    letterSpacing: 0.5,
+  },
+  demoButtonsContainer: {
+    gap: 8,
+  },
+  demoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0F1626',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+  },
+  demoCardTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: Colors.textWhite,
+  },
+  demoCardSub: {
+    fontSize: 10,
+    color: Colors.textSecondary,
+    marginTop: 1,
   },
 });

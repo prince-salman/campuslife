@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authService, UserProfile, UserRole, DEMO_ADMIN, DEMO_STUDENT } from '../services/authService';
+import { authService, UserProfile, UserRole, DEMO_ADMIN, DEMO_CLASS_MANAGER, DEMO_STUDENT } from '../services/authService';
 import { supabase } from '../services/supabase';
 import { walletService } from '../services/walletService';
 import { scheduleService } from '../services/scheduleService';
+import { assignmentService } from '../services/assignmentService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
@@ -10,6 +11,8 @@ interface AuthContextType {
   user: UserProfile | null;
   role: UserRole | null;
   isAdmin: boolean;
+  isClassManager: boolean;
+  canManageAssignments: boolean;
   isLoading: boolean;
   login: (email: string, pass: string) => Promise<void>;
   register: (email: string, pass: string, fullName: string) => Promise<void>;
@@ -36,6 +39,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setUser(parsed);
           walletService.setUserId(parsed.id);
           scheduleService.setUserId(parsed.id);
+          assignmentService.setUserId(parsed.id);
         }
 
         // 2. Check Supabase auth state
@@ -49,6 +53,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           await AsyncStorage.setItem(LOCAL_USER_KEY, JSON.stringify(profile));
           walletService.setUserId(profile.id);
           scheduleService.setUserId(profile.id);
+          assignmentService.setUserId(profile.id);
         }
       } catch (err) {
         console.warn('Session restore error:', err);
@@ -94,6 +99,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await AsyncStorage.setItem(LOCAL_USER_KEY, JSON.stringify(profile));
       await walletService.setUserId(profile.id);
       await scheduleService.setUserId(profile.id);
+      await assignmentService.setUserId(profile.id);
     } finally {
       setIsLoading(false);
     }
@@ -107,6 +113,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await AsyncStorage.setItem(LOCAL_USER_KEY, JSON.stringify(profile));
       await walletService.setUserId(profile.id);
       await scheduleService.setUserId(profile.id);
+      await assignmentService.setUserId(profile.id);
     } finally {
       setIsLoading(false);
     }
@@ -115,11 +122,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const quickLogin = async (targetRole: UserRole): Promise<void> => {
     setIsLoading(true);
     try {
-      const targetUser = targetRole === 'admin' ? DEMO_ADMIN : DEMO_STUDENT;
+      let targetUser = DEMO_STUDENT;
+      if (targetRole === 'admin') targetUser = DEMO_ADMIN;
+      if (targetRole === 'class_manager') targetUser = DEMO_CLASS_MANAGER;
+
       setUser(targetUser);
       await AsyncStorage.setItem(LOCAL_USER_KEY, JSON.stringify(targetUser));
       await walletService.setUserId(targetUser.id);
       await scheduleService.setUserId(targetUser.id);
+      await assignmentService.setUserId(targetUser.id);
     } finally {
       setIsLoading(false);
     }
@@ -133,6 +144,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await AsyncStorage.removeItem(LOCAL_USER_KEY);
       walletService.setUserId(null);
       scheduleService.setUserId(null);
+      assignmentService.setUserId(null);
     } finally {
       setIsLoading(false);
     }
@@ -140,6 +152,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const role = user?.role || null;
   const isAdmin = role === 'admin';
+  const isClassManager = role === 'class_manager';
+  const canManageAssignments = role === 'class_manager' || role === 'admin';
 
   return (
     <AuthContext.Provider
@@ -147,6 +161,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         user,
         role,
         isAdmin,
+        isClassManager,
+        canManageAssignments,
         isLoading,
         login,
         register,

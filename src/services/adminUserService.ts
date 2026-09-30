@@ -1,4 +1,4 @@
-import { UserProfile, UserRole, DEMO_ADMIN, DEMO_STUDENT } from './authService';
+import { UserProfile, UserRole, DEMO_ADMIN, DEMO_CLASS_MANAGER, DEMO_STUDENT } from './authService';
 import { supabase } from './supabase';
 
 type Listener = () => void;
@@ -9,6 +9,7 @@ class AdminUserService {
 
   private users: UserProfile[] = [
     DEMO_ADMIN,
+    DEMO_CLASS_MANAGER,
     DEMO_STUDENT,
     {
       id: 'student_demo_2',
@@ -66,7 +67,8 @@ class AdminUserService {
           id: d.id,
           email: d.email,
           fullName: d.full_name || d.email.split('@')[0],
-          role: (d.role === 'admin' ? 'admin' : 'user') as UserRole,
+          role: (d.role === 'admin' ? 'admin' : (d.role === 'class_manager' ? 'class_manager' : 'user')) as UserRole,
+          managedClass: d.managed_class,
           createdAt: d.created_at,
         }));
 
@@ -120,7 +122,7 @@ class AdminUserService {
   /**
    * Update user full name or role.
    */
-  public async updateUser(userId: string, updates: { fullName?: string; role?: UserRole }): Promise<void> {
+  public async updateUser(userId: string, updates: { fullName?: string; role?: UserRole; managedClass?: string }): Promise<void> {
     const idx = this.users.findIndex((u) => u.id === userId);
     if (idx !== -1) {
       this.users[idx] = { ...this.users[idx], ...updates };
@@ -131,6 +133,7 @@ class AdminUserService {
       const dbPayload: any = {};
       if (updates.fullName !== undefined) dbPayload.full_name = updates.fullName;
       if (updates.role !== undefined) dbPayload.role = updates.role;
+      if (updates.managedClass !== undefined) dbPayload.managed_class = updates.managedClass;
 
       await supabase.from('profiles').update(dbPayload).eq('id', userId);
     } catch (e) {

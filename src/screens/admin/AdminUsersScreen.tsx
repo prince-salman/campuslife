@@ -96,6 +96,7 @@ export const AdminUsersScreen: React.FC = () => {
       await adminUserService.updateUser(selectedUser.id, {
         fullName: editFullName.trim(),
         role: editRole,
+        managedClass: editRole === 'class_manager' ? (selectedUser.managedClass || 'IT 1') : undefined,
       });
       Alert.alert('Sukses', 'Data pengguna berhasil diperbarui.');
       setEditModalVisible(false);
@@ -166,6 +167,7 @@ export const AdminUsersScreen: React.FC = () => {
         renderItem={({ item }) => {
           const isCurrentUser = item.id === currentAdmin?.id;
           const isAdminRole = item.role === 'admin';
+          const isClassManagerRole = item.role === 'class_manager';
 
           return (
             <View style={styles.userCard}>
@@ -184,9 +186,31 @@ export const AdminUsersScreen: React.FC = () => {
                   </View>
                   <Text style={styles.userEmail} numberOfLines={1}>{item.email}</Text>
                 </View>
-                <View style={[styles.roleBadge, isAdminRole ? styles.roleAdmin : styles.roleUser]}>
-                  <Text style={[styles.roleBadgeText, isAdminRole ? styles.roleAdminText : styles.roleUserText]}>
-                    {isAdminRole ? 'ADMIN' : 'MAHASISWA'}
+                <View
+                  style={[
+                    styles.roleBadge,
+                    isAdminRole
+                      ? styles.roleAdmin
+                      : isClassManagerRole
+                      ? styles.roleClassManager
+                      : styles.roleUser,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.roleBadgeText,
+                      isAdminRole
+                        ? styles.roleAdminText
+                        : isClassManagerRole
+                        ? styles.roleClassManagerText
+                        : styles.roleUserText,
+                    ]}
+                  >
+                    {isAdminRole
+                      ? 'ADMIN'
+                      : isClassManagerRole
+                      ? `MANAGER (${item.managedClass || 'IT 1'})`
+                      : 'MAHASISWA'}
                   </Text>
                 </View>
               </View>
@@ -310,7 +334,24 @@ export const AdminUsersScreen: React.FC = () => {
                     editRole === 'user' && styles.roleOptionTextActive,
                   ]}
                 >
-                  Mahasiswa (User)
+                  Mahasiswa
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={[
+                  styles.roleOption,
+                  editRole === 'class_manager' && styles.roleOptionActiveClassManager,
+                ]}
+                onPress={() => setEditRole('class_manager')}
+              >
+                <Text
+                  style={[
+                    styles.roleOptionText,
+                    editRole === 'class_manager' && styles.roleOptionTextActiveClassManager,
+                  ]}
+                >
+                  Class Manager
                 </Text>
               </Pressable>
 
@@ -327,7 +368,7 @@ export const AdminUsersScreen: React.FC = () => {
                     editRole === 'admin' && styles.roleOptionTextActiveAdmin,
                   ]}
                 >
-                  Administrator
+                  Admin
                 </Text>
               </Pressable>
             </View>
@@ -502,6 +543,16 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '800',
   },
+  roleClassManager: {
+    backgroundColor: 'rgba(163, 128, 255, 0.15)',
+    borderWidth: 1,
+    borderColor: '#A380FF',
+  },
+  roleClassManagerText: {
+    color: '#A380FF',
+    fontSize: 9,
+    fontWeight: '900',
+  },
   cardActions: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -619,6 +670,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#55A4B2',
     borderColor: '#55A4B2',
   },
+  roleOptionActiveClassManager: {
+    backgroundColor: '#A380FF',
+    borderColor: '#A380FF',
+  },
   roleOptionActiveAdmin: {
     backgroundColor: Colors.accentYellow,
     borderColor: Colors.accentYellow,
@@ -629,6 +684,10 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   roleOptionTextActive: {
+    color: '#000000',
+    fontWeight: '800',
+  },
+  roleOptionTextActiveClassManager: {
     color: '#000000',
     fontWeight: '800',
   },

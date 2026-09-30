@@ -57,157 +57,155 @@ export interface UpdateScheduleParams {
   cardColor?: string;
 }
 
-const DEFAULT_DEMO_WEEK_SCHEDULE: DaySchedule[] = [
+export const DEFAULT_DEMO_WEEK_SCHEDULE: DaySchedule[] = [
   {
     dayName: 'Sen',
-      dayNumber: '11',
-      items: [
-        {
-          id: 'mon_1',
-          time: '08',
-          timePeriod: 'am',
-          timeRange: '08:00 WIB - 10:30 WIB',
-          title: 'Algorithms & Data Structures',
-          room: 'B101',
-          lecturer: 'Dr. Kenzo Tenma',
-          duration: '2.5 Jam',
-          headerColor: '#2E6F79',
-          cardColor: '#55A4B2',
-        },
-        {
-          id: 'mon_2',
-          time: '01',
-          timePeriod: 'pm',
-          timeRange: '13:00 WIB - 15:00 WIB',
-          title: 'Operating Systems',
-          room: 'Lab 2',
-          lecturer: 'Prof. Wolfgang Grimmer',
-          duration: '2 Jam',
-          headerColor: '#3B3878',
-          cardColor: '#6560B0',
-        },
-      ],
-    },
-    {
-      dayName: 'Sel',
-      dayNumber: '12',
-      items: [
-        {
-          id: 'tue_1',
-          time: '10',
-          timePeriod: 'am',
-          timeRange: '10:00 WIB - 12:00 WIB',
-          title: 'Database Management',
-          room: 'B204',
-          lecturer: 'Ms. Anna Liebert',
-          duration: '2 Jam',
-          headerColor: '#2E7958',
-          cardColor: '#57B288',
-        },
-      ],
-    },
-    {
-      dayName: 'Rab',
-      dayNumber: '13',
-      items: [
-        {
-          id: 'wed_1',
-          time: '08',
-          timePeriod: 'am',
-          timeRange: '08:00 WIB - 11:00 WIB',
-          title: 'Software Engineering',
-          room: 'C301',
-          lecturer: 'Dr. Julius Reichwein',
-          duration: '3 Jam',
-          headerColor: '#2E6F79',
-          cardColor: '#55A4B2',
-        },
-      ],
-    },
-    {
-      dayName: 'Kam',
-      dayNumber: '14',
-      items: [
-        {
-          id: 'thu_1',
-          time: '08',
-          timePeriod: 'am',
-          timeRange: '08:00 WIB - 10:00 WIB',
-          title: 'Informatics',
-          room: 'B103',
-          lecturer: 'Mr. John Liebert',
-          duration: '2 Jam',
-          headerColor: '#2E7979',
-          cardColor: '#5FB8B2',
-        },
-        {
-          id: 'thu_2',
-          time: '11',
-          timePeriod: 'am',
-          timeRange: '11:00 WIB - 13:00 WIB',
-          title: 'Linear Algebra',
-          room: 'A201',
-          lecturer: 'Dr. Johan Liebert',
-          duration: '2 Jam',
-          headerColor: '#274975',
-          cardColor: '#4D7FA9',
-        },
-        {
-          id: 'thu_3',
-          time: '02',
-          timePeriod: 'pm',
-          timeRange: '14:00 WIB - 17:00 WIB',
-          title: 'Web Development Lab',
-          room: 'Lab 1',
-          lecturer: 'Mr. Salman',
-          duration: '3 Jam',
-          headerColor: '#5A2E79',
-          cardColor: '#8C5FB8',
-        },
-      ],
-    },
-    {
-      dayName: 'Jum',
-      dayNumber: '15',
-      items: [
-        {
-          id: 'fri_1',
-          time: '09',
-          timePeriod: 'am',
-          timeRange: '09:00 WIB - 11:00 WIB',
-          title: 'Computer Networks',
-          room: 'B102',
-          lecturer: 'Mr. Richard Braun',
-          duration: '2 Jam',
-          headerColor: '#792E4D',
-          cardColor: '#B85F82',
-        },
-      ],
-    },
-    {
-      dayName: 'Sab',
-      dayNumber: '16',
-      items: [
-        {
-          id: 'sat_1',
-          time: '10',
-          timePeriod: 'am',
-          timeRange: '10:00 WIB - 13:00 WIB',
-          title: 'Public Speaking Seminar',
-          room: 'Auditorium',
-          lecturer: 'Guest Speaker',
-          duration: '3 Jam',
-          headerColor: '#755127',
-          cardColor: '#A87D4C',
-        },
-      ],
-    },
-    {
-      dayName: 'Min',
-      dayNumber: '17',
-      items: [],
-    },
-  ];
+    dayNumber: '01',
+    items: [
+      {
+        id: 'puis_mon_1',
+        time: '09',
+        timePeriod: 'am',
+        timeRange: '09:30 WIB - 11:45 WIB',
+        title: 'Web Programming',
+        room: 'LabA209',
+        lecturer: 'Anggraini Dyah Ayu Sekarlangit',
+        duration: '2 Jam 15 Mnt',
+        headerColor: '#1E3A5F',
+        cardColor: '#2563EB',
+      },
+      {
+        id: 'puis_mon_2',
+        time: '12',
+        timePeriod: 'pm',
+        timeRange: '12:00 WIB - 13:30 WIB',
+        title: 'Economic Survival 1: Gen-AI & Business Project',
+        room: 'B202',
+        lecturer: 'Mark Ian Murray & Cornellius Suyadi',
+        duration: '1.5 Jam',
+        headerColor: '#4A1D96',
+        cardColor: '#7C3AED',
+      },
+    ],
+  },
+  {
+    dayName: 'Sel',
+    dayNumber: '02',
+    items: [],
+  },
+  {
+    dayName: 'Rab',
+    dayNumber: '03',
+    items: [
+      {
+        id: 'puis_wed_1',
+        time: '07',
+        timePeriod: 'am',
+        timeRange: '07:00 WIB - 09:15 WIB',
+        title: 'Calculus',
+        room: 'B408',
+        lecturer: 'Hendra Jayanto',
+        duration: '2 Jam 15 Mnt',
+        headerColor: '#065F46',
+        cardColor: '#059669',
+      },
+      {
+        id: 'puis_wed_2',
+        time: '12',
+        timePeriod: 'pm',
+        timeRange: '12:00 WIB - 14:15 WIB',
+        title: 'Discrete Mathematics (Lab)',
+        room: 'LabA211',
+        lecturer: 'Rosalina',
+        duration: '2 Jam 15 Mnt',
+        headerColor: '#1E40AF',
+        cardColor: '#3B82F6',
+      },
+      {
+        id: 'puis_wed_3',
+        time: '02',
+        timePeriod: 'pm',
+        timeRange: '14:30 WIB - 16:45 WIB',
+        title: 'Discrete Mathematics (Theory)',
+        room: 'B309',
+        lecturer: 'Rosalina',
+        duration: '2 Jam 15 Mnt',
+        headerColor: '#0E7490',
+        cardColor: '#06B6D4',
+      },
+    ],
+  },
+  {
+    dayName: 'Kam',
+    dayNumber: '04',
+    items: [
+      {
+        id: 'puis_thu_1',
+        time: '09',
+        timePeriod: 'am',
+        timeRange: '09:30 WIB - 11:45 WIB',
+        title: 'Programming Concepts',
+        room: 'B104',
+        lecturer: 'Rikip Ginanjar',
+        duration: '2 Jam 15 Mnt',
+        headerColor: '#92400E',
+        cardColor: '#D97706',
+      },
+      {
+        id: 'puis_thu_2',
+        time: '02',
+        timePeriod: 'pm',
+        timeRange: '14:30 WIB - 16:45 WIB',
+        title: 'Computer Network',
+        room: 'B404',
+        lecturer: 'Abdul Ghofir',
+        duration: '2 Jam 15 Mnt',
+        headerColor: '#831843',
+        cardColor: '#DB2777',
+      },
+    ],
+  },
+  {
+    dayName: 'Jum',
+    dayNumber: '05',
+    items: [
+      {
+        id: 'puis_fri_1',
+        time: '09',
+        timePeriod: 'am',
+        timeRange: '09:30 WIB - 11:45 WIB',
+        title: 'Probability and Statistics',
+        room: 'A424',
+        lecturer: 'Rusdianto Roestam',
+        duration: '2 Jam 15 Mnt',
+        headerColor: '#4338CA',
+        cardColor: '#6366F1',
+      },
+      {
+        id: 'puis_fri_2',
+        time: '05',
+        timePeriod: 'pm',
+        timeRange: '17:00 WIB - 19:15 WIB',
+        title: 'Survival English',
+        room: 'C202 (PUCC)',
+        lecturer: 'Parker Adam Birkenbach',
+        duration: '2 Jam 15 Mnt',
+        headerColor: '#164E63',
+        cardColor: '#0284C7',
+      },
+    ],
+  },
+  {
+    dayName: 'Sab',
+    dayNumber: '06',
+    items: [],
+  },
+  {
+    dayName: 'Min',
+    dayNumber: '07',
+    items: [],
+  },
+];
 
 export class ScheduleService {
   private static instance: ScheduleService;
@@ -291,11 +289,7 @@ export class ScheduleService {
     }
 
     // Set immediate isolated in-memory default before async read
-    if (userId === DEMO_STUDENT_ID) {
-      this.weekSchedule = this.getSampleDemoSchedule();
-    } else {
-      this.weekSchedule = this.createEmptyWeekSchedule();
-    }
+    this.weekSchedule = this.getSampleDemoSchedule();
 
     try {
       const storageKey = this.getStorageKey(userId);
@@ -448,6 +442,32 @@ export class ScheduleService {
   }
 
   /**
+   * Menimpa jadwal mingguan (digunakan saat sinkronisasi otomatis dari PUIS)
+   */
+  public async replaceWeekSchedule(newSchedule: DaySchedule[]): Promise<void> {
+    const baseDate = new Date();
+    const dayOfWeek = (baseDate.getDay() + 6) % 7;
+    const startOfWeek = new Date(baseDate);
+    startOfWeek.setDate(baseDate.getDate() - dayOfWeek);
+
+    this.weekSchedule = newSchedule.map((day, idx) => {
+      const d = new Date(startOfWeek);
+      d.setDate(startOfWeek.getDate() + idx);
+      return {
+        ...day,
+        dayNumber: String(d.getDate()).padStart(2, '0'),
+        items: day.items.map((it) => ({ ...it })),
+      };
+    });
+
+    await this.saveToStorage();
+    if (this.currentUserId) {
+      this.syncWithSupabase(this.currentUserId);
+    }
+    this.notify();
+  }
+
+  /**
    * Menambahkan jadwal baru dengan jam selesai dan timeRange otomatis
    */
   public addScheduleItem(params: AddScheduleParams): ScheduleItem {
@@ -521,6 +541,57 @@ export class ScheduleService {
     };
 
     this.saveToStorage();
+    this.notify();
+
+    if (this.currentUserId) {
+      this.syncUpdateToSupabase(day.items[itemIndex]);
+    }
+
+    return true;
+  }
+
+  /**
+   * Mengambil daftar nama mata kuliah unik dari jadwal aktif (PUIS)
+   */
+  public getActiveCourses(): string[] {
+    const set = new Set<string>();
+    for (const day of this.weekSchedule) {
+      for (const item of day.items) {
+        if (item.title) {
+          const baseName = item.title.replace(/\s*\((Lab|Theory)\)/i, '').trim();
+          set.add(baseName);
+        }
+      }
+    }
+    return Array.from(set);
+  }
+
+  /**
+   * Mengatur status pembatalan jadwal kuliah secara manual oleh Class Manager
+   */
+  public async setScheduleItemCancelled(
+    dayIndex: number,
+    itemId: string,
+    isCancelled: boolean,
+    reason?: string,
+    cancelledBy?: string
+  ): Promise<boolean> {
+    const day = this.weekSchedule[dayIndex];
+    if (!day) return false;
+
+    const itemIndex = day.items.findIndex((it) => it.id === itemId);
+    if (itemIndex === -1) return false;
+
+    const existing = day.items[itemIndex];
+    day.items[itemIndex] = {
+      ...existing,
+      isCancelled,
+      cancelledReason: isCancelled ? (reason || 'Dosen Berhalangan Hadir (Dibatalkan Class Manager)') : undefined,
+      cancelledAt: isCancelled ? new Date().toISOString() : undefined,
+      cancelledBy: isCancelled ? (cancelledBy || 'Class Manager') : undefined,
+    };
+
+    await this.saveToStorage();
     this.notify();
 
     if (this.currentUserId) {

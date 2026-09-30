@@ -11,6 +11,10 @@ export interface ScheduleItem {
   reminderMinutes?: number;
   headerColor: string;
   cardColor: string;
+  isCancelled?: boolean;
+  cancelledReason?: string;
+  cancelledAt?: string;
+  cancelledBy?: string;
 }
 
 export interface DaySchedule {

@@ -13,6 +13,7 @@ import { AdminDashboardScreen } from '../screens/admin/AdminDashboardScreen';
 import { AdminAdsScreen } from '../screens/admin/AdminAdsScreen';
 import { AdminUmkmScreen } from '../screens/admin/AdminUmkmScreen';
 import { AdminUsersScreen } from '../screens/admin/AdminUsersScreen';
+import { AdminAssignmentScreen } from '../screens/admin/AdminAssignmentScreen';
 
 export type StudentTabParamList = {
   Home: undefined;
@@ -21,14 +22,24 @@ export type StudentTabParamList = {
   Umkm: undefined;
 };
 
+export type ClassManagerTabParamList = {
+  Home: undefined;
+  Schedule: undefined;
+  ClassAssignments: undefined;
+  Finance: undefined;
+  Umkm: undefined;
+};
+
 export type AdminTabParamList = {
   AdminDashboard: undefined;
+  AdminAssignments: undefined;
   AdminAds: undefined;
   AdminUmkm: undefined;
   AdminUsers: undefined;
 };
 
 const StudentTab = createBottomTabNavigator<StudentTabParamList>();
+const ClassManagerTab = createBottomTabNavigator<ClassManagerTabParamList>();
 const AdminTab = createBottomTabNavigator<AdminTabParamList>();
 
 export const AppNavigator: React.FC = () => {
@@ -47,8 +58,7 @@ export const AppNavigator: React.FC = () => {
     return <AuthScreen />;
   }
 
-  // If Admin: render Admin specific tabs.
-  // Note: Jadwal and Keuangan are completely blocked and hidden from Admin navigation!
+  // If Admin: render Admin specific tabs with full Assignment management
   if (role === 'admin') {
     return (
       <AdminTab.Navigator
@@ -64,6 +74,8 @@ export const AppNavigator: React.FC = () => {
 
             if (route.name === 'AdminDashboard') {
               iconName = focused ? 'speedometer' : 'speedometer-outline';
+            } else if (route.name === 'AdminAssignments') {
+              iconName = focused ? 'briefcase' : 'briefcase-outline';
             } else if (route.name === 'AdminAds') {
               iconName = focused ? 'megaphone' : 'megaphone-outline';
             } else if (route.name === 'AdminUmkm') {
@@ -82,6 +94,11 @@ export const AppNavigator: React.FC = () => {
           options={{ tabBarLabel: 'Dashboard' }}
         />
         <AdminTab.Screen
+          name="AdminAssignments"
+          component={AdminAssignmentScreen}
+          options={{ tabBarLabel: 'Tugas Kuliah' }}
+        />
+        <AdminTab.Screen
           name="AdminAds"
           component={AdminAdsScreen}
           options={{ tabBarLabel: 'Kelola Iklan' }}
@@ -97,6 +114,65 @@ export const AppNavigator: React.FC = () => {
           options={{ tabBarLabel: 'Kelola User' }}
         />
       </AdminTab.Navigator>
+    );
+  }
+
+  // If Class Manager: Student tabs + dedicated "Kelola Tugas" tab
+  if (role === 'class_manager') {
+    return (
+      <ClassManagerTab.Navigator
+        initialRouteName="Home"
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          tabBarActiveTintColor: Colors.accentYellow,
+          tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.5)',
+          tabBarStyle: styles.tabBar,
+          tabBarLabelStyle: styles.tabBarLabel,
+          tabBarIcon: ({ focused, color, size }) => {
+            let iconName: keyof typeof Ionicons.glyphMap = 'home';
+
+            if (route.name === 'Home') {
+              iconName = focused ? 'home' : 'home-outline';
+            } else if (route.name === 'Schedule') {
+              iconName = focused ? 'calendar' : 'calendar-outline';
+            } else if (route.name === 'ClassAssignments') {
+              iconName = focused ? 'briefcase' : 'briefcase-outline';
+            } else if (route.name === 'Finance') {
+              iconName = focused ? 'wallet' : 'wallet-outline';
+            } else if (route.name === 'Umkm') {
+              iconName = focused ? 'storefront' : 'storefront-outline';
+            }
+
+            return <Ionicons name={iconName} size={22} color={color} />;
+          },
+        })}
+      >
+        <ClassManagerTab.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{ tabBarLabel: 'Beranda' }}
+        />
+        <ClassManagerTab.Screen
+          name="Schedule"
+          component={ScheduleScreen}
+          options={{ tabBarLabel: 'Jadwal' }}
+        />
+        <ClassManagerTab.Screen
+          name="ClassAssignments"
+          component={AdminAssignmentScreen}
+          options={{ tabBarLabel: 'Kelola Tugas' }}
+        />
+        <ClassManagerTab.Screen
+          name="Finance"
+          component={FinanceScreen}
+          options={{ tabBarLabel: 'Keuangan' }}
+        />
+        <ClassManagerTab.Screen
+          name="Umkm"
+          component={UmkmScreen}
+          options={{ tabBarLabel: 'UMKM' }}
+        />
+      </ClassManagerTab.Navigator>
     );
   }
 

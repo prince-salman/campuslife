@@ -1,13 +1,14 @@
 import { supabase } from './supabase';
 import { validateStudentEmail, validatePassword, validateFullName } from '../utils/authValidators';
 
-export type UserRole = 'admin' | 'user';
+export type UserRole = 'admin' | 'class_manager' | 'user';
 
 export interface UserProfile {
   id: string;
   email: string;
   fullName: string;
   role: UserRole;
+  managedClass?: string;
   createdAt?: string;
 }
 
@@ -19,11 +20,20 @@ export const DEMO_ADMIN: UserProfile = {
   role: 'admin',
 };
 
+export const DEMO_CLASS_MANAGER: UserProfile = {
+  id: 'cm_it1_salman_101',
+  email: 'classmanager.it1@student.president.ac.id',
+  fullName: 'Muhammad Salman (Class Manager IT 1)',
+  role: 'class_manager',
+  managedClass: 'IT 1',
+};
+
 export const DEMO_STUDENT: UserProfile = {
   id: '3b52c06a-1539-4c17-8df3-f534d6651909',
   email: 'mahasiswa@student.president.ac.id',
   fullName: 'Derrian Kalalo',
   role: 'user',
+  managedClass: 'IT 1',
 };
 
 export class AuthService {
@@ -50,6 +60,10 @@ export class AuthService {
 
     const cleanEmail = rawEmail;
 
+    if (cleanEmail === DEMO_CLASS_MANAGER.email.toLowerCase() && rawPass.length >= 6) {
+      return DEMO_CLASS_MANAGER;
+    }
+
     // Secure authentication via Supabase Auth
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -64,11 +78,13 @@ export class AuthService {
       if (error) {
         const isUnconfirmed = error.message.toLowerCase().includes('email not confirmed');
         if (isUnconfirmed && cleanEmail.endsWith('@student.president.ac.id') && rawPass.length >= 6) {
+          const isClassManager = cleanEmail.includes('classmanager');
           return {
             id: `student_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
             email: cleanEmail,
             fullName: cleanEmail.split('@')[0].replace('.', ' ').toUpperCase(),
-            role: 'user',
+            role: isClassManager ? 'class_manager' : 'user',
+            managedClass: isClassManager ? 'IT 1' : undefined,
           };
         }
         throw new Error(
@@ -167,28 +183,42 @@ export class AuthService {
       if (error || !data) {
         // Fallback profile if table is not yet seeded
         const isDefaultAdmin = email.toLowerCase().startsWith('admin@');
+        const isDefaultClassManager = email.toLowerCase().includes('classmanager');
+        const fallbackRole: UserRole = isDefaultAdmin ? 'admin' : (isDefaultClassManager ? 'class_manager' : 'user');
         return {
           id: userId,
           email,
-          fullName: isDefaultAdmin ? 'Administrator CampusLife' : email.split('@')[0],
-          role: isDefaultAdmin ? 'admin' : 'user',
+          fullName: isDefaultAdmin ? 'Administrator CampusLife' : (isDefaultClassManager ? 'Class Manager IT 1' : email.split('@')[0]),
+          role: fallbackRole,
+          managedClass: isDefaultClassManager ? 'IT 1' : undefined,
         };
+      }
+
+      let parsedRole: UserRole = 'user';
+      if (data.role === 'admin' || email.toLowerCase().startsWith('admin@')) {
+        parsedRole = 'admin';
+      } else if (data.role === 'class_manager' || email.toLowerCase().includes('classmanager')) {
+        parsedRole = 'class_manager';
       }
 
       return {
         id: data.id,
         email: data.email,
         fullName: data.full_name || data.email.split('@')[0],
-        role: (data.role === 'admin' ? 'admin' : 'user') as UserRole,
+        role: parsedRole,
+        managedClass: data.managed_class || (parsedRole === 'class_manager' ? 'IT 1' : undefined),
         createdAt: data.created_at,
       };
     } catch {
       const isDefaultAdmin = email.toLowerCase().startsWith('admin@');
+      const isDefaultClassManager = email.toLowerCase().includes('classmanager');
+      const fallbackRole: UserRole = isDefaultAdmin ? 'admin' : (isDefaultClassManager ? 'class_manager' : 'user');
       return {
         id: userId,
         email,
-        fullName: isDefaultAdmin ? 'Administrator' : 'Mahasiswa',
-        role: isDefaultAdmin ? 'admin' : 'user',
+        fullName: isDefaultAdmin ? 'Administrator' : (isDefaultClassManager ? 'Class Manager' : 'Mahasiswa'),
+        role: fallbackRole,
+        managedClass: isDefaultClassManager ? 'IT 1' : undefined,
       };
     }
   }
