@@ -37,7 +37,7 @@ export function validateStudentEmail(email: string): ValidationResult {
   if (!trimmed.endsWith(STUDENT_EMAIL_DOMAIN)) {
     return {
       isValid: false,
-      error: `Pendaftaran akun mahasiswa wajib menggunakan email resmi President University (${STUDENT_EMAIL_DOMAIN}).`,
+      error: `Pendaftaran ditolak. Sistem registrasi hanya menerima email mahasiswa President University (${STUDENT_EMAIL_DOMAIN}).`,
     };
   }
 

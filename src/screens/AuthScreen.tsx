@@ -27,6 +27,16 @@ export const AuthScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
 
+  const trimmedEmail = email.trim().toLowerCase();
+  const isInvalidDomain =
+    isRegisterMode && trimmedEmail.includes('@') && !trimmedEmail.endsWith('@student.president.ac.id');
+  const isValidStudentDomain =
+    isRegisterMode &&
+    trimmedEmail.endsWith('@student.president.ac.id') &&
+    trimmedEmail.length > '@student.president.ac.id'.length;
+  const canAppendDomain =
+    isRegisterMode && trimmedEmail.length > 0 && !trimmedEmail.includes('@');
+
   const handleSubmit = async () => {
     setErrorMessage('');
 
@@ -41,10 +51,13 @@ export const AuthScreen: React.FC = () => {
         return;
       }
 
-      // Strict President University email check
+      // Strict President University student email check
       const emailValidation = validateStudentEmail(email);
       if (!emailValidation.isValid) {
-        setErrorMessage(emailValidation.error || 'Email tidak valid.');
+        setErrorMessage(
+          emailValidation.error ||
+            'Pendaftaran ditolak: Sistem registrasi CampusLife hanya menerima email resmi mahasiswa @student.president.ac.id.'
+        );
         return;
       }
 
@@ -148,6 +161,18 @@ export const AuthScreen: React.FC = () => {
         {/* Form Inputs */}
         <View style={styles.formCard}>
           {isRegisterMode && (
+            <View style={styles.studentNoticeBox}>
+              <Ionicons name="school-outline" size={20} color={Colors.accentYellow} style={{ marginRight: 10 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.studentNoticeTitle}>Pendaftaran Khusus Mahasiswa</Text>
+                <Text style={styles.studentNoticeSub}>
+                  Sistem registrasi HANYA menerima akun mahasiswa resmi President University (@student.president.ac.id).
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {isRegisterMode && (
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Nama Lengkap</Text>
               <View style={styles.inputContainer}>
@@ -184,9 +209,38 @@ export const AuthScreen: React.FC = () => {
                 autoCapitalize="none"
               />
             </View>
-            {isRegisterMode && (
+
+            {isRegisterMode && isInvalidDomain && (
+              <View style={styles.domainErrorPill}>
+                <Ionicons name="close-circle" size={14} color="#EF4444" />
+                <Text style={styles.domainErrorText}>
+                  Domain ditolak. Hanya email @student.president.ac.id yang diizinkan mendaftar.
+                </Text>
+              </View>
+            )}
+
+            {isRegisterMode && isValidStudentDomain && (
+              <View style={styles.domainSuccessPill}>
+                <Ionicons name="checkmark-circle" size={14} color="#4ADE80" />
+                <Text style={styles.domainSuccessText}>
+                  Domain @student.president.ac.id terverifikasi valid
+                </Text>
+              </View>
+            )}
+
+            {canAppendDomain && (
+              <Pressable
+                style={styles.appendDomainChip}
+                onPress={() => setEmail(trimmedEmail + '@student.president.ac.id')}
+              >
+                <Ionicons name="add" size={12} color={Colors.accentYellow} />
+                <Text style={styles.appendDomainText}>Pasang @student.president.ac.id</Text>
+              </Pressable>
+            )}
+
+            {isRegisterMode && !isInvalidDomain && !isValidStudentDomain && !canAppendDomain && (
               <Text style={styles.fieldHint}>
-                *Domain wajib: @student.president.ac.id
+                *Wajib: Hanya menerima email resmi @student.president.ac.id
               </Text>
             )}
           </View>
@@ -515,5 +569,80 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: Colors.textSecondary,
     marginTop: 1,
+  },
+  studentNoticeBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(247, 206, 69, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(247, 206, 69, 0.3)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  studentNoticeTitle: {
+    color: Colors.accentYellow,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  studentNoticeSub: {
+    color: 'rgba(255, 255, 255, 0.75)',
+    fontSize: 11,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  domainErrorPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.4)',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    marginTop: 6,
+    gap: 6,
+  },
+  domainErrorText: {
+    color: '#F87171',
+    fontSize: 11,
+    fontWeight: '700',
+    flex: 1,
+  },
+  domainSuccessPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(74, 222, 128, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(74, 222, 128, 0.4)',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    marginTop: 6,
+    gap: 6,
+  },
+  domainSuccessText: {
+    color: '#4ADE80',
+    fontSize: 11,
+    fontWeight: '700',
+    flex: 1,
+  },
+  appendDomainChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(247, 206, 69, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(247, 206, 69, 0.4)',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginTop: 6,
+    gap: 4,
+  },
+  appendDomainText: {
+    color: Colors.accentYellow,
+    fontSize: 11,
+    fontWeight: '700',
   },
 });
