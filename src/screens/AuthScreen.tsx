@@ -10,6 +10,7 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
@@ -95,9 +96,11 @@ export const AuthScreen: React.FC = () => {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.brandContainer}>
-          <View style={styles.logoBadge}>
-            <Ionicons name="school" size={32} color={Colors.accentYellow} />
-          </View>
+          <Image
+            source={require('../../assets/logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <Text style={styles.appTitle}>CampusLife</Text>
           <Text style={styles.appSubtitle}>President University Student Portal</Text>
 
@@ -355,6 +358,14 @@ const styles = StyleSheet.create({
   brandContainer: {
     alignItems: 'center',
     marginBottom: 24,
+  },
+  logoImage: {
+    width: 76,
+    height: 76,
+    borderRadius: 22,
+    marginBottom: 14,
+    borderWidth: 1.5,
+    borderColor: 'rgba(247, 206, 69, 0.4)',
   },
   logoBadge: {
     width: 64,

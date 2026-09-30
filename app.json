@@ -5,7 +5,10 @@
     "version": "1.0.0",
     "orientation": "default",
     "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
     "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
       "backgroundColor": "#080D1A"
     },
     "assetBundlePatterns": [
@@ -15,11 +18,14 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.campuslife.app",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       }
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#080D1A"
       },
       "package": "com.campuslife.app",
@@ -43,6 +49,7 @@
       ]
     ],
     "web": {
+      "favicon": "./assets/favicon.png",
       "bundler": "metro"
     }
   }
