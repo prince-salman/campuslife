@@ -67,7 +67,6 @@ export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
         showsVerticalScrollIndicator={true}
       >
         <View style={styles.responsiveContainer}>
-          {/* Top Header */}
           <View style={[styles.topHeader, { paddingTop: topPadding }]}>
             <View style={styles.appIconBox}>
               <Ionicons name="school" size={20} color={Colors.primary} />
@@ -100,7 +99,6 @@ export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
             </View>
           </View>
 
-          {/* Banner Card */}
           <View style={styles.umkmBanner}>
             <View style={styles.umkmBannerLeft}>
               <Text style={styles.umkmBannerTitle}>Direktori UMKM</Text>
@@ -113,7 +111,6 @@ export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
             </View>
           </View>
 
-          {/* Search Bar */}
           <View style={styles.searchSection}>
             <SearchBarWidget
               value={searchQuery}
@@ -122,7 +119,6 @@ export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
             />
           </View>
 
-          {/* Category Tabs */}
           <View style={styles.categorySection}>
             <CategoryTabs
               categories={categories}
@@ -131,7 +127,6 @@ export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
             />
           </View>
 
-          {/* UMKM Results Grid */}
           <View style={styles.gridSection}>
             <View style={styles.gridHeaderRow}>
               <Text style={styles.gridTitle}>Daftar Lapak ({filteredUmkm.length})</Text>

@@ -12,7 +12,6 @@ export interface DeviceNotificationPayload {
   isUrgent?: boolean;
 }
 
-// Type declaration for Electron exposed API
 declare global {
   interface Window {
     electronAPI?: {
@@ -26,12 +25,6 @@ class NotificationService {
   private isInitialized = false;
   private permissionGranted = false;
 
-  /**
-   * Initializes notification service across all platforms:
-   * - iOS: Registers expo-notifications handlers and requests permissions.
-   * - Android: Registers 2 high-priority notification channels (PUBLIC lockscreen visibility).
-   * - Windows & macOS (Electron / Web): Configures native Electron IPC or Web Notification API.
-   */
   async init(): Promise<boolean> {
     if (this.isInitialized) {
       return this.permissionGranted;
@@ -39,14 +32,13 @@ class NotificationService {
 
     if (Platform.OS === 'web') {
       try {
-        // Desktop Electron native bridge
+
         if (typeof window !== 'undefined' && window.electronAPI?.isElectron) {
           this.permissionGranted = true;
           this.isInitialized = true;
           return true;
         }
 
-        // Web / Desktop browser (Windows Action Center & macOS Notification Center via Web Notification)
         if (typeof window !== 'undefined' && 'Notification' in window) {
           if (window.Notification.permission === 'granted') {
             this.permissionGranted = true;
@@ -65,9 +57,9 @@ class NotificationService {
       this.isInitialized = true;
       return false;
     } else {
-      // Mobile: iOS & Android via expo-notifications
+
       try {
-        // Configure foreground notification presentation behavior
+
         Notifications.setNotificationHandler({
           handleNotification: async (notification) => {
             const data = notification?.request?.content?.data as Record<string, any> | undefined;
@@ -87,9 +79,8 @@ class NotificationService {
           },
         });
 
-        // Configure high-importance channels for Android lockscreen, drawer & pop-up
         if (Platform.OS === 'android') {
-          // 1. Critical Class Reminders Channel (Pierces Lockscreen & Wakes Screen)
+
           await Notifications.setNotificationChannelAsync('class_reminders_channel', {
             name: 'Pengingat Kuliah & Ujian (Prioritas Tinggi)',
             description: 'Pengingat kelas prioritas tinggi yang menembus layar kunci dan menyalakan layar.',
@@ -112,7 +103,6 @@ class NotificationService {
             showBadge: true,
           });
 
-          // 2. Mode Biasa Channel: Suara + Getar + Pop-up
           await Notifications.setNotificationChannelAsync('normal_channel', {
             name: 'Mode Biasa (Suara + Getar + Pop-up)',
             description: 'Notifikasi dengan nada dering, getaran, dan pop-up banner di layar',
@@ -127,7 +117,6 @@ class NotificationService {
             showBadge: true,
           });
 
-          // 3. Mode Silent Channel: Pop-up + Getar (Tanpa Suara)
           await Notifications.setNotificationChannelAsync('silent_channel', {
             name: 'Mode Silent (Pop-up + Getar)',
             description: 'Notifikasi hening tanpa suara tapi tetap memunculkan getaran dan pop-up banner di layar',
@@ -142,7 +131,6 @@ class NotificationService {
             showBadge: true,
           });
 
-          // 4. Mode DND Channel: Pop-up Saja (Tembus DND, Tanpa Suara, Tanpa Getar)
           await Notifications.setNotificationChannelAsync('dnd_channel', {
             name: 'Mode DND (Pop-up Banner Saja)',
             description: 'Notifikasi khusus tembus Do Not Disturb (DND) berupa pop-up banner visual di layar',
@@ -157,7 +145,6 @@ class NotificationService {
             showBadge: true,
           });
 
-          // 5. General Notification Channel
           await Notifications.setNotificationChannelAsync('default', {
             name: 'Notifikasi Umum Campus Life',
             description: 'Pengumuman, aktivitas keuangan, dan status kampus',
@@ -172,7 +159,6 @@ class NotificationService {
             showBadge: true,
           });
 
-          // 6. Fallback Channel
           await Notifications.setNotificationChannelAsync('expo_notifications_fallback_notification_channel', {
             name: 'Campus Life Notifikasi Layar Kunci',
             description: 'Pengingat prioritas tinggi di layar kunci dan bilah status',
@@ -188,7 +174,6 @@ class NotificationService {
           });
         }
 
-        // Check and request permissions
         const { status: existingStatus } = await Notifications.getPermissionsAsync();
         let finalStatus = existingStatus;
 
@@ -218,28 +203,15 @@ class NotificationService {
     }
   }
 
-  /**
-   * Alias for init() to maintain full compatibility
-   */
   async initialize(): Promise<boolean> {
     return await this.init();
   }
 
-  /**
-   * Request or check notification permissions
-   */
   async requestPermission(): Promise<boolean> {
     this.isInitialized = false;
     return await this.init();
   }
 
-  /**
-   * Send notification directly into the device's Notification Center:
-   * - iOS: iOS Notification Center & Banner (timeSensitive interruption level)
-   * - Android: Android Status Bar & Lock Screen (PUBLIC visibility, MAX importance)
-   * - Windows: Windows Action Center / Toast Notification
-   * - macOS: macOS Notification Center Banner
-   */
   async sendNotification(payload: DeviceNotificationPayload): Promise<boolean> {
     if (!this.isInitialized) {
       await this.init();
@@ -251,13 +223,12 @@ class NotificationService {
 
     if (Platform.OS === 'web') {
       try {
-        // 1. Electron IPC (Windows & macOS Native)
+
         if (typeof window !== 'undefined' && window.electronAPI?.sendNotification) {
           const res = await window.electronAPI.sendNotification({ title, body });
           if (res) return true;
         }
 
-        // 2. Web Notification API (Windows Action Center / macOS Notification Center via Browser)
         if (typeof window !== 'undefined' && 'Notification' in window) {
           if (window.Notification.permission === 'default') {
             const perm = await window.Notification.requestPermission();
@@ -287,7 +258,7 @@ class NotificationService {
       }
       return false;
     } else {
-      // 3. Mobile (iOS & Android)
+
       try {
         const isMuted = targetChannel === 'silent_channel' || targetChannel === 'dnd_channel';
         const isVibrateDisabled = targetChannel === 'dnd_channel';
@@ -301,14 +272,12 @@ class NotificationService {
           vibrate: isVibrateDisabled ? undefined : [0, 500, 200, 500, 200, 500],
           badge: 1,
           color: '#F59E0B',
-          // iOS 15+ timeSensitive breaks through Focus mode / Do Not Disturb
+
           ...(Platform.OS === 'ios' ? { interruptionLevel: 'timeSensitive' as const } : {}),
         };
 
         try {
-          // In Expo Android, a trigger with only { channelId } without seconds/date creates
-          // an unschedulable ChannelAwareTrigger. Using { seconds: 1, channelId } creates
-          // a compliant SchedulableNotificationTrigger that delivers in 1s.
+
           await Notifications.scheduleNotificationAsync({
             content: notificationContent,
             trigger:
@@ -317,14 +286,13 @@ class NotificationService {
                 : null,
           });
         } catch (schedErr) {
-          // Fallback to null trigger (immediate delivery to default/fallback channel)
+
           await Notifications.scheduleNotificationAsync({
             content: notificationContent,
             trigger: null,
           });
         }
 
-        // Always wake device screen so user sees pop-up immediately
         await this.wakeDeviceScreen(6000);
         return true;
       } catch (err) {
@@ -334,9 +302,6 @@ class NotificationService {
     }
   }
 
-  /**
-   * Request native hardware screen wake up if running on native Android (bypasses screen sleep)
-   */
   async wakeDeviceScreen(durationMs: number = 5000): Promise<boolean> {
     if (Platform.OS === 'android' && WakeScreenModule?.turnScreenOn) {
       try {
@@ -348,16 +313,10 @@ class NotificationService {
     return false;
   }
 
-  /**
-   * Alias for sendNotification to maintain full compatibility with friend's implementation
-   */
   async sendLocalNotification(title: string, body: string, data: Record<string, any> = {}): Promise<void> {
     await this.sendNotification({ title, body, data, isUrgent: true });
   }
 
-  /**
-   * Send welcome notification when app is installed/opened
-   */
   async sendWelcomeNotification(): Promise<void> {
     await this.sendNotification({
       title: 'Selamat Datang di Campus Life! 🎉',
@@ -366,9 +325,6 @@ class NotificationService {
     });
   }
 
-  /**
-   * Send upcoming class schedule reminder immediately with maximum lockscreen priority
-   */
   async sendClassReminder(courseTitle: string, arg2: string, arg3?: string): Promise<boolean> {
     let room = 'B103';
     let time = '08:00 WIB';
@@ -398,9 +354,6 @@ class NotificationService {
     });
   }
 
-  /**
-   * Schedules a lockscreen alert before class begins (e.g., 15 or 30 minutes before)
-   */
   async scheduleUpcomingClassReminder(
     courseTitle: string,
     room: string,
@@ -422,7 +375,7 @@ class NotificationService {
     }
 
     try {
-      // Calculate trigger date
+
       const match = timeString.match(/(\d{1,2})[:.](\d{2})/);
       const now = new Date();
       let targetDate = new Date();
@@ -433,7 +386,6 @@ class NotificationService {
         targetDate.setHours(hours, minutes, 0, 0);
         targetDate = new Date(targetDate.getTime() - minutesBefore * 60 * 1000);
 
-        // If time already passed today, set for tomorrow
         if (targetDate.getTime() <= now.getTime()) {
           targetDate = new Date(targetDate.getTime() + 24 * 60 * 60 * 1000);
         }
@@ -473,13 +425,6 @@ class NotificationService {
     }
   }
 
-  /**
-   * Sends a high-priority lock screen notification after X seconds delay.
-   * Supports:
-   * - 'normal': Suara + Getar + Pop-up Banner
-   * - 'silent': Pop-up Banner + Getar (Hening)
-   * - 'dnd': Pop-up Banner Saja (Tembus DND)
-   */
   async sendDelayedLockscreenTest(
     seconds: number = 5,
     mode: 'normal' | 'silent' | 'dnd' = 'normal'
@@ -548,7 +493,6 @@ class NotificationService {
         } as any,
       });
 
-      // Schedule native hardware screen wake up
       if (Platform.OS === 'android') {
         if (WakeScreenModule?.scheduleWakeScreen) {
           await WakeScreenModule.scheduleWakeScreen(seconds);
@@ -569,9 +513,6 @@ class NotificationService {
     }
   }
 
-  /**
-   * Send transaction alert to device notification center
-   */
   async sendTransactionAlert(
     title: string,
     amountFormatted: string,

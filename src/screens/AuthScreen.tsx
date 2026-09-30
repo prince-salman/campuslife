@@ -51,7 +51,6 @@ export const AuthScreen: React.FC = () => {
         return;
       }
 
-      // Strict President University student email check
       const emailValidation = validateStudentEmail(email);
       if (!emailValidation.isValid) {
         setErrorMessage(
@@ -77,7 +76,7 @@ export const AuthScreen: React.FC = () => {
         setErrorMessage(err.message || 'Pendaftaran gagal.');
       }
     } else {
-      // Login mode
+
       try {
         await login(email, password);
       } catch (err: any) {
@@ -95,7 +94,6 @@ export const AuthScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        {/* App Branding */}
         <View style={styles.brandContainer}>
           <View style={styles.logoBadge}>
             <Ionicons name="school" size={32} color={Colors.accentYellow} />
@@ -103,7 +101,6 @@ export const AuthScreen: React.FC = () => {
           <Text style={styles.appTitle}>CampusLife</Text>
           <Text style={styles.appSubtitle}>President University Student Portal</Text>
 
-          {/* Database Live Status Badge */}
           <View style={styles.dbIndicator}>
             <View style={styles.dbDot} />
             <Text style={styles.dbText}>Database: Terhubung ke Supabase Cloud</Text>
@@ -111,7 +108,6 @@ export const AuthScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Tab Switch: Masuk / Daftar */}
         <View style={styles.tabContainer}>
           <Pressable
             style={[styles.tabButton, !isRegisterMode && styles.activeTabButton]}
@@ -137,7 +133,6 @@ export const AuthScreen: React.FC = () => {
           </Pressable>
         </View>
 
-        {/* Notice for registration restriction */}
         {isRegisterMode && (
           <View style={styles.noticeBox}>
             <Ionicons name="information-circle" size={20} color={Colors.accentYellow} />
@@ -150,7 +145,6 @@ export const AuthScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Error Alert */}
         {errorMessage ? (
           <View style={styles.errorBox}>
             <Ionicons name="alert-circle" size={18} color="#FF6B6B" />
@@ -158,7 +152,6 @@ export const AuthScreen: React.FC = () => {
           </View>
         ) : null}
 
-        {/* Form Inputs */}
         <View style={styles.formCard}>
           {isRegisterMode && (
             <View style={styles.studentNoticeBox}>
@@ -284,7 +277,6 @@ export const AuthScreen: React.FC = () => {
             </View>
           )}
 
-          {/* Submit Button */}
           <Pressable
             style={[styles.primaryButton, isLoading && styles.disabledButton]}
             onPress={handleSubmit}
@@ -300,7 +292,6 @@ export const AuthScreen: React.FC = () => {
           </Pressable>
         </View>
 
-        {/* Quick Demo Access Bar */}
         {!isRegisterMode && (
           <View style={styles.demoSection}>
             <View style={styles.demoDividerRow}>

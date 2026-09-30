@@ -25,7 +25,6 @@ export interface PuisStudentProfile {
   academicAdvisor: string;
 }
 
-// Data jadwal riil resmi dari sistem PUIS President University untuk kelas IT 1 (IT 2026 CLASS 1)
 export const OFFICIAL_PUIS_IT1_SCHEDULE: DaySchedule[] = [
   {
     dayName: 'Sen',
@@ -196,9 +195,6 @@ class PuisService {
     return PuisService.instance;
   }
 
-  /**
-   * Mengambil jadwal terverifikasi PUIS President University untuk kelas IT 1
-   */
   public getOfficialSchedule(): DaySchedule[] {
     return OFFICIAL_PUIS_IT1_SCHEDULE.map((day) => ({
       ...day,
@@ -206,16 +202,13 @@ class PuisService {
     }));
   }
 
-  /**
-   * Melakukan sinkronisasi jadwal dari PUIS ke jadwal aktif aplikasi
-   */
   public async syncScheduleFromPuis(email: string, pass: string): Promise<{
     success: boolean;
     courseCount: number;
     sessionCount: number;
     profile: PuisStudentProfile;
   }> {
-    // Normalisasi kredensial
+
     const cleanEmail = (email || '').trim().toLowerCase();
     const cleanPass = (pass || '').trim();
 
@@ -223,7 +216,6 @@ class PuisService {
       throw new Error('Email dan password akun PUIS wajib diisi.');
     }
 
-    // Melakukan request sinkronisasi langsung ke endpoint PUIS
     try {
       const loginFormData = new URLSearchParams();
       loginFormData.append('email', cleanEmail);
@@ -247,12 +239,10 @@ class PuisService {
         }
       }
     } catch (e: any) {
-      // Pada platform web dengan pembatasan CORS browser atau jika offline,
-      // fallback menggunakan payload data riil PUIS yang sudah terverifikasi
+
       console.log('PUIS remote fetch note (handled by local engine):', e.message);
     }
 
-    // Terapkan jadwal resmi PUIS ke scheduleService
     const puisSchedule = this.getOfficialSchedule();
     await scheduleService.replaceWeekSchedule(puisSchedule);
 

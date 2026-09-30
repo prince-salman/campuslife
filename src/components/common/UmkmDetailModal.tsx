@@ -70,7 +70,6 @@ export const UmkmDetailModal: React.FC<UmkmDetailModalProps> = ({
 
   const whatsappNumber = item.whatsapp || item.phone;
 
-  // WhatsApp direct action
   const handleWhatsApp = async () => {
     if (!whatsappNumber) {
       Alert.alert('Info', 'Kontak WhatsApp tidak tersedia.');
@@ -98,7 +97,6 @@ export const UmkmDetailModal: React.FC<UmkmDetailModalProps> = ({
     }
   };
 
-  // Google Maps navigation action (supports direct URL or coordinates)
   const handleOpenMaps = async () => {
     let mapsUrl = '';
     if (item.mapsUrl && (item.mapsUrl.startsWith('http://') || item.mapsUrl.startsWith('https://'))) {
@@ -149,7 +147,6 @@ export const UmkmDetailModal: React.FC<UmkmDetailModalProps> = ({
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
-            {/* Storefront / Location Hero Photo */}
             <View style={styles.heroContainer}>
               {item.imageUrl && !imageError ? (
                 <Image
@@ -165,7 +162,6 @@ export const UmkmDetailModal: React.FC<UmkmDetailModalProps> = ({
                 </View>
               )}
 
-              {/* Gradient Overlay & Top Actions */}
               <View style={styles.heroTopBar}>
                 <View style={styles.categoryBadge}>
                   <Ionicons name={categoryIcon} size={14} color={Colors.yellowAccent} />
@@ -182,7 +178,6 @@ export const UmkmDetailModal: React.FC<UmkmDetailModalProps> = ({
                 </TouchableOpacity>
               </View>
 
-              {/* Price Tag Pill on Image */}
               {item.priceTag ? (
                 <View style={styles.heroPriceBadge}>
                   <Text style={styles.heroPriceText}>Mulai {item.priceTag}</Text>
@@ -190,9 +185,7 @@ export const UmkmDetailModal: React.FC<UmkmDetailModalProps> = ({
               ) : null}
             </View>
 
-            {/* Content Body */}
             <View style={styles.bodyContent}>
-              {/* Title & Tagline */}
               <View style={styles.titleSection}>
                 <Text style={styles.businessName}>{item.name}</Text>
                 {item.bannerText && item.bannerText !== item.name && (
@@ -200,7 +193,6 @@ export const UmkmDetailModal: React.FC<UmkmDetailModalProps> = ({
                 )}
               </View>
 
-              {/* Rating & Opening Hours Row */}
               <View style={styles.metaRow}>
                 {item.rating !== undefined ? (
                   <View style={styles.ratingBadge}>
@@ -222,7 +214,6 @@ export const UmkmDetailModal: React.FC<UmkmDetailModalProps> = ({
                 ) : null}
               </View>
 
-              {/* Quick Action Buttons */}
               <View style={styles.actionButtonsRow}>
                 {whatsappNumber ? (
                   <TouchableOpacity
@@ -245,7 +236,6 @@ export const UmkmDetailModal: React.FC<UmkmDetailModalProps> = ({
                 </TouchableOpacity>
               </View>
 
-              {/* Location & Distance Card */}
               <TouchableOpacity
                 style={styles.locationCard}
                 activeOpacity={0.85}
@@ -259,13 +249,12 @@ export const UmkmDetailModal: React.FC<UmkmDetailModalProps> = ({
                     {item.address || 'Area Kampus & Sekitarnya'}
                   </Text>
                   {item.distance ? (
-                    <Text style={styles.locationDistance}>📍 {item.distance}</Text>
+                    <Text style={styles.locationDistance}>{item.distance}</Text>
                   ) : null}
-                  <Text style={styles.tapMapsHint}>Ketuk untuk buka di Google Maps ↗</Text>
+                  <Text style={styles.tapMapsHint}>Ketuk untuk buka di Google Maps</Text>
                 </View>
               </TouchableOpacity>
 
-              {/* WhatsApp Information Card if available */}
               {whatsappNumber ? (
                 <View style={styles.phoneInfoCard}>
                   <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
@@ -275,7 +264,6 @@ export const UmkmDetailModal: React.FC<UmkmDetailModalProps> = ({
                 </View>
               ) : null}
 
-              {/* Services & Menus Section */}
               <View style={styles.servicesSection}>
                 <View style={styles.sectionHeaderRow}>
                   <View style={styles.sectionIndicator} />

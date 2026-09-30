@@ -31,7 +31,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ navi
   const [taskCount, setTaskCount] = useState<number>(assignmentService.getAssignments('IT 1').length);
 
   useEffect(() => {
-    // Initial fetch from remote
+
     umkmService.fetchUmkmList().then((list) => setUmkmCount(list.length)).catch(() => {});
     adminUserService.fetchUsers().then((list) => setUserCount(list.length)).catch(() => {});
 
@@ -61,7 +61,6 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ navi
 
   return (
     <View style={[styles.container, { paddingTop: topPadding }]}>
-      {/* Admin Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.shieldBadge}>
@@ -80,7 +79,6 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ navi
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Supabase Status Banner */}
         <View style={styles.statusCard}>
           <View style={styles.statusDot} />
           <View style={{ flex: 1, marginLeft: 10 }}>
@@ -90,7 +88,6 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ navi
           <Ionicons name="cloud-done-outline" size={20} color="#4ADE80" />
         </View>
 
-        {/* Metric Cards Grid */}
         <View style={styles.metricsRow}>
           <View style={[styles.metricCard, { borderColor: '#55A4B2' }]}>
             <View style={styles.metricIconBox}>
@@ -127,7 +124,6 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ navi
           </View>
         </View>
 
-        {/* Privacy Note */}
         <View style={styles.privacyCard}>
           <Ionicons name="lock-closed" size={22} color={Colors.accentYellow} />
           <View style={{ marginLeft: 12, flex: 1 }}>
@@ -138,7 +134,6 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ navi
           </View>
         </View>
 
-        {/* Quick Actions */}
         <Text style={styles.sectionTitle}>AKSI UTAMA ADMINISTRATOR</Text>
 
         <Pressable

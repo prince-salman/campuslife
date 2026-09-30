@@ -159,7 +159,6 @@ export class AssignmentService {
         }
       }
 
-      // Try fetching from Supabase if table exists
       try {
         const { data, error } = await supabase
           .from('assignments')
@@ -184,7 +183,7 @@ export class AssignmentService {
           await this.saveToStorage();
         }
       } catch {
-        // Fallback to local
+
       }
     } catch (err) {
       console.warn('Assignment load error:', err);
@@ -228,9 +227,6 @@ export class AssignmentService {
     return this.completedTaskIds.has(taskId);
   }
 
-  /**
-   * Only Class Managers or Admins have permission to add assignments!
-   */
   public async addAssignment(
     input: CreateAssignmentInput,
     user: UserProfile | null
@@ -257,7 +253,6 @@ export class AssignmentService {
     this.assignments.unshift(newTask);
     await this.saveToStorage();
 
-    // Sync to Supabase in background if table exists
     try {
       await supabase.from('assignments').insert({
         id: newTask.id,
@@ -279,9 +274,6 @@ export class AssignmentService {
     return newTask;
   }
 
-  /**
-   * Only Class Managers or Admins have permission to update assignments!
-   */
   public async updateAssignment(
     taskId: string,
     updates: Partial<CreateAssignmentInput>,
@@ -329,9 +321,6 @@ export class AssignmentService {
     return updated;
   }
 
-  /**
-   * Only Class Managers or Admins have permission to delete assignments!
-   */
   public async deleteAssignment(taskId: string, user: UserProfile | null): Promise<void> {
     if (!user || (user.role !== 'class_manager' && user.role !== 'admin')) {
       throw new Error('Akses Ditolak: Hanya Class Manager atau Administrator yang berwenang menghapus tugas.');
@@ -347,16 +336,12 @@ export class AssignmentService {
     this.notifyListeners();
   }
 
-  /**
-   * Menyelaraskan daftar tugas secara otomatis dengan seluruh mata kuliah resmi di PUIS
-   */
   public async syncAssignmentsFromPuisCourses(
     className: string = 'IT 1',
     user?: UserProfile | null
   ): Promise<number> {
     const creator = user ? `${user.fullName || user.email} (Class Manager ${className})` : `Class Manager ${className}`;
 
-    // Mapping silabus dan tugas terstruktur untuk mata kuliah resmi PUIS President University
     const PUIS_DEFAULT_TASKS: Record<string, { title: string; description: string; priority: TaskPriority; daysAhead: number }> = {
       'Web Programming': {
         title: 'Praktikum Web: Responsive Layout & Flexbox UI',

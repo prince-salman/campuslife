@@ -274,11 +274,6 @@ export class ScheduleService {
     return `${STORAGE_PREFIX}${userId}`;
   }
 
-  /**
-   * Set user context and load their private isolated schedule.
-   * New registrations start with clean empty calendar schedule.
-   * Existing accounts retain their preserved schedule.
-   */
   public async setUserId(userId: string | null): Promise<void> {
     this.currentUserId = userId;
 
@@ -288,7 +283,6 @@ export class ScheduleService {
       return;
     }
 
-    // Set immediate isolated in-memory default before async read
     this.weekSchedule = this.getSampleDemoSchedule();
 
     try {
@@ -307,7 +301,6 @@ export class ScheduleService {
 
       this.syncWithSupabase(userId);
     } catch {
-      // Fallback
     }
 
     this.notify();
@@ -420,18 +413,12 @@ export class ScheduleService {
     }
   }
 
-  /**
-   * Mendapatkan jadwal kuliah pertama (First Lesson) untuk ditampilkan di Home.
-   * Mencari mata kuliah pertama pada hari yang dipilih. Jika hari itu kosong,
-   * mencari mata kuliah pertama berikutnya pada minggu tersebut.
-   */
   public getFirstLesson(): ScheduleItem | null {
     const selectedDay = this.weekSchedule[this.selectedDayIndex];
     if (selectedDay && selectedDay.items.length > 0) {
       return selectedDay.items[0];
     }
 
-    // Fallback: cari kelas pertama yang tersedia di hari mana saja
     for (const day of this.weekSchedule) {
       if (day.items.length > 0) {
         return day.items[0];
@@ -441,9 +428,6 @@ export class ScheduleService {
     return null;
   }
 
-  /**
-   * Menimpa jadwal mingguan (digunakan saat sinkronisasi otomatis dari PUIS)
-   */
   public async replaceWeekSchedule(newSchedule: DaySchedule[]): Promise<void> {
     const baseDate = new Date();
     const dayOfWeek = (baseDate.getDay() + 6) % 7;
@@ -467,9 +451,6 @@ export class ScheduleService {
     this.notify();
   }
 
-  /**
-   * Menambahkan jadwal baru dengan jam selesai dan timeRange otomatis
-   */
   public addScheduleItem(params: AddScheduleParams): ScheduleItem {
     const day = this.weekSchedule[params.dayIndex];
     if (!day) {
@@ -508,9 +489,6 @@ export class ScheduleService {
     return newItem;
   }
 
-  /**
-   * Mengedit jadwal yang sudah ada
-   */
   public updateScheduleItem(params: UpdateScheduleParams): boolean {
     const day = this.weekSchedule[params.dayIndex];
     if (!day) return false;
@@ -550,9 +528,6 @@ export class ScheduleService {
     return true;
   }
 
-  /**
-   * Mengambil daftar nama mata kuliah unik dari jadwal aktif (PUIS)
-   */
   public getActiveCourses(): string[] {
     const set = new Set<string>();
     for (const day of this.weekSchedule) {
@@ -566,9 +541,6 @@ export class ScheduleService {
     return Array.from(set);
   }
 
-  /**
-   * Mengatur status pembatalan jadwal kuliah secara manual oleh Class Manager
-   */
   public async setScheduleItemCancelled(
     dayIndex: number,
     itemId: string,
@@ -601,9 +573,6 @@ export class ScheduleService {
     return true;
   }
 
-  /**
-   * Menghapus jadwal
-   */
   public deleteScheduleItem(dayIndex: number, itemId: string): boolean {
     const day = this.weekSchedule[dayIndex];
     if (!day) return false;
@@ -664,7 +633,6 @@ export class ScheduleService {
         this.notify();
       }
     } catch {
-      // Offline fallback
     }
   }
 
@@ -687,7 +655,6 @@ export class ScheduleService {
         card_color: item.cardColor,
       });
     } catch {
-      // Offline fallback
     }
   }
 
@@ -705,7 +672,6 @@ export class ScheduleService {
         card_color: item.cardColor,
       }).eq('id', item.id);
     } catch {
-      // Offline fallback
     }
   }
 
@@ -713,7 +679,6 @@ export class ScheduleService {
     try {
       await supabase.from('schedules').delete().eq('id', itemId);
     } catch {
-      // Offline fallback
     }
   }
 }

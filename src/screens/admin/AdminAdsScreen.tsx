@@ -37,7 +37,6 @@ export const AdminAdsScreen: React.FC<AdminAdsScreenProps> = ({ navigation }) =>
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [selectedAdId, setSelectedAdId] = useState<string | null>(null);
 
-  // Form fields
   const [title, setTitle] = useState<string>('');
   const [subtitle, setSubtitle] = useState<string>('');
   const [servicesText, setServicesText] = useState<string>('');
@@ -139,7 +138,6 @@ export const AdminAdsScreen: React.FC<AdminAdsScreenProps> = ({ navigation }) =>
 
   return (
     <View style={[styles.container, { paddingTop: topPadding }]}>
-      {/* Header */}
       <View style={styles.headerRow}>
         <View>
           <Text style={styles.headerTitle}>Kelola Iklan & Promo</Text>
@@ -178,7 +176,6 @@ export const AdminAdsScreen: React.FC<AdminAdsScreenProps> = ({ navigation }) =>
         ) : (
           ads.map((item) => (
             <View key={item.id} style={styles.adItemWrapper}>
-              {/* Banner Visual Preview (Exact Blue Card Style) */}
               <View style={styles.bannerCardPreview}>
                 <Text style={styles.previewTitle}>{item.title}</Text>
                 <Text style={styles.previewSubtitle}>{item.subtitle}</Text>
@@ -186,7 +183,6 @@ export const AdminAdsScreen: React.FC<AdminAdsScreenProps> = ({ navigation }) =>
                 <Text style={styles.previewContact}>Hubungi: {item.contact}</Text>
               </View>
 
-              {/* Action Buttons */}
               <View style={styles.actionRow}>
                 <Pressable
                   style={styles.editActionBtn}
@@ -209,7 +205,6 @@ export const AdminAdsScreen: React.FC<AdminAdsScreenProps> = ({ navigation }) =>
         )}
       </ScrollView>
 
-      {/* Add / Edit Modal */}
       <Modal
         visible={modalVisible}
         transparent
@@ -228,7 +223,6 @@ export const AdminAdsScreen: React.FC<AdminAdsScreenProps> = ({ navigation }) =>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Judul Iklan */}
               <Text style={styles.inputLabel}>Judul Iklan / Nama Usaha *</Text>
               <TextInput
                 style={styles.input}
@@ -238,7 +232,6 @@ export const AdminAdsScreen: React.FC<AdminAdsScreenProps> = ({ navigation }) =>
                 onChangeText={setTitle}
               />
 
-              {/* Sub-judul */}
               <Text style={styles.inputLabel}>Sub-judul / Tagline Promosi *</Text>
               <TextInput
                 style={styles.input}
@@ -248,7 +241,6 @@ export const AdminAdsScreen: React.FC<AdminAdsScreenProps> = ({ navigation }) =>
                 onChangeText={setSubtitle}
               />
 
-              {/* Poin Layanan */}
               <Text style={styles.inputLabel}>Daftar Layanan (Pisahkan dengan Koma / Enter) *</Text>
               <TextInput
                 style={[styles.input, { height: 72, textAlignVertical: 'top', paddingTop: 10 }]}
@@ -259,7 +251,6 @@ export const AdminAdsScreen: React.FC<AdminAdsScreenProps> = ({ navigation }) =>
                 multiline
               />
 
-              {/* Nomor Kontak */}
               <Text style={styles.inputLabel}>Nomor Kontak / WhatsApp *</Text>
               <TextInput
                 style={styles.input}
@@ -270,7 +261,6 @@ export const AdminAdsScreen: React.FC<AdminAdsScreenProps> = ({ navigation }) =>
                 keyboardType="phone-pad"
               />
 
-              {/* Live Preview Card */}
               <Text style={styles.inputLabel}>Preview Tampilan di HP Mahasiswa:</Text>
               <View style={styles.bannerCardPreview}>
                 <Text style={styles.previewTitle}>{title || 'Judul Iklan'}</Text>

@@ -52,13 +52,13 @@ const REMINDER_PRESETS = [
 ];
 
 const THEMES_BY_DAY = [
-  { header: '#2E6F79', card: '#55A4B2' }, // Sen
-  { header: '#2E7958', card: '#57B288' }, // Sel
-  { header: '#3B3878', card: '#6560B0' }, // Rab
-  { header: '#2E7979', card: '#5FB8B2' }, // Kam
-  { header: '#792E4D', card: '#B85F82' }, // Jum
-  { header: '#755127', card: '#A87D4C' }, // Sab
-  { header: '#274975', card: '#4D7FA9' }, // Min
+  { header: '#2E6F79', card: '#55A4B2' },
+  { header: '#2E7958', card: '#57B288' },
+  { header: '#3B3878', card: '#6560B0' },
+  { header: '#2E7979', card: '#5FB8B2' },
+  { header: '#792E4D', card: '#B85F82' },
+  { header: '#755127', card: '#A87D4C' },
+  { header: '#274975', card: '#4D7FA9' },
 ];
 
 export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
@@ -101,7 +101,6 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
     }
   }, [visible, mode, initialItem, initialDayIndex]);
 
-  // Kalkulasi Jam Selesai & Rentang Waktu Otomatis secara Realtime
   const calculated = ScheduleService.calculateEndTime(time, timePeriod, duration);
 
   const handleSave = () => {
@@ -189,7 +188,6 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
           </View>
 
           <ScrollView style={styles.scrollBody} showsVerticalScrollIndicator={false}>
-            {/* 1. Pilih Hari */}
             <Text style={styles.inputLabel}>Hari Kuliah *</Text>
             <View style={styles.daysRow}>
               {DAYS_NAMES.map((name, idx) => (
@@ -213,7 +211,6 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
               ))}
             </View>
 
-            {/* 2. Mata Kuliah */}
             <Text style={styles.inputLabel}>Mata Kuliah / Kegiatan *</Text>
             <TextInput
               style={styles.input}
@@ -223,7 +220,6 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
               onChangeText={setTitle}
             />
 
-            {/* 3. Dosen Pengampu */}
             <Text style={styles.inputLabel}>Dosen Pengampu *</Text>
             <TextInput
               style={styles.input}
@@ -233,7 +229,6 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
               onChangeText={setLecturer}
             />
 
-            {/* 4. Ruangan Kelas */}
             <Text style={styles.inputLabel}>Ruangan Kelas *</Text>
             <TextInput
               style={styles.input}
@@ -243,7 +238,6 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
               onChangeText={setRoom}
             />
 
-            {/* 5. Jam Mulai & Periode (AM / PM) */}
             <View style={styles.twoColRow}>
               <View style={styles.colHalf}>
                 <Text style={styles.inputLabel}>Jam Mulai (01 - 12)</Text>
@@ -295,7 +289,6 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
               </View>
             </View>
 
-            {/* 6. Durasi */}
             <Text style={styles.inputLabel}>Durasi Kelas</Text>
             <View style={styles.presetChipsRow}>
               {DURATION_PRESETS.map((item) => (
@@ -319,7 +312,6 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
               ))}
             </View>
 
-            {/* 7. Jam Selesai Terisi Otomatis (Live Calculation) */}
             <View style={styles.autoCalcCard}>
               <View style={styles.autoCalcHeader}>
                 <Ionicons name="time-outline" size={18} color={Colors.accentYellow} />
@@ -331,7 +323,6 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
               </Text>
             </View>
 
-            {/* 8. Pengingat Sebelum Kelas (Reminder) */}
             <Text style={styles.inputLabel}>
               <Ionicons name="notifications-outline" size={13} color={Colors.accentYellow} /> Pengingat Sebelum Kelas Dimulai
             </Text>
@@ -357,7 +348,6 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
               ))}
             </View>
 
-            {/* Action Buttons */}
             <View style={styles.actionButtonsContainer}>
               <Pressable style={styles.saveBtn} onPress={handleSave}>
                 <Ionicons name="checkmark-circle" size={18} color="#000000" />

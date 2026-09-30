@@ -53,12 +53,10 @@ export const AppNavigator: React.FC = () => {
     );
   }
 
-  // If unauthenticated, show AuthScreen (Login / Register student)
   if (!user) {
     return <AuthScreen />;
   }
 
-  // If Admin: render Admin specific tabs with full Assignment management
   if (role === 'admin') {
     return (
       <AdminTab.Navigator
@@ -117,7 +115,6 @@ export const AppNavigator: React.FC = () => {
     );
   }
 
-  // If Class Manager: Student tabs + dedicated "Kelola Tugas" tab
   if (role === 'class_manager') {
     return (
       <ClassManagerTab.Navigator
@@ -176,7 +173,6 @@ export const AppNavigator: React.FC = () => {
     );
   }
 
-  // Student (User) Navigation: Full access to Home, Schedule, Finance, UMKM
   return (
     <StudentTab.Navigator
       initialRouteName="Home"

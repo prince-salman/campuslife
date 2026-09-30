@@ -29,7 +29,6 @@ export const AdminAssignmentScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [filterPriority, setFilterPriority] = useState<string>('Semua');
 
-  // Modal State
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [editingTask, setEditingTask] = useState<AssignmentTask | null>(null);
@@ -95,7 +94,7 @@ export const AdminAssignmentScreen: React.FC = () => {
   const handleSaveAssignment = async (data: CreateAssignmentInput) => {
     if (modalMode === 'add') {
       const created = await assignmentService.addAssignment(data, user);
-      // Kirim notifikasi broadcast sistem ke mahasiswa
+
       await notificationService.sendLocalNotification(
         `Tugas Baru [${created.className}]: ${created.title}`,
         `Mata kuliah: ${created.courseName}. Deadline: ${created.deadlineDate} (${created.deadlineTime}).`
@@ -138,7 +137,6 @@ export const AdminAssignmentScreen: React.FC = () => {
     );
   };
 
-  // Filter list
   const filteredTasks = tasks.filter((task) => {
     const matchesSearch =
       searchQuery.trim() === '' ||
@@ -167,7 +165,6 @@ export const AdminAssignmentScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { paddingTop: topPadding }]}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.badgeIcon}>
@@ -205,7 +202,6 @@ export const AdminAssignmentScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <View>
-            {/* Class Selector Bar */}
             <View style={styles.sectionRow}>
               <Text style={styles.sectionLabel}>KELAS DIKELOLA</Text>
               <View style={styles.roleTag}>
@@ -228,7 +224,6 @@ export const AdminAssignmentScreen: React.FC = () => {
               ))}
             </View>
 
-            {/* Metrics Overview Cards */}
             <View style={styles.metricsRow}>
               <View style={[styles.metricCard, { borderColor: '#38BDF8' }]}>
                 <Text style={styles.metricNumber}>{tasks.length}</Text>
@@ -241,7 +236,6 @@ export const AdminAssignmentScreen: React.FC = () => {
               </View>
             </View>
 
-            {/* Broadcast Button */}
             <Pressable style={styles.broadcastBtn} onPress={handleBroadcastReminder}>
               <Ionicons name="notifications" size={18} color="#000000" style={{ marginRight: 6 }} />
               <Text style={styles.broadcastBtnText}>
@@ -249,7 +243,6 @@ export const AdminAssignmentScreen: React.FC = () => {
               </Text>
             </Pressable>
 
-            {/* Search and Filter */}
             <View style={styles.searchBar}>
               <Ionicons name="search-outline" size={18} color={Colors.textSecondary} style={{ marginRight: 8 }} />
               <TextInput
@@ -266,7 +259,6 @@ export const AdminAssignmentScreen: React.FC = () => {
               ) : null}
             </View>
 
-            {/* Priority Filter */}
             <View style={styles.filterPillsRow}>
               {['Semua', 'high', 'medium', 'normal'].map((p) => (
                 <Pressable
@@ -307,7 +299,6 @@ export const AdminAssignmentScreen: React.FC = () => {
         }
       />
 
-      {/* Add / Edit Assignment Modal */}
       <AddEditAssignmentModal
         visible={modalVisible}
         mode={modalMode}

@@ -57,7 +57,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [nearestTask, setNearestTask] = useState<AssignmentTask | null>(
     assignmentService.getAssignments(user?.managedClass || 'IT 1')[0] || null
   );
-  
+
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [modalType, setModalType] = useState<TransactionType>('income');
   const [notificationModalVisible, setNotificationModalVisible] = useState<boolean>(false);
@@ -157,7 +157,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             onLogoutPress={logout}
           />
 
-          {/* Quick Assignment Reminder Banner */}
           {nearestTask && (
             <Pressable
               style={styles.taskBanner}
@@ -179,7 +178,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </Pressable>
           )}
 
-          {/* Responsive Dashboard: Side-by-side on tablet/desktop, stacked on mobile */}
           <View style={isTablet ? styles.desktopRow : styles.mobileCol}>
             <View style={isTablet ? styles.desktopCol : styles.sectionSpacer}>
               <FirstLessonCard

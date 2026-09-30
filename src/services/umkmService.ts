@@ -26,17 +26,10 @@ class UmkmService {
     this.listeners.forEach((listener) => listener());
   }
 
-  /**
-   * Get the current synchronous cache of UMKM items.
-   */
   public getUmkmList(): UmkmModel[] {
     return [...this.umkmList];
   }
 
-  /**
-   * Fetch latest UMKM list from Supabase.
-   * Shared by all users (both students and admins).
-   */
   public async fetchUmkmList(): Promise<UmkmModel[]> {
     try {
       const { data, error } = await supabase
@@ -50,7 +43,7 @@ class UmkmService {
       }
 
       if (data && data.length > 0) {
-        // Map database columns to UmkmModel
+
         const mapped: UmkmModel[] = data.map((item: any) => {
           let address = item.address || '';
           let mapsUrl = '';
@@ -93,9 +86,6 @@ class UmkmService {
     }
   }
 
-  /**
-   * Create a new UMKM (Admin Privilege).
-   */
   public async createUmkm(params: {
     name: string;
     category: string;
@@ -136,11 +126,9 @@ class UmkmService {
       services: params.services || [],
     };
 
-    // Update local state immediately for instant UI response
     this.umkmList.unshift(newItem);
     this.notify();
 
-    // Persist to Supabase if connected
     try {
       const { error } = await supabase.from('umkm').insert({
         id: newId,
@@ -169,9 +157,6 @@ class UmkmService {
     return newItem;
   }
 
-  /**
-   * Update an existing UMKM (Admin Privilege).
-   */
   public async updateUmkm(id: string, updates: Partial<UmkmModel>): Promise<void> {
     const index = this.umkmList.findIndex((u) => u.id === id);
     if (index !== -1) {
@@ -210,9 +195,6 @@ class UmkmService {
     }
   }
 
-  /**
-   * Delete an UMKM (Admin Privilege).
-   */
   public async deleteUmkm(id: string): Promise<void> {
     this.umkmList = this.umkmList.filter((u) => u.id !== id);
     this.notify();

@@ -40,10 +40,8 @@ export const ScheduleScreen: React.FC = () => {
   const { user, canManageAssignments, isClassManager, isAdmin } = useAuth();
   const canManageSchedule = isClassManager || isAdmin;
 
-  // Tab switch: 'schedule' vs 'assignments'
   const [activeTab, setActiveTab] = useState<'schedule' | 'assignments'>('schedule');
 
-  // Schedule Tab States
   const [weekSchedule, setWeekSchedule] = useState<DaySchedule[]>(scheduleService.getWeekSchedule());
   const [monthYear, setMonthYear] = useState<string>(scheduleService.getSelectedMonthYear());
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(scheduleService.getSelectedDayIndex());
@@ -52,24 +50,20 @@ export const ScheduleScreen: React.FC = () => {
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [editingItem, setEditingItem] = useState<ScheduleItem | null>(null);
 
-  // Assignment Tab States
   const [selectedClass, setSelectedClass] = useState<string>(user?.managedClass || 'IT 1');
   const [tasks, setTasks] = useState<AssignmentTask[]>(assignmentService.getAssignments(selectedClass));
   const [taskSearchQuery, setTaskSearchQuery] = useState<string>('');
   const [taskPriorityFilter, setTaskPriorityFilter] = useState<string>('Semua');
 
-  // Assignment Modal
   const [assignmentModalVisible, setAssignmentModalVisible] = useState<boolean>(false);
   const [assignmentModalMode, setAssignmentModalMode] = useState<'add' | 'edit'>('add');
   const [editingTask, setEditingTask] = useState<AssignmentTask | null>(null);
 
-  // PUIS Sync States (Kredensial tidak di-hardcode demi keamanan akun)
   const [puisModalVisible, setPuisModalVisible] = useState<boolean>(false);
   const [puisEmail, setPuisEmail] = useState<string>('');
   const [puisPassword, setPuisPassword] = useState<string>('');
   const [isSyncingPuis, setIsSyncingPuis] = useState<boolean>(false);
 
-  // Class Cancellation Modal States (Khusus Class Manager & Admin)
   const [cancelModalVisible, setCancelModalVisible] = useState<boolean>(false);
   const [cancellingItem, setCancellingItem] = useState<ScheduleItem | null>(null);
   const [cancelReason, setCancelReason] = useState<string>('Dosen Berhalangan Hadir');
@@ -87,10 +81,8 @@ export const ScheduleScreen: React.FC = () => {
       scheduleService.resetToCurrentDeviceDate();
       setWeekSchedule(scheduleService.getWeekSchedule());
 
-      // Tugas otomatis menyesuaikan mata kuliah resmi di PUIS
       const syncedTaskCount = await assignmentService.syncAssignmentsFromPuisCourses(selectedClass, user);
 
-      // Bersihkan password dari memori setelah sinkronisasi berhasil
       setPuisPassword('');
       setPuisModalVisible(false);
 
@@ -106,7 +98,7 @@ export const ScheduleScreen: React.FC = () => {
   };
 
   useEffect(() => {
-    // Sinkronisasi otomatis ke tanggal, hari ini, dan bulan sekarang sesuai settingan perangkat
+
     scheduleService.resetToCurrentDeviceDate();
     setWeekSchedule(scheduleService.getWeekSchedule());
     setMonthYear(scheduleService.getSelectedMonthYear());
@@ -129,7 +121,6 @@ export const ScheduleScreen: React.FC = () => {
     return unsubAssignments;
   }, [selectedClass]);
 
-  // Schedule Handlers
   const handleDaySelect = (index: number) => {
     scheduleService.setSelectedDayIndex(index);
   };
@@ -257,7 +248,6 @@ export const ScheduleScreen: React.FC = () => {
     );
   };
 
-  // Assignment Handlers
   const handleOpenAddAssignment = () => {
     if (!canManageAssignments) {
       Alert.alert(
@@ -313,7 +303,6 @@ export const ScheduleScreen: React.FC = () => {
     items: [],
   };
 
-  // Filter assignment tasks
   const filteredTasks = tasks.filter((task) => {
     const matchesSearch =
       taskSearchQuery.trim() === '' ||
@@ -329,7 +318,6 @@ export const ScheduleScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.responsiveContainer}>
-        {/* Top Segmented Pill Bar */}
         <View style={[styles.topSegmentContainer, { paddingTop: topPadding + 6 }]}>
           <Pressable
             style={[styles.segmentBtn, activeTab === 'schedule' && styles.segmentBtnActive]}
@@ -389,7 +377,6 @@ export const ScheduleScreen: React.FC = () => {
           </Pressable>
         </View>
 
-        {/* View Mode: Jadwal Kuliah */}
         {activeTab === 'schedule' ? (
           <>
             <ScheduleCalendarHeader
@@ -401,7 +388,6 @@ export const ScheduleScreen: React.FC = () => {
               topPadding={0}
             />
 
-            {/* Action Header Bar */}
             <View style={styles.actionHeaderBar}>
               <View style={styles.dayInfoCol}>
                 <Text style={styles.dayInfoTitle}>
@@ -456,13 +442,12 @@ export const ScheduleScreen: React.FC = () => {
             </ScrollView>
           </>
         ) : (
-          /* View Mode: Jadwal Tugas */
+
           <ScrollView
             style={styles.scrollView}
             contentContainerStyle={styles.assignmentContent}
             showsVerticalScrollIndicator={true}
           >
-            {/* Class Chips Bar */}
             <View style={styles.classChipsContainer}>
               <Text style={styles.classChipsLabel}>PILIH KELAS:</Text>
               <View style={styles.classChipsRow}>
@@ -480,7 +465,6 @@ export const ScheduleScreen: React.FC = () => {
               </View>
             </View>
 
-            {/* Assignments Header Bar */}
             <View style={styles.assignmentHeaderBar}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.assignmentHeaderTitle}>
@@ -506,7 +490,6 @@ export const ScheduleScreen: React.FC = () => {
               )}
             </View>
 
-            {/* Search Input */}
             <View style={styles.searchBar}>
               <Ionicons name="search-outline" size={17} color={Colors.textSecondary} style={{ marginRight: 8 }} />
               <TextInput
@@ -523,7 +506,6 @@ export const ScheduleScreen: React.FC = () => {
               ) : null}
             </View>
 
-            {/* Priority Filter Pills */}
             <View style={styles.filterPillsRow}>
               {['Semua', 'high', 'medium', 'normal'].map((p) => (
                 <Pressable
@@ -538,7 +520,6 @@ export const ScheduleScreen: React.FC = () => {
               ))}
             </View>
 
-            {/* Assignment List */}
             {filteredTasks.length === 0 ? (
               <View style={styles.emptyAssignmentCard}>
                 <Ionicons name="checkmark-done-circle-outline" size={54} color={Colors.textSecondary} />
@@ -572,7 +553,6 @@ export const ScheduleScreen: React.FC = () => {
         )}
       </View>
 
-      {/* Schedule Modals */}
       <MonthPickerModal
         visible={monthPickerVisible}
         currentMonthYear={monthYear}
@@ -590,7 +570,6 @@ export const ScheduleScreen: React.FC = () => {
         onDelete={handleDeleteSchedule}
       />
 
-      {/* Assignment Modal (Class Manager & Admin) */}
       <AddEditAssignmentModal
         visible={assignmentModalVisible}
         mode={assignmentModalMode}
@@ -601,7 +580,6 @@ export const ScheduleScreen: React.FC = () => {
         onDelete={handleDeleteAssignment}
       />
 
-      {/* PUIS Sync Modal */}
       <Modal visible={puisModalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -676,7 +654,6 @@ export const ScheduleScreen: React.FC = () => {
         </View>
       </Modal>
 
-      {/* Cancellation Modal for Class Manager */}
       <Modal
         visible={cancelModalVisible}
         transparent

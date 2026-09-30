@@ -28,11 +28,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Restore stored session on mount
   useEffect(() => {
     const restoreSession = async () => {
       try {
-        // 1. Check AsyncStorage for fast restore
+
         const cached = await AsyncStorage.getItem(LOCAL_USER_KEY);
         if (cached) {
           const parsed = JSON.parse(cached);
@@ -42,7 +41,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           assignmentService.setUserId(parsed.id);
         }
 
-        // 2. Check Supabase auth state
         const { data } = await supabase.auth.getSession();
         if (data.session?.user) {
           const profile = await authService.fetchProfile(
@@ -64,10 +62,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     restoreSession();
 
-    // Listen to Supabase auth events
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT' || !session?.user) {
-        // Only clear if not in demo mode
+
         if (user && !user.id.startsWith('admin_demo') && !user.id.startsWith('student_demo')) {
           setUser(null);
           await AsyncStorage.removeItem(LOCAL_USER_KEY);

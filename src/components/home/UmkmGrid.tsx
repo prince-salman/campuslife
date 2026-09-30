@@ -13,10 +13,10 @@ export const UmkmGrid: React.FC<UmkmGridProps> = ({ items, onItemPress }) => {
   const { width } = useWindowDimensions();
 
   const getResponsiveCardWidth = () => {
-    if (width >= 960) return '18.4%'; // 5 columns on wide desktop
-    if (width >= 640) return '23.4%'; // 4 columns on tablet / medium desktop
-    if (width >= 400) return '31.2%'; // 3 columns on standard mobile
-    return '48%'; // 2 columns on small mobile
+    if (width >= 960) return '18.4%';
+    if (width >= 640) return '23.4%';
+    if (width >= 400) return '31.2%';
+    return '48%';
   };
 
   const cardWidth = getResponsiveCardWidth();

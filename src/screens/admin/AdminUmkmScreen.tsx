@@ -27,7 +27,6 @@ export const AdminUmkmScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
 
-  // Modal form states
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formName, setFormName] = useState<string>('');
@@ -132,7 +131,6 @@ export const AdminUmkmScreen: React.FC = () => {
     const parsedRating = parseFloat(formRating) || 4.8;
     const clampedRating = Math.min(5.0, Math.max(1.0, parsedRating));
 
-    // Filter valid services
     const cleanedServices = formServices
       .filter((s) => s.name.trim().length > 0)
       .map((s) => ({
@@ -144,7 +142,7 @@ export const AdminUmkmScreen: React.FC = () => {
     setIsSaving(true);
     try {
       if (editingId) {
-        // Update
+
         await umkmService.updateUmkm(editingId, {
           name: formName.trim(),
           category: formCategory,
@@ -161,7 +159,7 @@ export const AdminUmkmScreen: React.FC = () => {
           services: cleanedServices,
         });
       } else {
-        // Create
+
         await umkmService.createUmkm({
           name: formName.trim(),
           category: formCategory,
@@ -204,7 +202,6 @@ export const AdminUmkmScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { paddingTop: topPadding }]}>
-      {/* Header with Add Button */}
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>Manajemen Katalog UMKM</Text>
@@ -216,7 +213,6 @@ export const AdminUmkmScreen: React.FC = () => {
         </Pressable>
       </View>
 
-      {/* Search Input */}
       <View style={styles.searchBar}>
         <Ionicons name="search-outline" size={18} color={Colors.textSecondary} />
         <TextInput
@@ -233,7 +229,6 @@ export const AdminUmkmScreen: React.FC = () => {
         ) : null}
       </View>
 
-      {/* Category Filter Chips */}
       <View style={styles.categoryContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
           {categories.map((cat) => {
@@ -253,7 +248,6 @@ export const AdminUmkmScreen: React.FC = () => {
         </ScrollView>
       </View>
 
-      {/* UMKM List */}
       <FlatList
         data={filteredList}
         keyExtractor={(item) => item.id}
@@ -293,7 +287,6 @@ export const AdminUmkmScreen: React.FC = () => {
               ) : null}
             </View>
 
-            {/* Action Buttons: Edit & Delete */}
             <View style={styles.cardActions}>
               <Pressable
                 style={styles.editBtn}
@@ -315,7 +308,6 @@ export const AdminUmkmScreen: React.FC = () => {
         )}
       />
 
-      {/* Add / Edit UMKM Modal */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -361,7 +353,6 @@ export const AdminUmkmScreen: React.FC = () => {
                 ))}
               </View>
 
-              {/* Thumbnail Image URL & Preview */}
               <Text style={styles.inputLabel}>URL Gambar Thumbnail Lapak</Text>
               <TextInput
                 style={styles.modalInput}
@@ -378,7 +369,6 @@ export const AdminUmkmScreen: React.FC = () => {
                 </View>
               ) : null}
 
-              {/* Rating Manual */}
               <Text style={styles.inputLabel}>Rating UMKM (1.0 - 5.0) *</Text>
               <TextInput
                 style={styles.modalInput}
@@ -389,7 +379,6 @@ export const AdminUmkmScreen: React.FC = () => {
                 keyboardType="decimal-pad"
               />
 
-              {/* WhatsApp (Nomor Telepon Biasa Dihapus) */}
               <Text style={styles.inputLabel}>Nomor WhatsApp Lapak *</Text>
               <TextInput
                 style={styles.modalInput}
@@ -400,7 +389,6 @@ export const AdminUmkmScreen: React.FC = () => {
                 keyboardType="phone-pad"
               />
 
-              {/* Link / Koordinat Google Maps */}
               <Text style={styles.inputLabel}>Link / Koordinat Google Maps</Text>
               <TextInput
                 style={styles.modalInput}
@@ -456,7 +444,6 @@ export const AdminUmkmScreen: React.FC = () => {
                 onChangeText={setFormBannerText}
               />
 
-              {/* Dynamic Menu & Services Section */}
               <View style={styles.servicesHeaderContainer}>
                 <View>
                   <Text style={styles.servicesSectionTitle}>Daftar Menu & Jasa yang Ditawarkan</Text>

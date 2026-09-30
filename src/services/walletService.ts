@@ -124,11 +124,6 @@ class WalletService {
     return `${STORAGE_PREFIX}${userId}`;
   }
 
-  /**
-   * Set user context and load their private isolated wallet data.
-   * New registrations default strictly to Rp 0 balance and [] transactions.
-   * Existing accounts retain their preserved balance and history.
-   */
   public async setUserId(userId: string | null): Promise<void> {
     this.currentUserId = userId;
 
@@ -139,12 +134,11 @@ class WalletService {
       return;
     }
 
-    // Set immediate isolated in-memory default before async read
     if (userId === DEMO_STUDENT_ID) {
       this.balance = 1000025;
       this.transactions = [...DEFAULT_DEMO_TRANSACTIONS];
     } else {
-      // ANY NEW REGISTRATION STRICTLY DEFAULTS TO 0 RUPIAH
+
       this.balance = 0;
       this.transactions = [];
     }
@@ -154,7 +148,7 @@ class WalletService {
       const savedData = await safeWalletStorage.getItem(storageKey);
 
       if (savedData) {
-        // Preserved existing user data
+
         const parsed = JSON.parse(savedData);
         this.balance = typeof parsed.balance === 'number' ? parsed.balance : 0;
         this.transactions = Array.isArray(parsed.transactions) ? parsed.transactions : [];
@@ -162,7 +156,6 @@ class WalletService {
         await this.saveToStorage();
       }
 
-      // Background remote sync with Supabase
       this.syncWithSupabase(userId);
     } catch (e) {
       console.warn('Wallet load error:', e);
@@ -269,7 +262,6 @@ class WalletService {
         });
       }
     } catch {
-      // Offline / unauthenticated fallback
     }
   }
 
@@ -291,7 +283,6 @@ class WalletService {
         date_text: tx.dateText,
       });
     } catch {
-      // Offline / unauthenticated fallback
     }
   }
 }

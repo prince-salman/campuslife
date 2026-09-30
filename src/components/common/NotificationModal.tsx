@@ -75,7 +75,6 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
     >
       <View style={styles.overlay}>
         <View style={styles.contentCard}>
-          {/* Header */}
           <View style={styles.headerRow}>
             <View style={styles.titleRow}>
               <Ionicons name="notifications" size={20} color={Colors.accentYellow} />
@@ -86,7 +85,6 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
             </Pressable>
           </View>
 
-          {/* Mode Notifikasi Otomatis (Mengikuti Sistem HP) */}
           <View style={styles.deviceModeCard}>
             <View style={styles.deviceModeIconBox}>
               <Ionicons name="phone-portrait-outline" size={18} color={Colors.accentYellow} />

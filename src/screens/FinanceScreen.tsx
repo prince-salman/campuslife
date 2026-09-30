@@ -46,7 +46,7 @@ export const FinanceScreen: React.FC<FinanceScreenProps> = ({ navigation }) => {
   const [isBalanceVisible, setIsBalanceVisible] = useState<boolean>(true);
   const [selectedTab, setSelectedTab] = useState<TransactionType>('spent');
   const [selectedMonthIndex, setSelectedMonthIndex] = useState<number>(new Date().getMonth());
-  
+
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [modalType, setModalType] = useState<TransactionType>('income');
 
@@ -99,7 +99,6 @@ export const FinanceScreen: React.FC<FinanceScreenProps> = ({ navigation }) => {
         showsVerticalScrollIndicator={true}
       >
         <View style={styles.responsiveContainer}>
-          {/* Top Bar Header */}
           <View style={[styles.topHeader, { paddingTop: topPadding }]}>
             <View style={styles.appIconBox}>
               <Ionicons name="school" size={20} color={Colors.primary} />
@@ -132,7 +131,6 @@ export const FinanceScreen: React.FC<FinanceScreenProps> = ({ navigation }) => {
             </View>
           </View>
 
-          {/* Royal Blue Balance Card */}
           <View style={styles.balanceCard}>
             <View style={styles.balanceDecorativeCircle} />
 
@@ -190,7 +188,6 @@ export const FinanceScreen: React.FC<FinanceScreenProps> = ({ navigation }) => {
             </View>
           </View>
 
-          {/* Month Selector Carousel */}
           <View style={styles.monthSelectorRow}>
             <TouchableOpacity
               style={styles.monthNavCircle}
@@ -213,7 +210,6 @@ export const FinanceScreen: React.FC<FinanceScreenProps> = ({ navigation }) => {
             </TouchableOpacity>
           </View>
 
-          {/* Big Center Spent Tracker */}
           <View style={styles.centerSpentSection}>
             <View style={styles.centerAmountRow}>
               <Text style={styles.centerCurrencyPrefix}>Rp</Text>
@@ -237,7 +233,6 @@ export const FinanceScreen: React.FC<FinanceScreenProps> = ({ navigation }) => {
             </Text>
           </View>
 
-          {/* Lower Sheet Section: Latest Transactions */}
           <View style={styles.bottomSheetContainer}>
             <Text style={styles.sectionHeading}>Latest Transaction</Text>
 

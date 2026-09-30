@@ -26,13 +26,11 @@ export const AdminUsersScreen: React.FC = () => {
   const [users, setUsers] = useState<UserProfile[]>(adminUserService.getUsers());
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Reset password modal state
   const [resetModalVisible, setResetModalVisible] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [newPassword, setNewPassword] = useState<string>('');
   const [isResetting, setIsResetting] = useState<boolean>(false);
 
-  // Edit user modal state
   const [editModalVisible, setEditModalVisible] = useState<boolean>(false);
   const [editFullName, setEditFullName] = useState<string>('');
   const [editRole, setEditRole] = useState<UserRole>('user');
@@ -131,7 +129,6 @@ export const AdminUsersScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { paddingTop: topPadding }]}>
-      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>Manajemen Pengguna</Text>
@@ -142,7 +139,6 @@ export const AdminUsersScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Search Bar */}
       <View style={styles.searchBar}>
         <Ionicons name="search-outline" size={18} color={Colors.textSecondary} />
         <TextInput
@@ -159,7 +155,6 @@ export const AdminUsersScreen: React.FC = () => {
         ) : null}
       </View>
 
-      {/* Users List */}
       <FlatList
         data={filteredUsers}
         keyExtractor={(item) => item.id}
@@ -215,7 +210,6 @@ export const AdminUsersScreen: React.FC = () => {
                 </View>
               </View>
 
-              {/* Action Buttons: Reset Password & Edit & Delete */}
               <View style={styles.cardActions}>
                 <Pressable
                   style={styles.resetBtn}
@@ -247,7 +241,6 @@ export const AdminUsersScreen: React.FC = () => {
         }}
       />
 
-      {/* Reset Password Modal */}
       <Modal visible={resetModalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -299,7 +292,6 @@ export const AdminUsersScreen: React.FC = () => {
         </View>
       </Modal>
 
-      {/* Edit User Modal */}
       <Modal visible={editModalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>

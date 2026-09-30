@@ -5,7 +5,6 @@ import { Platform } from 'react-native';
 export const SUPABASE_URL = 'https://nepsoinveldfsncrgdvn.supabase.co';
 export const SUPABASE_ANON_KEY = 'sb_publishable_Udx1f1FcLhB4QJejxPJ20w_RxOi-2fA';
 
-// Cross-platform persistent storage adapter (Mobile AsyncStorage + Web localStorage)
 const customStorage = {
   getItem: async (key: string): Promise<string | null> => {
     try {

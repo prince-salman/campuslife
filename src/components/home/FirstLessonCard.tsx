@@ -22,14 +22,12 @@ export const FirstLessonCard: React.FC<FirstLessonCardProps> = ({
     const timeStr = schedule.time ? `${schedule.time}:00 WIB` : '08:00 WIB';
     const roomStr = schedule.room || 'B103';
 
-    // 1. Send immediate test lockscreen notification
     await notificationService.sendClassReminder(
       schedule.title,
       roomStr,
       timeStr
     );
 
-    // 2. Schedule lock screen alert 15 minutes before class begins
     await notificationService.scheduleUpcomingClassReminder(
       schedule.title,
       roomStr,

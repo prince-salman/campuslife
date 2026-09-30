@@ -42,7 +42,7 @@ export const CATEGORIES: string[] = [
 ];
 
 export const UMKM_LIST: UmkmModel[] = [
-  // F&B
+
   {
     id: '1',
     name: 'Kokoes Bites',
@@ -227,7 +227,7 @@ export const UMKM_LIST: UmkmModel[] = [
       { name: 'Ebi Furai Bento', price: 'Rp 18.000', description: '3 pcs udang goreng tepung renyah dengan saus tartar' },
     ],
   },
-  // Laundry
+
   {
     id: 'l1',
     name: 'Laundry Express Kampus',
@@ -289,7 +289,7 @@ export const UMKM_LIST: UmkmModel[] = [
       { name: 'Cuci Karpet Kamar Kos', price: 'Rp 15.000 / m²', description: 'Dicuci bersih kering maksimal bebas debu' },
     ],
   },
-  // Homestay / Kost
+
   {
     id: 'h1',
     name: 'Kost Melati Indah',
@@ -349,7 +349,7 @@ export const UMKM_LIST: UmkmModel[] = [
       { name: 'Paket Menginap Mingguan', price: 'Rp 850.000 / minggu', description: 'Diskon hemat untuk keperluan riset & seminar' },
     ],
   },
-  // Fotocopy & Printing
+
   {
     id: 'f1',
     name: 'Berkah Fotocopy & Jilid',
@@ -392,7 +392,7 @@ export const UMKM_LIST: UmkmModel[] = [
       { name: 'Sertifikat Panitia / Peserta Linen / Concorde', price: 'Rp 3.500 / lembar', description: 'Kertas berserat mewah siap bagikan' },
     ],
   },
-  // Holiday & Rental
+
   {
     id: 'hol1',
     name: 'Sewa Motor Kampus',

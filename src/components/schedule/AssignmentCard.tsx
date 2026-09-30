@@ -32,7 +32,6 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
   const [expanded, setExpanded] = useState<boolean>(false);
   const [reminded, setReminded] = useState<boolean>(false);
 
-  // Hitung selisih hari menuju deadline
   const calculateDaysLeft = (deadlineDateStr: string): { label: string; isUrgent: boolean; isPast: boolean } => {
     try {
       const today = new Date();
@@ -80,16 +79,13 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
 
   return (
     <View style={[styles.card, isCompleted && styles.cardCompleted]}>
-      {/* Top Meta Row */}
       <View style={styles.topMetaRow}>
         <View style={styles.badgeRow}>
-          {/* Class Tag */}
           <View style={styles.classBadge}>
             <Ionicons name="people" size={12} color="#FFFFFF" style={{ marginRight: 4 }} />
             <Text style={styles.classBadgeText}>{task.className}</Text>
           </View>
 
-          {/* Priority Badge */}
           <View
             style={[
               styles.priorityBadge,
@@ -111,7 +107,6 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
           </View>
         </View>
 
-        {/* Days Left Badge */}
         <View
           style={[
             styles.daysBadge,
@@ -143,15 +138,12 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
         </View>
       </View>
 
-      {/* Course Name */}
       <Text style={styles.courseName}>{task.courseName}</Text>
 
-      {/* Task Title */}
       <Text style={[styles.taskTitle, isCompleted && styles.taskTitleCompleted]}>
         {task.title}
       </Text>
 
-      {/* Deadline Info */}
       <View style={styles.deadlineRow}>
         <Ionicons name="calendar-outline" size={14} color={Colors.textSecondary} />
         <Text style={styles.deadlineText}>
@@ -159,7 +151,6 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
         </Text>
       </View>
 
-      {/* Description toggle */}
       {task.description ? (
         <View style={styles.descriptionSection}>
           <Pressable onPress={() => setExpanded(!expanded)} style={styles.expandRow}>
@@ -177,7 +168,6 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
         </View>
       ) : null}
 
-      {/* Creator Info */}
       <View style={styles.creatorRow}>
         <Ionicons name="person-circle-outline" size={13} color="rgba(255,255,255,0.4)" />
         <Text style={styles.creatorText} numberOfLines={1}>
@@ -185,9 +175,7 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
         </Text>
       </View>
 
-      {/* Footer Actions */}
       <View style={styles.footerRow}>
-        {/* Toggle Complete Checkbox */}
         <Pressable
           style={[styles.checkBtn, isCompleted && styles.checkBtnCompleted]}
           onPress={() => onToggleComplete(task.id)}
@@ -203,14 +191,12 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
         </Pressable>
 
         <View style={styles.actionButtonsRow}>
-          {/* Submission Link Button */}
           {task.submissionLink ? (
             <Pressable style={styles.linkBtn} onPress={handleOpenLink} hitSlop={6}>
               <Ionicons name="open-outline" size={16} color="#38BDF8" />
             </Pressable>
           ) : null}
 
-          {/* Reminder Bell Button */}
           <Pressable
             style={[styles.reminderBtn, reminded && styles.reminderBtnActive]}
             onPress={handleReminder}
@@ -223,14 +209,12 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
             />
           </Pressable>
 
-          {/* Manager / Admin Edit Button */}
           {canManage && onEdit ? (
             <Pressable style={styles.editBtn} onPress={() => onEdit(task)} hitSlop={6}>
               <Ionicons name="create-outline" size={16} color="#A380FF" />
             </Pressable>
           ) : null}
 
-          {/* Manager / Admin Delete Button */}
           {canManage && onDelete ? (
             <Pressable style={styles.deleteIconBtn} onPress={() => onDelete(task.id)} hitSlop={6}>
               <Ionicons name="trash-outline" size={16} color="#FF6B6B" />

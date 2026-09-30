@@ -73,7 +73,6 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       iconName: selectedIcon,
     });
 
-    // Send notification to device Notification Center
     notificationService.sendTransactionAlert(
       sanitizedTitle,
       formatRupiah(numAmount),
@@ -107,7 +106,6 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false}>
-            {/* Toggle Income / Spent */}
             <View style={styles.toggleContainer}>
               <Pressable
                 onPress={() => {
@@ -150,7 +148,6 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               </Pressable>
             </View>
 
-            {/* Title Input */}
             <Text style={styles.inputLabel}>Nama Transaksi</Text>
             <TextInput
               style={styles.input}
@@ -160,7 +157,6 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               onChangeText={setTitle}
             />
 
-            {/* Quick Title Chips */}
             <View style={styles.chipsRow}>
               {quickTitles.map((t) => (
                 <Pressable
@@ -173,7 +169,6 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               ))}
             </View>
 
-            {/* Amount Input */}
             <Text style={styles.inputLabel}>Nominal (Rp)</Text>
             <TextInput
               style={[styles.input, styles.amountInput]}
@@ -184,7 +179,6 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               onChangeText={(text) => setAmount(text.replace(/[^\d]/g, ''))}
             />
 
-            {/* Quick Amount Chips */}
             <View style={styles.chipsRow}>
               {quickAmounts.map((amt) => (
                 <Pressable
@@ -200,7 +194,6 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               ))}
             </View>
 
-            {/* Save Button */}
             <Pressable onPress={handleSave} style={styles.saveBtn}>
               <Text style={styles.saveBtnText}>
                 {type === 'income' ? 'Simpan Pemasukan' : 'Simpan Pengeluaran'}

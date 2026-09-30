@@ -76,7 +76,6 @@ export const AddEditAssignmentModal: React.FC<AddEditAssignmentModalProps> = ({
       setTitle('');
       setDescription('');
 
-      // Default deadline: 3 hari dari sekarang
       const d = new Date();
       d.setDate(d.getDate() + 3);
       const yyyy = d.getFullYear();
@@ -173,7 +172,6 @@ export const AddEditAssignmentModal: React.FC<AddEditAssignmentModalProps> = ({
     >
       <View style={styles.overlay}>
         <View style={styles.modalCard}>
-          {/* Header */}
           <View style={styles.modalHeader}>
             <View style={styles.headerTitleRow}>
               <View style={styles.iconBadge}>
@@ -194,7 +192,6 @@ export const AddEditAssignmentModal: React.FC<AddEditAssignmentModalProps> = ({
           </View>
 
           <ScrollView style={styles.scrollBody} showsVerticalScrollIndicator={false}>
-            {/* Target Class */}
             <Text style={styles.fieldLabel}>PILIH KELAS MAHASISWA</Text>
             <View style={styles.classChipsRow}>
               {AVAILABLE_CLASSES.map((c) => (
@@ -210,7 +207,6 @@ export const AddEditAssignmentModal: React.FC<AddEditAssignmentModalProps> = ({
               ))}
             </View>
 
-            {/* Course Name */}
             <Text style={styles.fieldLabel}>MATA KULIAH</Text>
             <TextInput
               style={styles.input}
@@ -220,7 +216,6 @@ export const AddEditAssignmentModal: React.FC<AddEditAssignmentModalProps> = ({
               onChangeText={setCourseName}
             />
 
-            {/* Common Course Fast Selectors */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.presetsRow}>
               {availableCourses.map((course) => (
                 <Pressable
@@ -235,7 +230,6 @@ export const AddEditAssignmentModal: React.FC<AddEditAssignmentModalProps> = ({
               ))}
             </ScrollView>
 
-            {/* Assignment Title */}
             <Text style={styles.fieldLabel}>JUDUL TUGAS</Text>
             <TextInput
               style={styles.input}
@@ -245,7 +239,6 @@ export const AddEditAssignmentModal: React.FC<AddEditAssignmentModalProps> = ({
               onChangeText={setTitle}
             />
 
-            {/* Description */}
             <Text style={styles.fieldLabel}>PETUNJUK PENGERJAAN / DESKRIPSI</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
@@ -258,7 +251,6 @@ export const AddEditAssignmentModal: React.FC<AddEditAssignmentModalProps> = ({
               textAlignVertical="top"
             />
 
-            {/* Deadline Date & Presets */}
             <Text style={styles.fieldLabel}>BATAS WAKTU (DEADLINE DATE)</Text>
             <TextInput
               style={styles.input}
@@ -283,7 +275,6 @@ export const AddEditAssignmentModal: React.FC<AddEditAssignmentModalProps> = ({
               </Pressable>
             </View>
 
-            {/* Deadline Time */}
             <Text style={styles.fieldLabel}>JAM DEADLINE</Text>
             <TextInput
               style={styles.input}
@@ -293,7 +284,6 @@ export const AddEditAssignmentModal: React.FC<AddEditAssignmentModalProps> = ({
               onChangeText={setDeadlineTime}
             />
 
-            {/* Priority Selector */}
             <Text style={styles.fieldLabel}>TINGKAT PRIORITAS</Text>
             <View style={styles.priorityRow}>
               <Pressable
@@ -336,7 +326,6 @@ export const AddEditAssignmentModal: React.FC<AddEditAssignmentModalProps> = ({
               </Pressable>
             </View>
 
-            {/* Submission Link */}
             <Text style={styles.fieldLabel}>LINK PENGUMPULAN (OPSIONAL)</Text>
             <TextInput
               style={styles.input}
@@ -348,7 +337,6 @@ export const AddEditAssignmentModal: React.FC<AddEditAssignmentModalProps> = ({
             />
           </ScrollView>
 
-          {/* Action Buttons */}
           <View style={styles.footerRow}>
             {mode === 'edit' && onDelete && (
               <Pressable

@@ -47,9 +47,6 @@ class AdminUserService {
     return [...this.users];
   }
 
-  /**
-   * Fetch all registered profiles from Supabase.
-   */
   public async fetchUsers(): Promise<UserProfile[]> {
     try {
       const { data, error } = await supabase
@@ -84,9 +81,6 @@ class AdminUserService {
     }
   }
 
-  /**
-   * Reset user password via Supabase Security Definer RPC.
-   */
   public async resetPassword(userId: string, newPass: string): Promise<{ success: boolean; message: string }> {
     if (!newPass || newPass.length < 6) {
       throw new Error('Kata sandi baru minimal 6 karakter.');
@@ -100,7 +94,7 @@ class AdminUserService {
 
       if (error) {
         console.warn('admin_reset_user_password RPC warning:', error.message);
-        // If RPC isn't deployed yet in remote DB, treat as simulated success for UI
+
         return {
           success: true,
           message: 'Password berhasil diperbarui (simulasi lokal/demo).',
@@ -119,9 +113,6 @@ class AdminUserService {
     }
   }
 
-  /**
-   * Update user full name or role.
-   */
   public async updateUser(userId: string, updates: { fullName?: string; role?: UserRole; managedClass?: string }): Promise<void> {
     const idx = this.users.findIndex((u) => u.id === userId);
     if (idx !== -1) {
@@ -141,9 +132,6 @@ class AdminUserService {
     }
   }
 
-  /**
-   * Delete user by admin.
-   */
   public async deleteUser(userId: string): Promise<void> {
     this.users = this.users.filter((u) => u.id !== userId);
     this.notify();

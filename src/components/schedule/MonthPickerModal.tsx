@@ -37,7 +37,7 @@ export const MonthPickerModal: React.FC<MonthPickerModalProps> = ({
   onClose,
   onSelect,
 }) => {
-  // Parse currentMonthYear like "Juni, 2026" or "June, 2026"
+
   const parseCurrent = () => {
     const parts = currentMonthYear.split(',').map((s) => s.trim());
     const m = parts[0] || 'Juni';
@@ -72,7 +72,6 @@ export const MonthPickerModal: React.FC<MonthPickerModalProps> = ({
             </Pressable>
           </View>
 
-          {/* Year Switcher */}
           <View style={styles.yearRow}>
             <Pressable
               onPress={() => setSelectedYear((prev) => prev - 1)}
@@ -91,7 +90,6 @@ export const MonthPickerModal: React.FC<MonthPickerModalProps> = ({
             </Pressable>
           </View>
 
-          {/* Months Grid */}
           <View style={styles.monthsGrid}>
             {MONTHS.map((month) => {
               const isSelected =

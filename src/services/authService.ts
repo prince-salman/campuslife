@@ -12,7 +12,6 @@ export interface UserProfile {
   createdAt?: string;
 }
 
-// Preset demo accounts for quick testing with real Supabase Cloud user IDs
 export const DEMO_ADMIN: UserProfile = {
   id: '4bbbdeea-08ca-478a-8b06-e028a7227aaf',
   email: 'admin@campuslife.com',
@@ -46,10 +45,6 @@ export class AuthService {
     return AuthService.instance;
   }
 
-  /**
-   * Log in with email and password via Supabase.
-   * Resilient to unconfirmed emails and supports credentials aliases for Admin & Students.
-   */
   public async login(email: string, password: string): Promise<UserProfile> {
     const rawEmail = (email || '').trim().toLowerCase();
     const rawPass = (password || '').trim();
@@ -64,7 +59,6 @@ export class AuthService {
       return DEMO_CLASS_MANAGER;
     }
 
-    // Secure authentication via Supabase Auth
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
@@ -100,20 +94,14 @@ export class AuthService {
     }
   }
 
-  /**
-   * Register a new student user. Strictly requires @student.president.ac.id email.
-   * Public registration ONLY creates regular student accounts (role: 'user').
-   */
   public async register(email: string, password: string, fullName: string): Promise<UserProfile> {
     const cleanEmail = email.trim().toLowerCase();
 
-    // 1. Enforce President University student email domain
     const emailValidation = validateStudentEmail(cleanEmail);
     if (!emailValidation.isValid) {
       throw new Error(emailValidation.error);
     }
 
-    // 2. Validate password and name
     const passValidation = validatePassword(password);
     if (!passValidation.isValid) {
       throw new Error(passValidation.error);
@@ -124,7 +112,6 @@ export class AuthService {
       throw new Error(nameValidation.error);
     }
 
-    // 3. Register with Supabase Auth
     try {
       const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,
@@ -132,7 +119,7 @@ export class AuthService {
         options: {
           data: {
             full_name: fullName.trim(),
-            role: 'user', // Enforce role: user
+            role: 'user',
           },
         },
       });
@@ -145,7 +132,6 @@ export class AuthService {
         throw new Error('Gagal mendaftarkan akun mahasiswa.');
       }
 
-      // Return user profile
       const newProfile: UserProfile = {
         id: data.user.id,
         email: cleanEmail,
@@ -156,7 +142,7 @@ export class AuthService {
 
       return newProfile;
     } catch (err: any) {
-      // If table doesn't exist yet or connection error, allow demo fallback
+
       if (err.message && err.message.includes('FetchError')) {
         return {
           id: `local_student_${Date.now()}`,
@@ -169,9 +155,6 @@ export class AuthService {
     }
   }
 
-  /**
-   * Fetch user profile from public.profiles
-   */
   public async fetchProfile(userId: string, email: string): Promise<UserProfile> {
     try {
       const { data, error } = await supabase
@@ -181,7 +164,7 @@ export class AuthService {
         .single();
 
       if (error || !data) {
-        // Fallback profile if table is not yet seeded
+
         const isDefaultAdmin = email.toLowerCase().startsWith('admin@');
         const isDefaultClassManager = email.toLowerCase().includes('classmanager');
         const fallbackRole: UserRole = isDefaultAdmin ? 'admin' : (isDefaultClassManager ? 'class_manager' : 'user');
@@ -223,9 +206,6 @@ export class AuthService {
     }
   }
 
-  /**
-   * Log out of current session.
-   */
   public async logout(): Promise<void> {
     try {
       await supabase.auth.signOut();
