@@ -15,25 +15,34 @@ export const FirstLessonCard: React.FC<FirstLessonCardProps> = ({
   onPressDetail,
 }) => {
   const [reminded, setReminded] = useState(false);
+  const [notificationId, setNotificationId] = useState<string | null>(null);
 
   const handleReminder = async () => {
     if (!schedule) return;
-    setReminded(true);
-    const timeStr = schedule.time ? `${schedule.time}:00 WIB` : '08:00 WIB';
-    const roomStr = schedule.room || 'B103';
+    const nextState = !reminded;
+    setReminded(nextState);
 
-    await notificationService.sendClassReminder(
-      schedule.title,
-      roomStr,
-      timeStr
-    );
+    if (nextState) {
+      const timeStr = schedule.timeRange || (schedule.time ? `${schedule.time}:00 ${schedule.timePeriod || 'am'}` : '08:00 am');
+      const roomStr = schedule.room || 'B103';
+      const minutes = schedule.reminderMinutes && schedule.reminderMinutes > 0 ? schedule.reminderMinutes : 15;
 
-    await notificationService.scheduleUpcomingClassReminder(
-      schedule.title,
-      roomStr,
-      timeStr,
-      15
-    );
+      const res = await notificationService.scheduleUpcomingClassReminder(
+        schedule.title,
+        roomStr,
+        timeStr,
+        minutes,
+        schedule.timePeriod
+      );
+      if (res.notificationId) {
+        setNotificationId(res.notificationId);
+      }
+    } else {
+      if (notificationId) {
+        await notificationService.cancelNotification(notificationId);
+        setNotificationId(null);
+      }
+    }
   };
 
   if (!schedule) {

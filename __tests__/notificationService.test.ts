@@ -94,15 +94,32 @@ describe('NotificationService Unit Tests', () => {
     );
   });
 
-  test('should schedule upcoming class reminder before class starts', async () => {
+  test('should schedule upcoming class reminder before class starts with correct trigger time', async () => {
     const res = await notificationService.scheduleUpcomingClassReminder(
       'Mobile Programming',
       'B103',
-      '08:00 WIB',
+      '09:00 WIB',
       15
     );
     expect(res.scheduled).toBe(true);
-    expect(res.message).toBeDefined();
+    expect(res.triggerTimeStr).toBe('08:45 WIB');
+    expect(res.message).toContain('08:45 WIB');
+  });
+
+  test('should calculate correct trigger time for afternoon class (14:30 WIB)', async () => {
+    const res = await notificationService.scheduleUpcomingClassReminder(
+      'Discrete Mathematics',
+      'B309',
+      '14:30 WIB - 16:45 WIB',
+      15
+    );
+    expect(res.scheduled).toBe(true);
+    expect(res.triggerTimeStr).toBe('14:15 WIB');
+    expect(res.message).toContain('14:15 WIB');
+  });
+
+  test('should handle cancelNotification gracefully', async () => {
+    await expect(notificationService.cancelNotification('mock_notif_123')).resolves.not.toThrow();
   });
 
   test('should trigger delayed lockscreen test', async () => {

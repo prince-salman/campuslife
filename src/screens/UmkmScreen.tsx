@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   useWindowDimensions,
   Platform,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +18,7 @@ import { CategoryTabs } from '../components/common/CategoryTabs';
 import { UmkmDetailModal } from '../components/common/UmkmDetailModal';
 import { UmkmModel } from '../models/umkm';
 import { umkmService } from '../services/umkmService';
+import { useAuth } from '../context/AuthContext';
 
 interface UmkmScreenProps {
   navigation?: any;
@@ -26,10 +28,28 @@ export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const topPadding = Platform.OS === 'android' ? Math.max(insets.top, 38) : Math.max(insets.top, 12);
+  const { user, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
   const [selectedUmkm, setSelectedUmkm] = useState<UmkmModel | null>(null);
   const [umkmList, setUmkmList] = useState<UmkmModel[]>(umkmService.getUmkmList());
+
+  const avatarInitial = (user?.fullName ? user.fullName.charAt(0) : (user?.email ? user.email.charAt(0) : 'M')).toUpperCase();
+
+  const handleProfilePress = () => {
+    Alert.alert(
+      'Profil Mahasiswa',
+      `Nama: ${user?.fullName || 'Mahasiswa'}\nEmail: ${user?.email || '-'}\nRole: ${user?.role === 'admin' ? 'Administrator' : (user?.role === 'class_manager' ? 'Class Manager' : 'Mahasiswa Aktif')}`,
+      [
+        { text: 'Tutup', style: 'cancel' },
+        {
+          text: 'Keluar (Logout)',
+          style: 'destructive',
+          onPress: logout,
+        },
+      ]
+    );
+  };
 
   React.useEffect(() => {
     umkmService.fetchUmkmList().then(setUmkmList).catch(() => {});
@@ -92,11 +112,15 @@ export const UmkmScreen: React.FC<UmkmScreenProps> = ({ navigation }) => {
               </View>
             </View>
 
-            <View style={styles.avatarBorder}>
+            <TouchableOpacity
+              style={styles.avatarBorder}
+              onPress={handleProfilePress}
+              activeOpacity={0.8}
+            >
               <View style={styles.avatarInner}>
-                <Text style={styles.avatarText}>R</Text>
+                <Text style={styles.avatarText}>{avatarInitial}</Text>
               </View>
-            </View>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.umkmBanner}>

@@ -466,6 +466,8 @@ export const ScheduleScreen: React.FC = () => {
                   <ScheduleTimelineCard
                     key={item.id}
                     item={item}
+                    dayIndex={selectedDayIndex}
+                    dayName={currentDay.dayName}
                     canManage={canManageSchedule}
                     onMorePressed={() => handleEditItem(item)}
                     onToggleCancel={() => handleToggleCancelClass(item)}

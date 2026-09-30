@@ -358,41 +358,78 @@ class NotificationService {
     courseTitle: string,
     room: string,
     timeString: string,
-    minutesBefore: number = 15
-  ): Promise<{ scheduled: boolean; message: string; notificationId?: string }> {
+    minutesBefore: number = 15,
+    timePeriod?: string,
+    dayIndex?: number
+  ): Promise<{ scheduled: boolean; message: string; notificationId?: string; triggerTimeStr?: string }> {
     if (!this.isInitialized) {
       await this.init();
     }
 
+    let startHour = 8;
+    let startMinute = 0;
+    const cleanTime = (timeString || '').trim();
+
+    const matchTime = cleanTime.match(/(\d{1,2})[:.](\d{2})/);
+    if (matchTime) {
+      startHour = parseInt(matchTime[1], 10);
+      startMinute = parseInt(matchTime[2], 10);
+    } else {
+      const matchHour = cleanTime.match(/\b(\d{1,2})\b/);
+      if (matchHour) {
+        startHour = parseInt(matchHour[1], 10);
+        startMinute = 0;
+      }
+    }
+
+    const isPM = (timePeriod?.toLowerCase() === 'pm') || /pm/i.test(cleanTime);
+    const isAM = (timePeriod?.toLowerCase() === 'am') || /am/i.test(cleanTime);
+
+    if (isPM && startHour < 12) {
+      startHour += 12;
+    } else if (isAM && startHour === 12) {
+      startHour = 0;
+    }
+
+    const now = new Date();
+    let targetDate = new Date();
+
+    if (dayIndex !== undefined && dayIndex >= 0 && dayIndex < 7) {
+      const currentDayOfWeek = (now.getDay() + 6) % 7;
+      let daysUntil = (dayIndex - currentDayOfWeek + 7) % 7;
+
+      targetDate.setDate(now.getDate() + daysUntil);
+      targetDate.setHours(startHour, startMinute, 0, 0);
+      targetDate = new Date(targetDate.getTime() - minutesBefore * 60 * 1000);
+
+      if (daysUntil === 0 && targetDate.getTime() <= now.getTime()) {
+        targetDate = new Date(targetDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+      }
+    } else {
+      targetDate.setHours(startHour, startMinute, 0, 0);
+      targetDate = new Date(targetDate.getTime() - minutesBefore * 60 * 1000);
+
+      if (targetDate.getTime() <= now.getTime()) {
+        targetDate = new Date(targetDate.getTime() + 24 * 60 * 60 * 1000);
+      }
+    }
+
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const triggerTimeStr = `${pad(targetDate.getHours())}:${pad(targetDate.getMinutes())} WIB`;
+    const classTimeDisplay = `${pad(startHour)}:${pad(startMinute)} WIB`;
+
     const title = `⏰ PENGINGAT KELAS (${minutesBefore} Menit Lagi): ${courseTitle}`;
-    const body = `Kuliah ${courseTitle} di Ruang ${room} dimulai jam ${timeString}. Siapkan perlengkapan sekarang!`;
+    const body = `Kuliah ${courseTitle} di Ruang ${room} dimulai jam ${classTimeDisplay}. Siapkan perlengkapan sekarang!`;
 
     if (Platform.OS === 'web') {
       return {
         scheduled: true,
-        message: `Pengingat terjadwal ${minutesBefore} menit sebelum jam ${timeString}.`,
+        message: `Pengingat aktif! Notifikasi akan berbunyi pukul ${triggerTimeStr} (${minutesBefore} menit sebelum kuliah dimulai).`,
+        triggerTimeStr,
       };
     }
 
     try {
-
-      const match = timeString.match(/(\d{1,2})[:.](\d{2})/);
-      const now = new Date();
-      let targetDate = new Date();
-
-      if (match) {
-        const hours = parseInt(match[1], 10);
-        const minutes = parseInt(match[2], 10);
-        targetDate.setHours(hours, minutes, 0, 0);
-        targetDate = new Date(targetDate.getTime() - minutesBefore * 60 * 1000);
-
-        if (targetDate.getTime() <= now.getTime()) {
-          targetDate = new Date(targetDate.getTime() + 24 * 60 * 60 * 1000);
-        }
-      } else {
-        targetDate = new Date(now.getTime() + minutesBefore * 60 * 1000);
-      }
-
       const id = await Notifications.scheduleNotificationAsync({
         content: {
           title,
@@ -413,14 +450,95 @@ class NotificationService {
 
       return {
         scheduled: true,
-        message: `Pengingat aktif! Notifikasi layar kunci akan muncul ${minutesBefore} menit sebelum kelas dimulai.`,
+        message: `Pengingat aktif! Notifikasi akan berbunyi pukul ${triggerTimeStr} (${minutesBefore} menit sebelum kuliah dimulai).`,
         notificationId: id,
+        triggerTimeStr,
       };
     } catch (err) {
       console.warn('Failed to schedule class reminder:', err);
       return {
         scheduled: false,
         message: 'Gagal menjadwalkan notifikasi di sistem perangkat.',
+      };
+    }
+  }
+
+  async cancelNotification(notificationId: string): Promise<void> {
+    try {
+      if (Platform.OS !== 'web' && notificationId) {
+        await Notifications.cancelScheduledNotificationAsync(notificationId);
+      }
+    } catch (e) {
+      console.warn('Failed to cancel scheduled notification:', e);
+    }
+  }
+
+  async scheduleAssignmentReminder(
+    taskTitle: string,
+    className: string,
+    courseName: string,
+    deadlineDate: string,
+    deadlineTime: string
+  ): Promise<{ scheduled: boolean; message: string; notificationId?: string }> {
+    if (!this.isInitialized) {
+      await this.init();
+    }
+
+    const title = `📝 PENGINGAT TUGAS [${className}]: ${taskTitle}`;
+    const body = `Batas pengumpulan: ${deadlineDate} pukul ${deadlineTime}. Mata kuliah: ${courseName}.`;
+
+    if (Platform.OS === 'web') {
+      return {
+        scheduled: true,
+        message: `Pengingat tugas terjadwal untuk ${deadlineDate} ${deadlineTime}.`,
+      };
+    }
+
+    try {
+      const now = new Date();
+      let triggerDate = new Date(now.getTime() + 60 * 60 * 1000);
+
+      try {
+        const timeMatch = (deadlineTime || '').match(/(\d{1,2})[:.](\d{2})/);
+        const hour = timeMatch ? parseInt(timeMatch[1], 10) : 23;
+        const min = timeMatch ? parseInt(timeMatch[2], 10) : 59;
+
+        const parsed = new Date(deadlineDate);
+        if (!isNaN(parsed.getTime())) {
+          parsed.setHours(hour, min, 0, 0);
+          const twoHoursBefore = new Date(parsed.getTime() - 2 * 60 * 60 * 1000);
+          if (twoHoursBefore.getTime() > now.getTime()) {
+            triggerDate = twoHoursBefore;
+          }
+        }
+      } catch {}
+
+      const id = await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          data: { type: 'scheduled_assignment_reminder', taskTitle, className, courseName },
+          sound: true,
+          priority: Notifications.AndroidNotificationPriority.HIGH,
+          badge: 1,
+          color: '#8B5CF6',
+        },
+        trigger: {
+          date: triggerDate,
+          channelId: 'class_reminders_channel',
+        },
+      });
+
+      return {
+        scheduled: true,
+        message: `Pengingat tugas aktif untuk batas pengumpulan ${deadlineDate} ${deadlineTime}.`,
+        notificationId: id,
+      };
+    } catch (err) {
+      console.warn('Failed to schedule assignment reminder:', err);
+      return {
+        scheduled: false,
+        message: 'Gagal menjadwalkan notifikasi tugas.',
       };
     }
   }

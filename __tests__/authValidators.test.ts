@@ -103,7 +103,7 @@ describe('authValidators', () => {
       // 1. Non-student email rejected
       await expect(
         auth.register('test@gmail.com', 'validpass123', 'Test User')
-      ).rejects.toThrow('Pendaftaran akun mahasiswa wajib menggunakan email resmi President University');
+      ).rejects.toThrow('President University (@student.president.ac.id)');
 
       // 2. Short password rejected
       await expect(

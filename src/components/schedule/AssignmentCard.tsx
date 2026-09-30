@@ -32,6 +32,7 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
 }) => {
   const [expanded, setExpanded] = useState<boolean>(false);
   const [reminded, setReminded] = useState<boolean>(false);
+  const [notificationId, setNotificationId] = useState<string | null>(null);
 
   const calculateDaysLeft = (deadlineDateStr: string): { label: string; isUrgent: boolean; isPast: boolean } => {
     try {
@@ -62,12 +63,31 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
   const deadlineInfo = calculateDaysLeft(task.deadlineDate);
 
   const handleReminder = async () => {
-    setReminded(true);
-    await notificationService.sendLocalNotification(
-      `Pengingat Tugas [${task.className}]: ${task.title}`,
-      `Batas pengumpulan: ${task.deadlineDate} pukul ${task.deadlineTime}. Mata kuliah: ${task.courseName}.`
-    );
-    Alert.alert('Pengingat Aktif', `Notifikasi tugas ${task.title} berhasil dikirim ke bilah status HP Anda.`);
+    const nextState = !reminded;
+    setReminded(nextState);
+
+    if (nextState) {
+      const res = await notificationService.scheduleAssignmentReminder(
+        task.title,
+        task.className,
+        task.courseName,
+        task.deadlineDate,
+        task.deadlineTime
+      );
+      if (res.notificationId) {
+        setNotificationId(res.notificationId);
+      }
+      Alert.alert(
+        'Pengingat Tugas Aktif',
+        `Pengingat untuk tugas "${task.title}" telah dijadwalkan menjelang batas waktu (${task.deadlineDate} ${task.deadlineTime}).`
+      );
+    } else {
+      if (notificationId) {
+        await notificationService.cancelNotification(notificationId);
+        setNotificationId(null);
+      }
+      Alert.alert('Pengingat Dibatalkan', `Pengingat tugas "${task.title}" telah dinonaktifkan.`);
+    }
   };
 
   const handleOpenLink = () => {

@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   Platform,
   useWindowDimensions,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,6 +17,7 @@ import { walletService } from '../services/walletService';
 import { TransactionType, TransactionModel } from '../models/transaction';
 import { TransactionItemCard } from '../components/finance/TransactionItemCard';
 import { AddTransactionModal } from '../components/finance/AddTransactionModal';
+import { useAuth } from '../context/AuthContext';
 
 interface FinanceScreenProps {
   navigation?: any;
@@ -41,6 +43,7 @@ export const FinanceScreen: React.FC<FinanceScreenProps> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const topPadding = Platform.OS === 'android' ? Math.max(insets.top, 38) : Math.max(insets.top, 12);
   const isTablet = width >= 720;
+  const { user, logout } = useAuth();
 
   const [balance, setBalance] = useState<number>(walletService.getBalance());
   const [isBalanceVisible, setIsBalanceVisible] = useState<boolean>(true);
@@ -50,13 +53,36 @@ export const FinanceScreen: React.FC<FinanceScreenProps> = ({ navigation }) => {
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [modalType, setModalType] = useState<TransactionType>('income');
 
+  const avatarInitial = (user?.fullName ? user.fullName.charAt(0) : (user?.email ? user.email.charAt(0) : 'M')).toUpperCase();
+
+  const handleProfilePress = () => {
+    Alert.alert(
+      'Profil Mahasiswa',
+      `Nama: ${user?.fullName || 'Mahasiswa'}\nEmail: ${user?.email || '-'}\nRole: ${user?.role === 'admin' ? 'Administrator' : (user?.role === 'class_manager' ? 'Class Manager' : 'Mahasiswa Aktif')}`,
+      [
+        { text: 'Tutup', style: 'cancel' },
+        {
+          text: 'Keluar (Logout)',
+          style: 'destructive',
+          onPress: logout,
+        },
+      ]
+    );
+  };
+
   useEffect(() => {
-    setBalance(walletService.getBalance());
+    if (user?.id) {
+      walletService.setUserId(user.id).then(() => {
+        setBalance(walletService.getBalance());
+      });
+    } else {
+      setBalance(walletService.getBalance());
+    }
     const unsubscribe = walletService.subscribe(() => {
       setBalance(walletService.getBalance());
     });
     return unsubscribe;
-  }, []);
+  }, [user?.id]);
 
   const currentMonthName = MONTHS[selectedMonthIndex];
   const spentAmount = walletService.getMonthlySpent(currentMonthName);
@@ -124,11 +150,15 @@ export const FinanceScreen: React.FC<FinanceScreenProps> = ({ navigation }) => {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.avatarBorder}>
+            <TouchableOpacity
+              style={styles.avatarBorder}
+              onPress={handleProfilePress}
+              activeOpacity={0.8}
+            >
               <View style={styles.avatarInner}>
-                <Text style={styles.avatarText}>R</Text>
+                <Text style={styles.avatarText}>{avatarInitial}</Text>
               </View>
-            </View>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.balanceCard}>

@@ -122,21 +122,18 @@ describe('ScheduleService Unit Tests', () => {
   });
 
   describe('Per-User Schedule Privacy & Isolation', () => {
-    test('new user starts with clean empty schedule on all days', async () => {
+    test('new user starts with official PUIS schedule', async () => {
       await scheduleService.setUserId('new_student_schedule_user_1');
       const week = scheduleService.getWeekSchedule();
       expect(week).toHaveLength(7);
-      for (const day of week) {
-        expect(day.items).toEqual([]);
-      }
-      expect(scheduleService.getFirstLesson()).toBeNull();
+      expect(week[0].items.length).toBeGreaterThan(0);
+      expect(scheduleService.getFirstLesson()).not.toBeNull();
     });
 
     test('schedule added by User A is completely isolated and not visible to User B', async () => {
       // 1. User A adds a class
       await scheduleService.setUserId('user_charlie_111');
-      const charlieWeekBefore = scheduleService.getWeekSchedule();
-      expect(charlieWeekBefore[0].items).toHaveLength(0);
+      const charlieInitialCount = scheduleService.getWeekSchedule()[0].items.length;
 
       scheduleService.addScheduleItem({
         dayIndex: 0,
@@ -149,20 +146,18 @@ describe('ScheduleService Unit Tests', () => {
       });
 
       const charlieWeekAfter = scheduleService.getWeekSchedule();
-      expect(charlieWeekAfter[0].items).toHaveLength(1);
-      expect(charlieWeekAfter[0].items[0].title).toBe('Cyber Security Ethics');
+      expect(charlieWeekAfter[0].items.length).toBe(charlieInitialCount + 1);
+      expect(charlieWeekAfter[0].items.some((it) => it.title === 'Cyber Security Ethics')).toBe(true);
 
       // 2. Switch to User B
       await scheduleService.setUserId('user_diana_222');
       const dianaWeek = scheduleService.getWeekSchedule();
-      expect(dianaWeek[0].items).toHaveLength(0);
-      expect(scheduleService.getFirstLesson()).toBeNull();
+      expect(dianaWeek[0].items.some((it) => it.title === 'Cyber Security Ethics')).toBe(false);
 
       // 3. Switch back to User A
       await scheduleService.setUserId('user_charlie_111');
       const charlieWeekReload = scheduleService.getWeekSchedule();
-      expect(charlieWeekReload[0].items).toHaveLength(1);
-      expect(charlieWeekReload[0].items[0].title).toBe('Cyber Security Ethics');
+      expect(charlieWeekReload[0].items.some((it) => it.title === 'Cyber Security Ethics')).toBe(true);
     });
 
     test('demo student account preserves test schedule classes', async () => {

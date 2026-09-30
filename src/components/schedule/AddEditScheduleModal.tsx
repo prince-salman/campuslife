@@ -132,11 +132,14 @@ export const AddEditScheduleModal: React.FC<AddEditScheduleModalProps> = ({
     onSave(finalData);
 
     if (reminderMinutes > 0) {
-      notificationService.sendNotification({
-        title: `⏰ Pengingat Kuliah: ${cleanTitle}`,
-        body: `Kelas di ${cleanRoom} (${calculated.timeRange}). Anda akan diingatkan ${reminderMinutes} menit sebelum mulai.`,
-        isUrgent: false,
-      }).catch(() => {});
+      notificationService.scheduleUpcomingClassReminder(
+        cleanTitle,
+        cleanRoom,
+        calculated.timeRange,
+        reminderMinutes,
+        timePeriod,
+        dayIndex
+      ).catch(() => {});
     }
 
     onClose();

@@ -7,6 +7,8 @@ import { notificationService } from '../../services/notificationService';
 
 interface ScheduleTimelineCardProps {
   item: ScheduleItem;
+  dayIndex?: number;
+  dayName?: string;
   canManage?: boolean;
   onMorePressed?: () => void;
   onToggleCancel?: () => void;
@@ -14,6 +16,8 @@ interface ScheduleTimelineCardProps {
 
 export const ScheduleTimelineCard: React.FC<ScheduleTimelineCardProps> = ({
   item,
+  dayIndex,
+  dayName,
   canManage = false,
   onMorePressed,
   onToggleCancel,
@@ -21,15 +25,30 @@ export const ScheduleTimelineCard: React.FC<ScheduleTimelineCardProps> = ({
   const [hasReminder, setHasReminder] = useState(
     item.reminderMinutes !== undefined ? item.reminderMinutes > 0 : false
   );
+  const [scheduledNotifId, setScheduledNotifId] = useState<string | null>(null);
 
   const handleReminder = async () => {
     const nextState = !hasReminder;
     setHasReminder(nextState);
     if (nextState) {
-      const timeStr = item.timeRange || `${item.time}:00 ${item.timePeriod}`;
+      const timeStr = item.timeRange || `${item.time}:00 ${item.timePeriod || 'am'}`;
       const minutes = item.reminderMinutes && item.reminderMinutes > 0 ? item.reminderMinutes : 15;
-      await notificationService.sendClassReminder(item.title, item.room, timeStr);
-      await notificationService.scheduleUpcomingClassReminder(item.title, item.room, timeStr, minutes);
+      const res = await notificationService.scheduleUpcomingClassReminder(
+        item.title,
+        item.room,
+        timeStr,
+        minutes,
+        item.timePeriod,
+        dayIndex
+      );
+      if (res.notificationId) {
+        setScheduledNotifId(res.notificationId);
+      }
+    } else {
+      if (scheduledNotifId) {
+        await notificationService.cancelNotification(scheduledNotifId);
+        setScheduledNotifId(null);
+      }
     }
   };
 

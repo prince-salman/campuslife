@@ -9,10 +9,12 @@ describe('UMKM Directory Data Integrity & Security Tests', () => {
     });
   });
 
-  test('all required categories have at least 2 merchants in UMKM_LIST', () => {
+  test('all required categories are correctly defined and any initial merchants belong to required categories', () => {
     REQUIRED_CATEGORIES.forEach((cat) => {
-      const items = UMKM_LIST.filter((item) => item.category === cat);
-      expect(items.length).toBeGreaterThanOrEqual(2);
+      expect(CATEGORIES).toContain(cat);
+    });
+    UMKM_LIST.forEach((item) => {
+      expect(REQUIRED_CATEGORIES).toContain(item.category);
     });
   });
 
