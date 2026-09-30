@@ -5,7 +5,7 @@ import { supabase } from './supabase';
 type Listener = () => void;
 
 const DEMO_STUDENT_ID = '3b52c06a-1539-4c17-8df3-f534d6651909';
-const STORAGE_PREFIX = '@campuslife_schedule_user_v5_';
+const STORAGE_PREFIX = '@campuslife_schedule_user_v8_';
 
 const scheduleMemoryStore: Record<string, string> = {};
 const safeScheduleStorage = {
@@ -280,7 +280,18 @@ export class ScheduleService {
       if (savedData) {
         const parsed = JSON.parse(savedData);
         if (Array.isArray(parsed) && parsed.length === 7) {
-          this.weekSchedule = parsed;
+          const hasInvalidRosalina = parsed.some((day: DaySchedule) => {
+            const rosalinaItems = day.items.filter((it: ScheduleItem) =>
+              it.lecturer.toLowerCase().includes('rosalina') || it.title.toLowerCase().includes('discrete')
+            );
+            return rosalinaItems.length > 1;
+          });
+          if (hasInvalidRosalina) {
+            this.weekSchedule = this.getSampleDemoSchedule();
+            await this.saveToStorage();
+          } else {
+            this.weekSchedule = parsed;
+          }
           this.syncCurrentWeekDates();
         }
       } else {
