@@ -49,6 +49,7 @@ export const ScheduleScreen: React.FC = () => {
   const [addEditModalVisible, setAddEditModalVisible] = useState<boolean>(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [editingItem, setEditingItem] = useState<ScheduleItem | null>(null);
+  const [languageTrack, setLanguageTrack] = useState<'english' | 'mandarin'>(scheduleService.getLanguageTrack());
 
   const [selectedClass, setSelectedClass] = useState<string>(user?.managedClass || 'IT 1');
   const [tasks, setTasks] = useState<AssignmentTask[]>(assignmentService.getAssignments(selectedClass));
@@ -108,6 +109,7 @@ export const ScheduleScreen: React.FC = () => {
       setWeekSchedule(scheduleService.getWeekSchedule());
       setMonthYear(scheduleService.getSelectedMonthYear());
       setSelectedDayIndex(scheduleService.getSelectedDayIndex());
+      setLanguageTrack(scheduleService.getLanguageTrack());
     });
 
     return unsubSchedule;
@@ -120,6 +122,12 @@ export const ScheduleScreen: React.FC = () => {
     });
     return unsubAssignments;
   }, [selectedClass]);
+
+  const handleSwitchTrack = async (track: 'english' | 'mandarin') => {
+    await scheduleService.setLanguageTrack(track);
+    setLanguageTrack(track);
+    setWeekSchedule(scheduleService.getWeekSchedule());
+  };
 
   const handleDaySelect = (index: number) => {
     scheduleService.setSelectedDayIndex(index);
@@ -387,6 +395,31 @@ export const ScheduleScreen: React.FC = () => {
               onMonthDropdownTap={() => setMonthPickerVisible(true)}
               topPadding={0}
             />
+
+            <View style={styles.trackCard}>
+              <View style={styles.trackCardLeft}>
+                <Ionicons name="language-outline" size={15} color={Colors.accentYellow} />
+                <Text style={styles.trackCardTitle}>Peminatan Bahasa IT 1:</Text>
+              </View>
+              <View style={styles.trackBtnGroup}>
+                <Pressable
+                  style={[styles.trackPill, languageTrack === 'english' && styles.trackPillActive]}
+                  onPress={() => handleSwitchTrack('english')}
+                >
+                  <Text style={[styles.trackPillText, languageTrack === 'english' && styles.trackPillTextActive]}>
+                    English
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.trackPill, languageTrack === 'mandarin' && styles.trackPillActive]}
+                  onPress={() => handleSwitchTrack('mandarin')}
+                >
+                  <Text style={[styles.trackPillText, languageTrack === 'mandarin' && styles.trackPillTextActive]}>
+                    Mandarin
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
 
             <View style={styles.actionHeaderBar}>
               <View style={styles.dayInfoCol}>
@@ -1209,5 +1242,53 @@ const styles = StyleSheet.create({
   cancelReasonTextActive: {
     color: Colors.textWhite,
     fontWeight: '700',
+  },
+  trackCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#0F1626',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#1D283E',
+    marginTop: 6,
+    marginBottom: 6,
+  },
+  trackCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  trackCardTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.textWhite,
+  },
+  trackBtnGroup: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  trackPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: '#1E293B',
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  trackPillActive: {
+    backgroundColor: Colors.accentYellow,
+    borderColor: Colors.accentYellow,
+  },
+  trackPillText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  trackPillTextActive: {
+    color: '#000000',
+    fontWeight: '800',
   },
 });

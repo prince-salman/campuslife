@@ -572,6 +572,62 @@ export class ScheduleService {
     return true;
   }
 
+  public getLanguageTrack(): 'english' | 'mandarin' {
+    for (const day of this.weekSchedule) {
+      for (const item of day.items) {
+        const lower = item.title.toLowerCase();
+        if (lower.includes('mandarin') || lower.includes('hsk') || lower.includes('chinese')) {
+          return 'mandarin';
+        }
+      }
+    }
+    return 'english';
+  }
+
+  public async setLanguageTrack(track: 'english' | 'mandarin'): Promise<void> {
+    const friday = this.weekSchedule[4];
+    if (!friday) return;
+
+    friday.items = friday.items.filter((it) => {
+      const lower = it.title.toLowerCase();
+      return !lower.includes('survival english') && !lower.includes('mandarin') && !lower.includes('hsk') && !lower.includes('chinese');
+    });
+
+    if (track === 'mandarin') {
+      friday.items.push({
+        id: 'puis_fri_mandarin',
+        time: '05',
+        timePeriod: 'pm',
+        timeRange: '17:00 WIB - 19:15 WIB',
+        title: 'Mandarin 1 (HSK 1)',
+        room: 'B404 / Online Class',
+        lecturer: 'Chen Laoshi',
+        duration: '2 Jam 15 Mnt',
+        headerColor: '#991B1B',
+        cardColor: '#DC2626',
+      });
+    } else {
+      friday.items.push({
+        id: 'puis_fri_2',
+        time: '05',
+        timePeriod: 'pm',
+        timeRange: '17:00 WIB - 19:15 WIB',
+        title: 'Survival English',
+        room: 'C202 (PUCC)',
+        lecturer: 'Parker Adam Birkenbach',
+        duration: '2 Jam 15 Mnt',
+        headerColor: '#164E63',
+        cardColor: '#0284C7',
+      });
+    }
+
+    await this.saveToStorage();
+    if (this.currentUserId) {
+      this.syncWithSupabase(this.currentUserId);
+    }
+    this.notify();
+  }
+
   public deleteScheduleItem(dayIndex: number, itemId: string): boolean {
     const day = this.weekSchedule[dayIndex];
     if (!day) return false;
