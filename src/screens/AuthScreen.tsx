@@ -101,11 +101,6 @@ export const AuthScreen: React.FC = () => {
           <Text style={styles.appTitle}>CampusLife</Text>
           <Text style={styles.appSubtitle}>President University Student Portal</Text>
 
-          <View style={styles.dbIndicator}>
-            <View style={styles.dbDot} />
-            <Text style={styles.dbText}>Database: Terhubung ke Supabase Cloud</Text>
-            <Ionicons name="checkmark-circle" size={14} color="#4ADE80" />
-          </View>
         </View>
 
         <View style={styles.tabContainer}>
@@ -382,30 +377,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.textSecondary,
     marginTop: 4,
-  },
-  dbIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(74, 222, 128, 0.1)',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderWidth: 1,
-    borderColor: 'rgba(74, 222, 128, 0.3)',
-    marginTop: 10,
-  },
-  dbDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: '#4ADE80',
-    marginRight: 6,
-  },
-  dbText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#4ADE80',
-    marginRight: 6,
   },
   tabContainer: {
     flexDirection: 'row',
