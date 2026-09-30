@@ -2,6 +2,7 @@ import { AssignmentTask, TaskPriority, TaskStatus } from '../models/assignment';
 import { UserProfile } from './authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
+import { sanitizeExternalUrl, sanitizeInput } from '../utils/security';
 
 type Listener = () => void;
 
@@ -235,17 +236,26 @@ export class AssignmentService {
       throw new Error('Akses Ditolak: Hanya Class Manager atau Administrator yang berwenang menambahkan tugas.');
     }
 
+    let safeSubmissionLink: string | undefined = undefined;
+    if (input.submissionLink && input.submissionLink.trim()) {
+      const sanitized = sanitizeExternalUrl(input.submissionLink.trim());
+      if (!sanitized) {
+        throw new Error('Tautan pengumpulan tidak valid atau tidak aman. Gunakan URL berawalan http:// atau https://');
+      }
+      safeSubmissionLink = sanitized;
+    }
+
     const newTask: AssignmentTask = {
       id: `task_${Date.now()}`,
       className: input.className || 'IT 1',
-      courseName: input.courseName.trim(),
-      title: input.title.trim(),
-      description: input.description.trim(),
+      courseName: sanitizeInput(input.courseName.trim(), 100),
+      title: sanitizeInput(input.title.trim(), 150),
+      description: sanitizeInput(input.description.trim(), 2000),
       deadlineDate: input.deadlineDate,
       deadlineTime: input.deadlineTime || '23:59 WIB',
       priority: input.priority || 'medium',
       status: 'pending',
-      submissionLink: input.submissionLink ? input.submissionLink.trim() : undefined,
+      submissionLink: safeSubmissionLink,
       createdBy: `${user.fullName} (${user.role === 'admin' ? 'Admin' : 'Class Manager ' + (user.managedClass || 'IT 1')})`,
       createdAt: new Date().toISOString(),
     };
@@ -289,16 +299,30 @@ export class AssignmentService {
     }
 
     const current = this.assignments[index];
+
+    let safeSubmissionLink: string | undefined = current.submissionLink;
+    if (updates.submissionLink !== undefined) {
+      if (updates.submissionLink.trim() === '') {
+        safeSubmissionLink = undefined;
+      } else {
+        const sanitized = sanitizeExternalUrl(updates.submissionLink.trim());
+        if (!sanitized) {
+          throw new Error('Tautan pengumpulan tidak valid atau tidak aman. Gunakan URL berawalan http:// atau https://');
+        }
+        safeSubmissionLink = sanitized;
+      }
+    }
+
     const updated: AssignmentTask = {
       ...current,
       className: updates.className ?? current.className,
-      courseName: updates.courseName ? updates.courseName.trim() : current.courseName,
-      title: updates.title ? updates.title.trim() : current.title,
-      description: updates.description !== undefined ? updates.description.trim() : current.description,
+      courseName: updates.courseName ? sanitizeInput(updates.courseName.trim(), 100) : current.courseName,
+      title: updates.title ? sanitizeInput(updates.title.trim(), 150) : current.title,
+      description: updates.description !== undefined ? sanitizeInput(updates.description.trim(), 2000) : current.description,
       deadlineDate: updates.deadlineDate ?? current.deadlineDate,
       deadlineTime: updates.deadlineTime ?? current.deadlineTime,
       priority: updates.priority ?? current.priority,
-      submissionLink: updates.submissionLink !== undefined ? updates.submissionLink.trim() : current.submissionLink,
+      submissionLink: safeSubmissionLink,
     };
 
     this.assignments[index] = updated;

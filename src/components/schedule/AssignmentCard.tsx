@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { AssignmentTask } from '../../models/assignment';
 import { notificationService } from '../../services/notificationService';
+import { sanitizeExternalUrl } from '../../utils/security';
 
 interface AssignmentCardProps {
   task: AssignmentTask;
@@ -70,10 +71,13 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
   };
 
   const handleOpenLink = () => {
-    if (task.submissionLink) {
-      Linking.openURL(task.submissionLink).catch(() => {
+    const safeUrl = sanitizeExternalUrl(task.submissionLink);
+    if (safeUrl) {
+      Linking.openURL(safeUrl).catch(() => {
         Alert.alert('Gagal Membuka Link', 'Pastikan tautan pengumpulan valid.');
       });
+    } else {
+      Alert.alert('Tautan Tidak Valid', 'Tautan pengumpulan harus berupa URL web yang valid (http / https).');
     }
   };
 

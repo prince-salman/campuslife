@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { validateStudentEmail, validatePassword, validateFullName } from '../utils/authValidators';
+import { loginRateLimiter } from '../utils/security';
 
 export type UserRole = 'admin' | 'class_manager' | 'user';
 
@@ -55,7 +56,16 @@ export class AuthService {
 
     const cleanEmail = rawEmail;
 
+    const limitStatus = loginRateLimiter.checkLimit(cleanEmail);
+    if (limitStatus.isLocked) {
+      const waitMinutes = Math.ceil(limitStatus.remainingSeconds / 60);
+      throw new Error(
+        `Terlalu banyak percobaan masuk yang gagal. Akun sementara dikunci demi keamanan. Silakan coba lagi dalam ${waitMinutes} menit.`
+      );
+    }
+
     if (cleanEmail === DEMO_CLASS_MANAGER.email.toLowerCase() && rawPass.length >= 6) {
+      loginRateLimiter.recordSuccess(cleanEmail);
       return DEMO_CLASS_MANAGER;
     }
 
@@ -66,13 +76,21 @@ export class AuthService {
       });
 
       if (!error && data?.user) {
+        loginRateLimiter.recordSuccess(cleanEmail);
         return await this.fetchProfile(data.user.id, data.user.email || cleanEmail);
       }
 
       if (error) {
+        const failStatus = loginRateLimiter.recordFailure(cleanEmail);
+        if (failStatus.isLocked) {
+          throw new Error(
+            'Terlalu banyak percobaan masuk yang gagal. Akun Anda sementara dikunci selama 5 menit demi keamanan.'
+          );
+        }
+
         const isUnconfirmed = error.message.toLowerCase().includes('email not confirmed');
         if (isUnconfirmed && cleanEmail.endsWith('@student.president.ac.id') && rawPass.length >= 6) {
-          const isClassManager = cleanEmail.includes('classmanager');
+          const isClassManager = cleanEmail === DEMO_CLASS_MANAGER.email.toLowerCase();
           return {
             id: `student_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
             email: cleanEmail,
@@ -88,6 +106,7 @@ export class AuthService {
         );
       }
 
+      loginRateLimiter.recordFailure(cleanEmail);
       throw new Error('Gagal masuk. Periksa kembali email dan kata sandi Anda.');
     } catch (err: any) {
       throw err;
@@ -142,7 +161,6 @@ export class AuthService {
 
       return newProfile;
     } catch (err: any) {
-
       if (err.message && err.message.includes('FetchError')) {
         return {
           id: `local_student_${Date.now()}`,
@@ -156,6 +174,9 @@ export class AuthService {
   }
 
   public async fetchProfile(userId: string, email: string): Promise<UserProfile> {
+    const isExplicitAdmin = email.toLowerCase() === DEMO_ADMIN.email.toLowerCase();
+    const isExplicitClassManager = email.toLowerCase() === DEMO_CLASS_MANAGER.email.toLowerCase();
+
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -164,23 +185,20 @@ export class AuthService {
         .single();
 
       if (error || !data) {
-
-        const isDefaultAdmin = email.toLowerCase().startsWith('admin@');
-        const isDefaultClassManager = email.toLowerCase().includes('classmanager');
-        const fallbackRole: UserRole = isDefaultAdmin ? 'admin' : (isDefaultClassManager ? 'class_manager' : 'user');
+        const fallbackRole: UserRole = isExplicitAdmin ? 'admin' : (isExplicitClassManager ? 'class_manager' : 'user');
         return {
           id: userId,
           email,
-          fullName: isDefaultAdmin ? 'Administrator CampusLife' : (isDefaultClassManager ? 'Class Manager IT 1' : email.split('@')[0]),
+          fullName: isExplicitAdmin ? 'Administrator CampusLife' : (isExplicitClassManager ? 'Class Manager IT 1' : email.split('@')[0]),
           role: fallbackRole,
-          managedClass: isDefaultClassManager ? 'IT 1' : undefined,
+          managedClass: isExplicitClassManager ? 'IT 1' : undefined,
         };
       }
 
       let parsedRole: UserRole = 'user';
-      if (data.role === 'admin' || email.toLowerCase().startsWith('admin@')) {
+      if (data.role === 'admin' || isExplicitAdmin) {
         parsedRole = 'admin';
-      } else if (data.role === 'class_manager' || email.toLowerCase().includes('classmanager')) {
+      } else if (data.role === 'class_manager' || isExplicitClassManager) {
         parsedRole = 'class_manager';
       }
 
@@ -193,15 +211,13 @@ export class AuthService {
         createdAt: data.created_at,
       };
     } catch {
-      const isDefaultAdmin = email.toLowerCase().startsWith('admin@');
-      const isDefaultClassManager = email.toLowerCase().includes('classmanager');
-      const fallbackRole: UserRole = isDefaultAdmin ? 'admin' : (isDefaultClassManager ? 'class_manager' : 'user');
+      const fallbackRole: UserRole = isExplicitAdmin ? 'admin' : (isExplicitClassManager ? 'class_manager' : 'user');
       return {
         id: userId,
         email,
-        fullName: isDefaultAdmin ? 'Administrator' : (isDefaultClassManager ? 'Class Manager' : 'Mahasiswa'),
+        fullName: isExplicitAdmin ? 'Administrator' : (isExplicitClassManager ? 'Class Manager' : 'Mahasiswa'),
         role: fallbackRole,
-        managedClass: isDefaultClassManager ? 'IT 1' : undefined,
+        managedClass: isExplicitClassManager ? 'IT 1' : undefined,
       };
     }
   }

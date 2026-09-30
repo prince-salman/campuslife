@@ -15,6 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { UmkmModel } from '../../models/umkm';
+import { sanitizeExternalUrl, sanitizeWhatsAppPhone } from '../../utils/security';
 
 interface UmkmDetailModalProps {
   visible: boolean;
@@ -75,23 +76,29 @@ export const UmkmDetailModal: React.FC<UmkmDetailModalProps> = ({
       Alert.alert('Info', 'Kontak WhatsApp tidak tersedia.');
       return;
     }
-    let clean = whatsappNumber.replace(/[^0-9]/g, '');
-    if (clean.startsWith('0')) {
-      clean = '62' + clean.slice(1);
+    const clean = sanitizeWhatsAppPhone(whatsappNumber);
+    if (!clean) {
+      Alert.alert('Info', 'Nomor WhatsApp tidak valid.');
+      return;
     }
     const message = encodeURIComponent(
       `Halo *${item.name}*, saya mahasiswa yang melihat lapak Anda di aplikasi CampusLife. Mau tanya info order.`
     );
     const waUrl = `https://wa.me/${clean}?text=${message}`;
+    const safeWaUrl = sanitizeExternalUrl(waUrl);
+    if (!safeWaUrl) {
+      Alert.alert('Error', 'Tautan WhatsApp tidak aman.');
+      return;
+    }
 
     try {
       if (Platform.OS === 'web') {
         if (typeof window !== 'undefined') {
-          window.open(waUrl, '_blank');
+          window.open(safeWaUrl, '_blank', 'noopener,noreferrer');
         }
         return;
       }
-      await Linking.openURL(waUrl);
+      await Linking.openURL(safeWaUrl);
     } catch {
       Alert.alert('Kontak WhatsApp', `Nomor WA: ${whatsappNumber}`);
     }
@@ -108,14 +115,20 @@ export const UmkmDetailModal: React.FC<UmkmDetailModalProps> = ({
       mapsUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
     }
 
+    const safeMapsUrl = sanitizeExternalUrl(mapsUrl);
+    if (!safeMapsUrl) {
+      Alert.alert('Error', 'Tautan peta tidak valid atau berisiko.');
+      return;
+    }
+
     try {
       if (Platform.OS === 'web') {
         if (typeof window !== 'undefined') {
-          window.open(mapsUrl, '_blank');
+          window.open(safeMapsUrl, '_blank', 'noopener,noreferrer');
         }
         return;
       }
-      await Linking.openURL(mapsUrl);
+      await Linking.openURL(safeMapsUrl);
     } catch {
       Alert.alert('Lokasi', `${item.address || item.name}`);
     }
