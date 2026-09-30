@@ -448,22 +448,24 @@ export const ScheduleScreen: React.FC = () => {
             contentContainerStyle={styles.assignmentContent}
             showsVerticalScrollIndicator={true}
           >
-            <View style={styles.classChipsContainer}>
-              <Text style={styles.classChipsLabel}>PILIH KELAS:</Text>
-              <View style={styles.classChipsRow}>
-                {AVAILABLE_CLASSES.map((c) => (
-                  <Pressable
-                    key={c}
-                    style={[styles.classChip, selectedClass === c && styles.classChipActive]}
-                    onPress={() => setSelectedClass(c)}
-                  >
-                    <Text style={[styles.classChipText, selectedClass === c && styles.classChipTextActive]}>
-                      {c}
-                    </Text>
-                  </Pressable>
-                ))}
+            {AVAILABLE_CLASSES.length > 1 && (
+              <View style={styles.classChipsContainer}>
+                <Text style={styles.classChipsLabel}>PILIH KELAS:</Text>
+                <View style={styles.classChipsRow}>
+                  {AVAILABLE_CLASSES.map((c) => (
+                    <Pressable
+                      key={c}
+                      style={[styles.classChip, selectedClass === c && styles.classChipActive]}
+                      onPress={() => setSelectedClass(c)}
+                    >
+                      <Text style={[styles.classChipText, selectedClass === c && styles.classChipTextActive]}>
+                        {c}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
               </View>
-            </View>
+            )}
 
             <View style={styles.assignmentHeaderBar}>
               <View style={{ flex: 1 }}>

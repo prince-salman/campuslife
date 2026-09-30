@@ -6,10 +6,10 @@ import { sanitizeExternalUrl, sanitizeInput } from '../utils/security';
 
 type Listener = () => void;
 
-const ASSIGNMENTS_STORAGE_KEY = '@campuslife_assignments_v2';
+const ASSIGNMENTS_STORAGE_KEY = '@campuslife_assignments_v3';
 const COMPLETED_TASKS_PREFIX = '@campuslife_task_done_';
 
-export const AVAILABLE_CLASSES = ['IT 1', 'IT 2', 'IS 1', 'CS 1'];
+export const AVAILABLE_CLASSES = ['IT 1'];
 
 const INITIAL_DEMO_ASSIGNMENTS: AssignmentTask[] = [
   {
@@ -203,10 +203,8 @@ export class AssignmentService {
   }
 
   public getAssignments(className?: string): AssignmentTask[] {
-    if (!className || className === 'Semua') {
-      return [...this.assignments];
-    }
-    return this.assignments.filter((t) => t.className.toLowerCase() === className.toLowerCase());
+    const targetClass = className && className !== 'Semua' ? className : 'IT 1';
+    return this.assignments.filter((t) => t.className.toLowerCase() === targetClass.toLowerCase());
   }
 
   public getAvailableClasses(): string[] {

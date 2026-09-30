@@ -192,20 +192,24 @@ export const AddEditAssignmentModal: React.FC<AddEditAssignmentModalProps> = ({
           </View>
 
           <ScrollView style={styles.scrollBody} showsVerticalScrollIndicator={false}>
-            <Text style={styles.fieldLabel}>PILIH KELAS MAHASISWA</Text>
-            <View style={styles.classChipsRow}>
-              {AVAILABLE_CLASSES.map((c) => (
-                <Pressable
-                  key={c}
-                  style={[styles.classChip, className === c && styles.classChipActive]}
-                  onPress={() => setClassName(c)}
-                >
-                  <Text style={[styles.classChipText, className === c && styles.classChipTextActive]}>
-                    {c}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+            {AVAILABLE_CLASSES.length > 1 ? (
+              <>
+                <Text style={styles.fieldLabel}>PILIH KELAS MAHASISWA</Text>
+                <View style={styles.classChipsRow}>
+                  {AVAILABLE_CLASSES.map((c) => (
+                    <Pressable
+                      key={c}
+                      style={[styles.classChip, className === c && styles.classChipActive]}
+                      onPress={() => setClassName(c)}
+                    >
+                      <Text style={[styles.classChipText, className === c && styles.classChipTextActive]}>
+                        {c}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </>
+            ) : null}
 
             <Text style={styles.fieldLabel}>MATA KULIAH</Text>
             <TextInput

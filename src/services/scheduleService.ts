@@ -5,7 +5,7 @@ import { supabase } from './supabase';
 type Listener = () => void;
 
 const DEMO_STUDENT_ID = '3b52c06a-1539-4c17-8df3-f534d6651909';
-const STORAGE_PREFIX = '@campuslife_schedule_user_';
+const STORAGE_PREFIX = '@campuslife_schedule_user_v5_';
 
 const scheduleMemoryStore: Record<string, string> = {};
 const safeScheduleStorage = {
@@ -111,22 +111,10 @@ export const DEFAULT_DEMO_WEEK_SCHEDULE: DaySchedule[] = [
       },
       {
         id: 'puis_wed_2',
-        time: '12',
-        timePeriod: 'pm',
-        timeRange: '12:00 WIB - 14:15 WIB',
-        title: 'Discrete Mathematics (Lab)',
-        room: 'LabA211',
-        lecturer: 'Rosalina',
-        duration: '2 Jam 15 Mnt',
-        headerColor: '#1E40AF',
-        cardColor: '#3B82F6',
-      },
-      {
-        id: 'puis_wed_3',
         time: '02',
         timePeriod: 'pm',
         timeRange: '14:30 WIB - 16:45 WIB',
-        title: 'Discrete Mathematics (Theory)',
+        title: 'Discrete Mathematics',
         room: 'B309',
         lecturer: 'Rosalina',
         duration: '2 Jam 15 Mnt',

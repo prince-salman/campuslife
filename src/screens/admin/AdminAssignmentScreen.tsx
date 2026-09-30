@@ -210,19 +210,21 @@ export const AdminAssignmentScreen: React.FC = () => {
               </View>
             </View>
 
-            <View style={styles.classChipsRow}>
-              {AVAILABLE_CLASSES.map((c) => (
-                <Pressable
-                  key={c}
-                  style={[styles.classChip, selectedClass === c && styles.classChipActive]}
-                  onPress={() => setSelectedClass(c)}
-                >
-                  <Text style={[styles.classChipText, selectedClass === c && styles.classChipTextActive]}>
-                    {c}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+            {AVAILABLE_CLASSES.length > 1 && (
+              <View style={styles.classChipsRow}>
+                {AVAILABLE_CLASSES.map((c) => (
+                  <Pressable
+                    key={c}
+                    style={[styles.classChip, selectedClass === c && styles.classChipActive]}
+                    onPress={() => setSelectedClass(c)}
+                  >
+                    <Text style={[styles.classChipText, selectedClass === c && styles.classChipTextActive]}>
+                      {c}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
 
             <View style={styles.metricsRow}>
               <View style={[styles.metricCard, { borderColor: '#38BDF8' }]}>
