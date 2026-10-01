@@ -5,7 +5,7 @@ import { supabase } from './supabase';
 type Listener = () => void;
 
 const DEMO_STUDENT_ID = '3b52c06a-1539-4c17-8df3-f534d6651909';
-const STORAGE_PREFIX = '@campuslife_wallet_user_v6_';
+const STORAGE_PREFIX = '@campuslife_wallet_user_v7_';
 
 const walletMemoryStore: Record<string, string> = {};
 const safeWalletStorage = {
@@ -26,62 +26,7 @@ const safeWalletStorage = {
   },
 };
 
-const DEFAULT_DEMO_TRANSACTIONS: TransactionModel[] = [
-  {
-    id: 'tx_1',
-    title: 'Makan siang',
-    dateText: '17 September | 4pm',
-    amount: 15000,
-    type: 'spent',
-    iconName: 'restaurant',
-    month: 'September',
-  },
-  {
-    id: 'tx_2',
-    title: 'Gojek',
-    dateText: '19 September | 9am',
-    amount: 34000,
-    type: 'spent',
-    iconName: 'car',
-    month: 'September',
-  },
-  {
-    id: 'tx_3',
-    title: 'Fotocopy Berkas',
-    dateText: '21 September | 2pm',
-    amount: 2000,
-    type: 'spent',
-    iconName: 'document',
-    month: 'September',
-  },
-  {
-    id: 'tx_4',
-    title: 'Lightstick Babymonster',
-    dateText: '28 September | 2pm',
-    amount: 680000,
-    type: 'spent',
-    iconName: 'gift',
-    month: 'September',
-  },
-  {
-    id: 'tx_inc_1',
-    title: 'Uang Bulanan Ortu',
-    dateText: '01 September | 10am',
-    amount: 1500000,
-    type: 'income',
-    iconName: 'wallet',
-    month: 'September',
-  },
-  {
-    id: 'tx_inc_2',
-    title: 'Gaji Asisten Dosen',
-    dateText: '15 September | 3pm',
-    amount: 450000,
-    type: 'income',
-    iconName: 'briefcase',
-    month: 'September',
-  },
-];
+const DEFAULT_DEMO_TRANSACTIONS: TransactionModel[] = [];
 
 class WalletService {
   private static instance: WalletService;
@@ -127,20 +72,12 @@ class WalletService {
   public async setUserId(userId: string | null): Promise<void> {
     this.currentUserId = userId;
 
+    this.balance = 0;
+    this.transactions = [];
+
     if (!userId) {
-      this.balance = 0;
-      this.transactions = [];
       this.notify();
       return;
-    }
-
-    if (userId === DEMO_STUDENT_ID) {
-      this.balance = 1000025;
-      this.transactions = [...DEFAULT_DEMO_TRANSACTIONS];
-    } else {
-
-      this.balance = 0;
-      this.transactions = [];
     }
 
     try {
@@ -148,10 +85,28 @@ class WalletService {
       const savedData = await safeWalletStorage.getItem(storageKey);
 
       if (savedData) {
-
         const parsed = JSON.parse(savedData);
-        this.balance = typeof parsed.balance === 'number' ? parsed.balance : 0;
-        this.transactions = Array.isArray(parsed.transactions) ? parsed.transactions : [];
+        const storedBalance = typeof parsed.balance === 'number' ? parsed.balance : 0;
+        const storedTransactions = Array.isArray(parsed.transactions) ? parsed.transactions : [];
+
+        const hasLegacyDemo =
+          storedBalance === 1000025 ||
+          storedTransactions.some(
+            (t: TransactionModel) =>
+              t.id === 'tx_1' ||
+              t.id === 'tx_inc_1' ||
+              t.title === 'Lightstick Babymonster' ||
+              t.title === 'Uang Bulanan Ortu'
+          );
+
+        if (hasLegacyDemo) {
+          this.balance = 0;
+          this.transactions = [];
+          await this.saveToStorage();
+        } else {
+          this.balance = storedBalance;
+          this.transactions = storedTransactions;
+        }
       } else {
         await this.saveToStorage();
       }
@@ -252,9 +207,17 @@ class WalletService {
         .single();
 
       if (!error && data) {
-        this.balance = Number(data.balance);
-        await this.saveToStorage();
-        this.notify();
+        const remoteBalance = Number(data.balance);
+        if (remoteBalance === 1000025) {
+          this.balance = 0;
+          await supabase.from('wallets').update({ balance: 0 }).eq('user_id', userId);
+          await this.saveToStorage();
+          this.notify();
+        } else {
+          this.balance = remoteBalance;
+          await this.saveToStorage();
+          this.notify();
+        }
       } else if (error && (error.code === 'PGRST116' || error.message?.includes('No rows'))) {
         await supabase.from('wallets').insert({
           user_id: userId,
