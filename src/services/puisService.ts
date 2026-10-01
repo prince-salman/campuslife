@@ -183,11 +183,8 @@ class PuisService {
     return PuisService.instance;
   }
 
-  public getOfficialSchedule(): DaySchedule[] {
-    return OFFICIAL_PUIS_IT1_SCHEDULE.map((day) => ({
-      ...day,
-      items: day.items.map((it) => ({ ...it })),
-    }));
+  public getOfficialSchedule(identifier?: string | null): DaySchedule[] {
+    return scheduleService.getSampleDemoSchedule(new Date(), identifier);
   }
 
   public async syncScheduleFromPuis(email: string, pass: string): Promise<{
@@ -231,7 +228,7 @@ class PuisService {
       console.log('PUIS remote fetch note (handled by local engine):', e.message);
     }
 
-    const puisSchedule = this.getOfficialSchedule();
+    const puisSchedule = this.getOfficialSchedule(cleanEmail);
     await scheduleService.replaceWeekSchedule(puisSchedule);
 
     let totalSessions = 0;

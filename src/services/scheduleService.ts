@@ -57,6 +57,66 @@ export interface UpdateScheduleParams {
   cardColor?: string;
 }
 
+export const SURVIVAL_ENGLISH_COURSE: ScheduleItem = {
+  id: 'puis_fri_survival_english',
+  time: '05',
+  timePeriod: 'pm',
+  timeRange: '17:00 WIB - 19:15 WIB',
+  title: 'Survival English',
+  room: 'C202 (PUCC)',
+  lecturer: 'Parker Adam Birkenbach',
+  duration: '2 Jam 15 Mnt',
+  headerColor: '#164E63',
+  cardColor: '#0284C7',
+};
+
+export const ACADEMIC_WRITING_COURSE: ScheduleItem = {
+  id: 'puis_fri_academic_writing',
+  time: '05',
+  timePeriod: 'pm',
+  timeRange: '17:00 WIB - 19:15 WIB',
+  title: 'Academic Writing and Research Papers',
+  room: 'B410',
+  lecturer: 'Language Center Lecturer',
+  duration: '2 Jam 15 Mnt',
+  headerColor: '#0F766E',
+  cardColor: '#0D9488',
+};
+
+export const MANDARIN_HSK1_COURSE: ScheduleItem = {
+  id: 'puis_fri_mandarin_hsk1',
+  time: '05',
+  timePeriod: 'pm',
+  timeRange: '17:00 WIB - 19:15 WIB',
+  title: 'HSK 1 (Mandarin 1)',
+  room: 'Online Class / B404',
+  lecturer: 'Chen Laoshi',
+  duration: '2 Jam 15 Mnt',
+  headerColor: '#991B1B',
+  cardColor: '#DC2626',
+};
+
+export function getAssignedLanguageCourse(identifier?: string | null): ScheduleItem {
+  const clean = (identifier || '').toLowerCase();
+  if (clean.includes('mandarin') || clean.includes('hsk') || clean.includes('chinese')) {
+    return { ...MANDARIN_HSK1_COURSE };
+  }
+  if (clean.includes('academic') || clean.includes('writing') || clean.includes('mahasiswa') || clean.includes('derrian')) {
+    return { ...ACADEMIC_WRITING_COURSE };
+  }
+  if (clean.includes('salman') || clean.includes('cm_it1') || clean.includes('survival') || clean.includes('001202600008')) {
+    return { ...SURVIVAL_ENGLISH_COURSE };
+  }
+  let hash = 0;
+  for (let i = 0; i < clean.length; i++) {
+    hash = (hash * 31 + clean.charCodeAt(i)) & 0xffffffff;
+  }
+  const mod = Math.abs(hash) % 3;
+  if (mod === 0) return { ...SURVIVAL_ENGLISH_COURSE };
+  if (mod === 1) return { ...ACADEMIC_WRITING_COURSE };
+  return { ...MANDARIN_HSK1_COURSE };
+}
+
 export const DEFAULT_DEMO_WEEK_SCHEDULE: DaySchedule[] = [
   {
     dayName: 'Sen',
@@ -242,18 +302,33 @@ export class ScheduleService {
     });
   }
 
-  public getSampleDemoSchedule(baseDate: Date = new Date()): DaySchedule[] {
+  public getSampleDemoSchedule(baseDate: Date = new Date(), userIdOrEmail?: string | null): DaySchedule[] {
     const dayOfWeek = (baseDate.getDay() + 6) % 7;
     const startOfWeek = new Date(baseDate);
     startOfWeek.setDate(baseDate.getDate() - dayOfWeek);
 
+    const assignedLangCourse = getAssignedLanguageCourse(userIdOrEmail || this.currentUserId);
+
     return DEFAULT_DEMO_WEEK_SCHEDULE.map((day, idx) => {
       const d = new Date(startOfWeek);
       d.setDate(startOfWeek.getDate() + idx);
+      const items = day.items.map((it) => ({ ...it }));
+      if (idx === 4) {
+        const filtered = items.filter((it) => {
+          const lower = it.title.toLowerCase();
+          return !lower.includes('survival') && !lower.includes('academic') && !lower.includes('writing') && !lower.includes('mandarin') && !lower.includes('hsk');
+        });
+        filtered.push({ ...assignedLangCourse });
+        return {
+          ...day,
+          dayNumber: String(d.getDate()).padStart(2, '0'),
+          items: filtered,
+        };
+      }
       return {
         ...day,
         dayNumber: String(d.getDate()).padStart(2, '0'),
-        items: day.items.map((it) => ({ ...it })),
+        items,
       };
     });
   }
@@ -271,7 +346,7 @@ export class ScheduleService {
       return;
     }
 
-    this.weekSchedule = this.getSampleDemoSchedule();
+    this.weekSchedule = this.getSampleDemoSchedule(new Date(), userId);
 
     try {
       const storageKey = this.getStorageKey(userId);
@@ -287,7 +362,7 @@ export class ScheduleService {
             return rosalinaItems.length > 1;
           });
           if (hasInvalidRosalina) {
-            this.weekSchedule = this.getSampleDemoSchedule();
+            this.weekSchedule = this.getSampleDemoSchedule(new Date(), userId);
             await this.saveToStorage();
           } else {
             this.weekSchedule = parsed;
@@ -572,53 +647,36 @@ export class ScheduleService {
     return true;
   }
 
-  public getLanguageTrack(): 'english' | 'mandarin' {
+  public getLanguageTrack(): 'english' | 'academic' | 'mandarin' {
     for (const day of this.weekSchedule) {
       for (const item of day.items) {
         const lower = item.title.toLowerCase();
         if (lower.includes('mandarin') || lower.includes('hsk') || lower.includes('chinese')) {
           return 'mandarin';
         }
+        if (lower.includes('academic') || lower.includes('writing')) {
+          return 'academic';
+        }
       }
     }
     return 'english';
   }
 
-  public async setLanguageTrack(track: 'english' | 'mandarin'): Promise<void> {
+  public async setLanguageTrack(track: 'english' | 'academic' | 'mandarin'): Promise<void> {
     const friday = this.weekSchedule[4];
     if (!friday) return;
 
     friday.items = friday.items.filter((it) => {
       const lower = it.title.toLowerCase();
-      return !lower.includes('survival english') && !lower.includes('mandarin') && !lower.includes('hsk') && !lower.includes('chinese');
+      return !lower.includes('survival') && !lower.includes('academic') && !lower.includes('writing') && !lower.includes('mandarin') && !lower.includes('hsk') && !lower.includes('chinese');
     });
 
     if (track === 'mandarin') {
-      friday.items.push({
-        id: 'puis_fri_mandarin',
-        time: '05',
-        timePeriod: 'pm',
-        timeRange: '17:00 WIB - 19:15 WIB',
-        title: 'Mandarin 1 (HSK 1)',
-        room: 'B404 / Online Class',
-        lecturer: 'Chen Laoshi',
-        duration: '2 Jam 15 Mnt',
-        headerColor: '#991B1B',
-        cardColor: '#DC2626',
-      });
+      friday.items.push({ ...MANDARIN_HSK1_COURSE });
+    } else if (track === 'academic') {
+      friday.items.push({ ...ACADEMIC_WRITING_COURSE });
     } else {
-      friday.items.push({
-        id: 'puis_fri_2',
-        time: '05',
-        timePeriod: 'pm',
-        timeRange: '17:00 WIB - 19:15 WIB',
-        title: 'Survival English',
-        room: 'C202 (PUCC)',
-        lecturer: 'Parker Adam Birkenbach',
-        duration: '2 Jam 15 Mnt',
-        headerColor: '#164E63',
-        cardColor: '#0284C7',
-      });
+      friday.items.push({ ...SURVIVAL_ENGLISH_COURSE });
     }
 
     await this.saveToStorage();
