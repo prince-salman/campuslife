@@ -176,12 +176,33 @@ CREATE POLICY "UMKM deletable only by admin"
     ON public.umkm FOR DELETE
     USING (public.is_admin());
 
--- SCHEDULES POLICIES (Data Mahasiswa Terisolasi - Admin diblokir)
+-- SCHEDULES POLICIES (Jadwal Kuliah: Read-only untuk Siswa & Class Manager, CRUD penuh hanya untuk Admin)
 DROP POLICY IF EXISTS "Schedules owned by user only" ON public.schedules;
-CREATE POLICY "Schedules owned by user only"
-    ON public.schedules FOR ALL
-    USING (auth.uid() = user_id)
-    WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Schedules viewable by owner or admin" ON public.schedules;
+DROP POLICY IF EXISTS "Schedules insertable only by admin" ON public.schedules;
+DROP POLICY IF EXISTS "Schedules updatable only by admin" ON public.schedules;
+DROP POLICY IF EXISTS "Schedules deletable only by admin" ON public.schedules;
+
+CREATE POLICY "Schedules viewable by owner or admin"
+    ON public.schedules FOR SELECT
+    TO authenticated
+    USING (auth.uid() = user_id OR public.is_admin());
+
+CREATE POLICY "Schedules insertable only by admin"
+    ON public.schedules FOR INSERT
+    TO authenticated
+    WITH CHECK (public.is_admin());
+
+CREATE POLICY "Schedules updatable only by admin"
+    ON public.schedules FOR UPDATE
+    TO authenticated
+    USING (public.is_admin())
+    WITH CHECK (public.is_admin());
+
+CREATE POLICY "Schedules deletable only by admin"
+    ON public.schedules FOR DELETE
+    TO authenticated
+    USING (public.is_admin());
 
 -- TRANSACTIONS POLICIES (Data Keuangan Terisolasi - Admin diblokir)
 DROP POLICY IF EXISTS "Transactions owned by user only" ON public.transactions;
@@ -228,7 +249,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE FUNCTION public.admin_update_user(
     target_user_id UUID,
     new_full_name TEXT,
-    new_role TEXT
+    new_role TEXT,
+    new_managed_class TEXT DEFAULT NULL
 )
 RETURNS JSONB AS $$
 BEGIN
@@ -236,13 +258,18 @@ BEGIN
         RAISE EXCEPTION 'Akses ditolak: Hanya admin yang dapat mengubah data pengguna.';
     END IF;
 
-    IF new_role NOT IN ('admin', 'user') THEN
-        RAISE EXCEPTION 'Role tidak valid. Harus admin atau user.';
+    IF new_role IS NOT NULL AND new_role NOT IN ('admin', 'class_manager', 'user') THEN
+        RAISE EXCEPTION 'Role tidak valid. Harus admin, class_manager, atau user.';
     END IF;
 
     UPDATE public.profiles
     SET full_name = COALESCE(new_full_name, full_name),
         role = COALESCE(new_role, role),
+        managed_class = CASE 
+            WHEN new_role = 'class_manager' THEN COALESCE(new_managed_class, managed_class, 'IT 1')
+            WHEN new_role = 'user' THEN NULL
+            ELSE managed_class
+        END,
         updated_at = NOW()
     WHERE id = target_user_id;
 

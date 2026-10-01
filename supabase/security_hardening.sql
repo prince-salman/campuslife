@@ -180,12 +180,33 @@ CREATE POLICY "UMKM deletable only by admin"
     TO authenticated
     USING (public.is_admin());
 
+-- SCHEDULES POLICIES (Jadwal Kuliah: Read-only untuk Siswa & Class Manager, CRUD penuh hanya untuk Admin)
 DROP POLICY IF EXISTS "Schedules owned by user only" ON public.schedules;
-CREATE POLICY "Schedules owned by user only"
-    ON public.schedules FOR ALL
+DROP POLICY IF EXISTS "Schedules viewable by owner or admin" ON public.schedules;
+DROP POLICY IF EXISTS "Schedules insertable only by admin" ON public.schedules;
+DROP POLICY IF EXISTS "Schedules updatable only by admin" ON public.schedules;
+DROP POLICY IF EXISTS "Schedules deletable only by admin" ON public.schedules;
+
+CREATE POLICY "Schedules viewable by owner or admin"
+    ON public.schedules FOR SELECT
     TO authenticated
-    USING (auth.uid() = user_id)
-    WITH CHECK (auth.uid() = user_id);
+    USING (auth.uid() = user_id OR public.is_admin());
+
+CREATE POLICY "Schedules insertable only by admin"
+    ON public.schedules FOR INSERT
+    TO authenticated
+    WITH CHECK (public.is_admin());
+
+CREATE POLICY "Schedules updatable only by admin"
+    ON public.schedules FOR UPDATE
+    TO authenticated
+    USING (public.is_admin())
+    WITH CHECK (public.is_admin());
+
+CREATE POLICY "Schedules deletable only by admin"
+    ON public.schedules FOR DELETE
+    TO authenticated
+    USING (public.is_admin());
 
 DROP POLICY IF EXISTS "Transactions owned by user only" ON public.transactions;
 CREATE POLICY "Transactions owned by user only"
