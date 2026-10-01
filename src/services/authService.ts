@@ -2,39 +2,9 @@ import { supabase } from './supabase';
 import { validateStudentEmail, validatePassword, validateFullName } from '../utils/authValidators';
 import { loginRateLimiter } from '../utils/security';
 
-export type UserRole = 'admin' | 'class_manager' | 'user';
-
-export interface UserProfile {
-  id: string;
-  email: string;
-  fullName: string;
-  role: UserRole;
-  managedClass?: string;
-  createdAt?: string;
-}
-
-export const DEMO_ADMIN: UserProfile = {
-  id: '4bbbdeea-08ca-478a-8b06-e028a7227aaf',
-  email: 'admin@campuslife.com',
-  fullName: 'Administrator CampusLife',
-  role: 'admin',
-};
-
-export const DEMO_CLASS_MANAGER: UserProfile = {
-  id: 'cm_it1_salman_101',
-  email: 'classmanager.it1@student.president.ac.id',
-  fullName: 'Muhammad Salman (Class Manager IT 1)',
-  role: 'class_manager',
-  managedClass: 'IT 1',
-};
-
-export const DEMO_STUDENT: UserProfile = {
-  id: '3b52c06a-1539-4c17-8df3-f534d6651909',
-  email: 'mahasiswa@student.president.ac.id',
-  fullName: 'Derrian Kalalo',
-  role: 'user',
-  managedClass: 'IT 1',
-};
+export * from '../models/user';
+import { UserProfile, UserRole, DEMO_ADMIN, DEMO_CLASS_MANAGER, DEMO_STUDENT } from '../models/user';
+import { adminUserService } from './adminUserService';
 
 export class AuthService {
   private static instance: AuthService;
@@ -64,6 +34,11 @@ export class AuthService {
       );
     }
 
+    if (cleanEmail === DEMO_ADMIN.email.toLowerCase() && rawPass.length >= 6) {
+      loginRateLimiter.recordSuccess(cleanEmail);
+      return DEMO_ADMIN;
+    }
+
     if (cleanEmail === DEMO_CLASS_MANAGER.email.toLowerCase() && rawPass.length >= 6) {
       loginRateLimiter.recordSuccess(cleanEmail);
       return DEMO_CLASS_MANAGER;
@@ -91,13 +66,16 @@ export class AuthService {
         const isUnconfirmed = error.message.toLowerCase().includes('email not confirmed');
         if (isUnconfirmed && cleanEmail.endsWith('@student.president.ac.id') && rawPass.length >= 6) {
           const isClassManager = cleanEmail === DEMO_CLASS_MANAGER.email.toLowerCase();
-          return {
+          const studentProfile: UserProfile = {
             id: `student_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
             email: cleanEmail,
             fullName: cleanEmail.split('@')[0].replace('.', ' ').toUpperCase(),
             role: isClassManager ? 'class_manager' : 'user',
             managedClass: isClassManager ? 'IT 1' : undefined,
+            createdAt: new Date().toISOString(),
           };
+          await adminUserService.recordNewUser(studentProfile);
+          return studentProfile;
         }
         throw new Error(
           error.message === 'Invalid login credentials'
@@ -159,15 +137,20 @@ export class AuthService {
         createdAt: new Date().toISOString(),
       };
 
+      await adminUserService.recordNewUser(newProfile);
+
       return newProfile;
     } catch (err: any) {
-      if (err.message && err.message.includes('FetchError')) {
-        return {
+      if (err.message && (err.message.includes('FetchError') || err.message.includes('network') || err.message.includes('fetch'))) {
+        const offlineProfile: UserProfile = {
           id: `local_student_${Date.now()}`,
           email: cleanEmail,
           fullName: fullName.trim(),
           role: 'user',
+          createdAt: new Date().toISOString(),
         };
+        await adminUserService.recordNewUser(offlineProfile);
+        return offlineProfile;
       }
       throw err;
     }
@@ -186,13 +169,15 @@ export class AuthService {
 
       if (error || !data) {
         const fallbackRole: UserRole = isExplicitAdmin ? 'admin' : (isExplicitClassManager ? 'class_manager' : 'user');
-        return {
+        const fallbackProfile: UserProfile = {
           id: userId,
           email,
           fullName: isExplicitAdmin ? 'Administrator CampusLife' : (isExplicitClassManager ? 'Class Manager IT 1' : email.split('@')[0]),
           role: fallbackRole,
           managedClass: isExplicitClassManager ? 'IT 1' : undefined,
         };
+        adminUserService.recordNewUser(fallbackProfile).catch(() => {});
+        return fallbackProfile;
       }
 
       let parsedRole: UserRole = 'user';
@@ -202,7 +187,7 @@ export class AuthService {
         parsedRole = 'class_manager';
       }
 
-      return {
+      const profileResult: UserProfile = {
         id: data.id,
         email: data.email,
         fullName: data.full_name || data.email.split('@')[0],
@@ -210,6 +195,8 @@ export class AuthService {
         managedClass: data.managed_class || (parsedRole === 'class_manager' ? 'IT 1' : undefined),
         createdAt: data.created_at,
       };
+      adminUserService.recordNewUser(profileResult).catch(() => {});
+      return profileResult;
     } catch {
       const fallbackRole: UserRole = isExplicitAdmin ? 'admin' : (isExplicitClassManager ? 'class_manager' : 'user');
       return {
