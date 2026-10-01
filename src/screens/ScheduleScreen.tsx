@@ -38,7 +38,7 @@ export const ScheduleScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const topPadding = Platform.OS === 'android' ? Math.max(insets.top, 38) : Math.max(insets.top, 12);
   const { user, canManageAssignments, isClassManager, isAdmin } = useAuth();
-  const canManageSchedule = isClassManager || isAdmin;
+  const canManageSchedule = isAdmin;
 
   const [activeTab, setActiveTab] = useState<'schedule' | 'assignments'>('schedule');
 
@@ -134,18 +134,30 @@ export const ScheduleScreen: React.FC = () => {
   };
 
   const handleAddNew = () => {
+    if (!isAdmin) {
+      Alert.alert('Akses Terbatas', 'Hanya Administrator yang berwenang menambah jadwal perkuliahan.');
+      return;
+    }
     setEditingItem(null);
     setModalMode('add');
     setAddEditModalVisible(true);
   };
 
   const handleEditItem = (item: ScheduleItem) => {
+    if (!isAdmin) {
+      Alert.alert('Akses Terbatas', 'Hanya Administrator yang berwenang mengubah jadwal perkuliahan.');
+      return;
+    }
     setEditingItem(item);
     setModalMode('edit');
     setAddEditModalVisible(true);
   };
 
   const handleSaveSchedule = (data: ScheduleFormData) => {
+    if (!isAdmin) {
+      Alert.alert('Akses Terbatas', 'Hanya Administrator yang berwenang menyimpan jadwal perkuliahan.');
+      return;
+    }
     if (modalMode === 'add') {
       scheduleService.addScheduleItem({
         dayIndex: data.dayIndex,
@@ -181,6 +193,10 @@ export const ScheduleScreen: React.FC = () => {
   };
 
   const handleDeleteSchedule = (dayIdx: number, itemId: string) => {
+    if (!isAdmin) {
+      Alert.alert('Akses Terbatas', 'Hanya Administrator yang berwenang menghapus jadwal perkuliahan.');
+      return;
+    }
     scheduleService.deleteScheduleItem(dayIdx, itemId);
   };
 
@@ -189,10 +205,10 @@ export const ScheduleScreen: React.FC = () => {
   };
 
   const handleToggleCancelClass = (item: ScheduleItem) => {
-    if (!canManageSchedule) {
+    if (!isAdmin) {
       Alert.alert(
         'Akses Terbatas',
-        'Hanya Class Manager atau Administrator yang berwenang membatalkan atau mengaktifkan kembali jadwal kuliah.'
+        'Hanya Administrator yang berwenang membatalkan atau mengaktifkan kembali jadwal kuliah.'
       );
       return;
     }
@@ -232,7 +248,7 @@ export const ScheduleScreen: React.FC = () => {
         ? customCancelReason.trim()
         : cancelReason;
 
-    const cancelledBy = user?.fullName || `Class Manager ${selectedClass}`;
+    const cancelledBy = user?.fullName || 'Administrator';
 
     await scheduleService.setScheduleItemCancelled(
       selectedDayIndex,
@@ -297,6 +313,13 @@ export const ScheduleScreen: React.FC = () => {
   };
 
   const handleDeleteAssignment = async (taskId: string) => {
+    if (!canManageAssignments) {
+      Alert.alert(
+        'Akses Terbatas',
+        'Hanya Class Manager atau Administrator yang berwenang menghapus tugas.'
+      );
+      return;
+    }
     await assignmentService.deleteAssignment(taskId, user);
     Alert.alert('Sukses', 'Tugas berhasil dihapus.');
   };
@@ -437,10 +460,12 @@ export const ScheduleScreen: React.FC = () => {
                   <Text style={styles.puisSyncBtnText}>Tarik PUIS</Text>
                 </Pressable>
 
-                <Pressable style={styles.addScheduleBtn} onPress={handleAddNew}>
-                  <Ionicons name="add" size={16} color="#000000" />
-                  <Text style={styles.addScheduleBtnText}>Tambah</Text>
-                </Pressable>
+                {isAdmin && (
+                  <Pressable style={styles.addScheduleBtn} onPress={handleAddNew}>
+                    <Ionicons name="add" size={16} color="#000000" />
+                    <Text style={styles.addScheduleBtnText}>Tambah</Text>
+                  </Pressable>
+                )}
               </View>
             </View>
 
@@ -456,10 +481,12 @@ export const ScheduleScreen: React.FC = () => {
                   <Text style={styles.emptySubtitle}>
                     Hari {currentDay.dayName} ini belum ada agenda kuliah aktif.
                   </Text>
-                  <Pressable style={styles.emptyAddBtn} onPress={handleAddNew}>
-                    <Ionicons name="add-circle-outline" size={18} color={Colors.accentYellow} />
-                    <Text style={styles.emptyAddBtnText}>Tambah Jadwal Hari Ini</Text>
-                  </Pressable>
+                  {isAdmin && (
+                    <Pressable style={styles.emptyAddBtn} onPress={handleAddNew}>
+                      <Ionicons name="add-circle-outline" size={18} color={Colors.accentYellow} />
+                      <Text style={styles.emptyAddBtnText}>Tambah Jadwal Hari Ini</Text>
+                    </Pressable>
+                  )}
                 </View>
               ) : (
                 currentDay.items.map((item) => (

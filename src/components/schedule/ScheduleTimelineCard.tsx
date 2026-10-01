@@ -124,7 +124,7 @@ export const ScheduleTimelineCard: React.FC<ScheduleTimelineCardProps> = ({
             <View style={styles.cancelledBanner}>
               <Ionicons name="alert-circle" size={16} color="#F87171" style={{ marginRight: 6 }} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.cancelledBannerTitle}>KELAS DITIADAKAN OLEH CLASS MANAGER</Text>
+                <Text style={styles.cancelledBannerTitle}>KELAS PERKULIAHAN DITIADAKAN</Text>
                 <Text style={styles.cancelledBannerReason}>
                   {item.cancelledReason || 'Dosen Berhalangan Hadir'}
                 </Text>
